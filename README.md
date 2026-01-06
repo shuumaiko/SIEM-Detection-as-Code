@@ -1,22 +1,32 @@
-SIEM-DaC
+SIEM-DaC (Detection as Code)
 
-Kho lưu trữ triển khai Detection as Code (DaC), chuẩn hóa detection rule và log schema phục vụ vận hành SOC đa SIEM.
+Kho lưu trữ triển khai Detection as Code (DaC) cho SOC, chuẩn hóa detection rule, log schema và quy trình triển khai đa SIEM.
 
 📌 Giới thiệu
 
-SIEM-DaC là kho lưu trữ các detection rule và thành phần liên quan, được xây dựng theo mô hình Detection as Code (DaC) nhằm hỗ trợ các đội SOC xây dựng, quản lý và triển khai detection một cách có hệ thống.
+SIEM-DaC là một dự án áp dụng mô hình Detection as Code nhằm quản lý toàn bộ vòng đời detection theo tư duy code-first, giúp SOC xây dựng, vận hành và mở rộng hệ thống phát hiện một cách bền vững.
 
-Dự án tập trung vào việc chuẩn hóa và tách bạch:
+Dự án tập trung vào việc tách bạch rõ ràng giữa:
 
-Logic phát hiện (detection logic)
+Logic phát hiện (Detection Logic)
 
-Chuẩn dữ liệu và schema log (OCSF / OCFS)
+Chuẩn dữ liệu & schema (OCSF / OCFS)
 
-Triển khai kỹ thuật theo từng nền tảng SIEM
+Triển khai kỹ thuật theo từng SIEM
 
-Qua đó giúp giảm phụ thuộc vào vendor, tăng khả năng tái sử dụng, kiểm soát chất lượng và mở rộng detection trong môi trường thực tế.
+Qua đó giảm phụ thuộc vào vendor, tăng khả năng tái sử dụng và chuẩn hóa detection trong môi trường đa nền tảng.
 
-Dự án phù hợp cho:
+🎯 Mục tiêu
+
+Xây dựng detection độc lập SIEM
+
+Chuẩn hóa log và field mapping
+
+Áp dụng version control, review, test cho detection
+
+Hỗ trợ SOC từ Detection Engineering → Threat Hunting → Incident Response
+
+👥 Đối tượng sử dụng
 
 SOC Analyst
 
@@ -28,63 +38,77 @@ SIEM Engineer
 
 DFIR / Purple Team
 
-🎯 Mục tiêu
+🧠 Kiến trúc Detection as Code
 
-Xây dựng detection rule độc lập SIEM
+Luồng tổng quát của dự án:
 
-Chuẩn hóa log source và field mapping
+Log source (vendor-specific)
+        ↓
+Logsource Mapping (OCSF / OCFS)
+        ↓
+Rule View (rule field ↔ log field)
+        ↓
+Detection Rule (SIEM-agnostic)
+        ↓
+SIEM-specific Implementation
 
-Quản lý detection theo tư duy code (Git, review, test)
+Triết lý thiết kế
 
-Hỗ trợ toàn bộ vòng đời detection trong SOC
+Detection rule không phụ thuộc log vendor
+
+Mapping xử lý khác biệt dữ liệu
+
+SIEM chỉ là lớp triển khai cuối
+
+Detection được quản lý như code (Git, PR, CI/CD)
 
 📁 Cấu trúc thư mục
 Thư mục	Mô tả
-.github/	Chứa GitHub workflows phục vụ tự động hóa
-docs/	Tài liệu kiến trúc, chuẩn schema, hướng dẫn sử dụng
-logsource-mapping-registry/	Field mapping cho các logsource theo chuẩn OCSF / OCFS
-rule-view/	Lớp trung gian ánh xạ field giữa rule và log thực tế
-rules/	Các detection rules độc lập SIEM (base rules)
-rules-tenants/	Rule đang triển khai thực tế theo từng tenant/khách hàng
-tests/	Test case, kết quả kiểm thử và script test rule
-tools/	Công cụ hỗ trợ validate, build và deploy rules
-🧠 Phương pháp phát triển Detection
+.github/	GitHub Actions & workflow tự động hóa
+docs/	Tài liệu kiến trúc, chuẩn schema, hướng dẫn
+logsource-mapping-registry/	Mapping log source theo chuẩn OCSF / OCFS
+rule-view/	Lớp trung gian ánh xạ field giữa rule và log
+rules/	Detection rules độc lập SIEM (base rules)
+rules-tenants/	Rule triển khai thực tế theo từng tenant
+tests/	Test case, validation, simulation
+tools/	Tool & script hỗ trợ build, validate, deploy
 
-Các detection rule trong dự án được xây dựng theo các nguyên tắc:
+Các domain như compliance, DFIR, threat hunting sẽ được mở rộng khi cần.
 
-Phát hiện theo hành vi (behavior-based), hạn chế IOC tĩnh
+📐 Chuẩn & nguyên tắc thiết kế
+1️⃣ Detection Rule
 
-Ánh xạ theo MITRE ATT&CK
+Phát hiện theo hành vi (behavior-based)
 
-Không phụ thuộc trực tiếp vào field SIEM hoặc log vendor
+Ánh xạ MITRE ATT&CK
 
-Có kiểm thử và điều chỉnh dựa trên dữ liệu thực tế
+Không hard-code field SIEM
 
-Detection được quản lý theo vòng đời:
+Có metadata đầy đủ: severity, confidence, coverage
 
-Thiết kế
+2️⃣ Log & Schema
 
-Viết rule
+Ưu tiên chuẩn OCSF / OCFS
 
-Review
+Log vendor không chuẩn → xử lý bằng mapping
 
-Test
+Field chưa có trong chuẩn → mở rộng có kiểm soát
 
-Deploy
+3️⃣ Vòng đời Detection
+Design → Write → Review → Test → Deploy → Monitor → Tune
 
-Monitor và tuning
 
-📐 Chuẩn log & mapping
+Detection được quản lý như code:
 
-Ưu tiên sử dụng chuẩn OCSF / OCFS
+Git versioning
 
-Log không theo chuẩn được xử lý thông qua logsource mapping
+Pull Request
 
-Field chưa có trong chuẩn được mở rộng có kiểm soát
+CI/CD
 
-Mapping tách biệt hoàn toàn khỏi logic detection
+Test & validation
 
-⚙️ Các nền tảng SIEM hỗ trợ
+⚙️ Nền tảng SIEM hỗ trợ
 
 Splunk
 
@@ -94,11 +118,11 @@ IBM QRadar
 
 Graylog
 
-(Có thể mở rộng sang XDR, SOAR hoặc Data Lake)
+Có thể mở rộng sang XDR / SOAR / Data Lake
 
 🧪 Testing & Validation
 
-Kiểm thử logic detection bằng dữ liệu giả lập
+Test logic detection bằng dữ liệu giả lập
 
 Validate logsource mapping
 
@@ -106,7 +130,7 @@ Validate logsource mapping
 
 Đảm bảo rule hoạt động nhất quán giữa các SIEM
 
-📚 Tài liệu tham khảo
+📚 Tham khảo & cảm hứng
 
 MITRE ATT&CK
 
@@ -121,8 +145,14 @@ Detection Engineering Handbook
 🤝 Đóng góp
 
 Vui lòng đọc CONTRIBUTING.md
- trước khi gửi pull request
+ trước khi gửi PR
 
-Hoan nghênh đóng góp rule, mapping và tài liệu
+Hoan nghênh đóng góp rule, mapping, tài liệu
 
-Ưu tiên các PR có mô tả mục tiêu detection và test kèm theo
+PR nên có mô tả mục tiêu detection và test đi kèm
+
+🧭 Ghi chú
+
+Dự án này không nhằm thay thế SIEM, mà nhằm:
+
+Chuẩn hóa và nâng cấp cách SOC xây dựng, quản lý và mở rộng detection theo hướng bền vững và chuyên nghiệp.
