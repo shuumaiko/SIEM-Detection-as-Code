@@ -1,53 +1,158 @@
-# SIEM-Detection
+SIEM-DaC (Detection as Code)
 
-> Kho lưu trữ các rules phát hiện tấn công cho hệ thống SIEM, hỗ trợ vận hành, giám sát và phản ứng sự cố hiệu quả cho SOC.
+Kho lưu trữ triển khai Detection as Code (DaC) cho SOC, chuẩn hóa detection rule, log schema và quy trình triển khai đa SIEM.
 
-## 📌 Giới thiệu
+📌 Giới thiệu
 
-**SIEM-Detection** là kho lưu trữ các detection rules được xây dựng và duy trì với mục tiêu hỗ trợ các nhóm vận hành an ninh (SOC). Dự án cung cấp:
+SIEM-DaC là một dự án áp dụng mô hình Detection as Code nhằm quản lý toàn bộ vòng đời detection theo tư duy code-first, giúp SOC xây dựng, vận hành và mở rộng hệ thống phát hiện một cách bền vững.
 
-- Bộ rule phát hiện theo hành vi độc hại, kỹ thuật tấn công.
-- Kịch bản threat hunting dựa trên MITRE ATT&CK.
-- Artifact phục vụ điều tra số (DFIR).
-- Các công cụ hỗ trợ triển khai rules một cách tự động.
+Dự án tập trung vào việc tách bạch rõ ràng giữa:
 
-Dành cho SOC Analyst, Threat Hunter, Incident Responder, Detection Engineer. Đây là nền tảng để tăng cường khả năng phát hiện, phản ứng và săn tìm mối đe dọa trên nhiều lớp: endpoint, network, application, cloud,...
+Logic phát hiện (Detection Logic)
 
-## 📁 Cấu trúc thư mục
+Chuẩn dữ liệu & schema (OCSF / OCFS)
 
-| Thư mục | Mô tả |
-|---|---|
-|[.github](.github/)| Chứa các GitHub workflows để tự động hóa một số luồng công việc |
-|[docs](docs/)| Chứa các tài liệu và hướng dẫn khác của dự án |
-|[rules](rules/)| Chứa tất cả các rules cho các giải pháp SIEM |
-|[rules-compliance](rules-compliance/)| Chứa các rules phục vụ kiểm tra tuân thủ |
-|[rules-dfir](rules-dfir/)| Chứa các rules cho Forensics & Response |
-|[rules-emerging-threats](rules-emerging-threats/)| Chứa các rules như CVE, Malware, Exploit |
-|[rules-tenants](rules-tenants/)| Chứa các rule đang triển khai thực tế cho các khách hàng |
-|[rules-threat-hunting](rules-threat-hunting/)| Chứa các rules phục vụ Hunting |
-|[tests](tests/)| Chứa các kết quả testing rules, script test rules |
-|[tools](tools/)| Chứa các công cụ tự động hóa: triên khai rules, quản lý rules cơ bản |
+Triển khai kỹ thuật theo từng SIEM
 
-## 🧠 Phương pháp phát triển rule
+Qua đó giảm phụ thuộc vào vendor, tăng khả năng tái sử dụng và chuẩn hóa detection trong môi trường đa nền tảng.
 
-Các detection rule được xây dựng theo các nguyên tắc:
+🎯 Mục tiêu
 
-- **Theo framework:** Ánh xạ MITRE ATT&CK.
-- **Ít false positive:** Phát hiện theo hành vi có ngữ cảnh.
-- **Đã kiểm nghiệm:** Kiểm thử qua hệ thống Lab, dùng các công cụ giả lập tấn công.
+Xây dựng detection độc lập SIEM
 
-## ⚙️ Các hệ thống hỗ trợ
+Chuẩn hóa log và field mapping
 
-- Splunk
-- IBM QRadar SIEM
-- Graylog
-- Elastic Security
+Áp dụng version control, review, test cho detection
 
-## 📚 Tài liệu tham khảo
+Hỗ trợ SOC từ Detection Engineering → Threat Hunting → Incident Response
 
-- [Splunk Security Content](https://github.com/splunk/security_content)
-- [ATT&CK Matrix for Enterprise](https://attack.mitre.org/)
+👥 Đối tượng sử dụng
 
-## 🤝 Đóng góp
+SOC Analyst
 
-- Xem thêm ở [CONTRIBUTING.md](CONTRIBUTING.md) trước khi gửi pull request.
+Detection Engineer
+
+Threat Hunter
+
+SIEM Engineer
+
+DFIR / Purple Team
+
+🧠 Kiến trúc Detection as Code
+
+Luồng tổng quát của dự án:
+
+Log source (vendor-specific)
+        ↓
+Logsource Mapping (OCSF / OCFS)
+        ↓
+Rule View (rule field ↔ log field)
+        ↓
+Detection Rule (SIEM-agnostic)
+        ↓
+SIEM-specific Implementation
+
+Triết lý thiết kế
+
+Detection rule không phụ thuộc log vendor
+
+Mapping xử lý khác biệt dữ liệu
+
+SIEM chỉ là lớp triển khai cuối
+
+Detection được quản lý như code (Git, PR, CI/CD)
+
+📁 Cấu trúc thư mục
+Thư mục	Mô tả
+.github/	GitHub Actions & workflow tự động hóa
+docs/	Tài liệu kiến trúc, chuẩn schema, hướng dẫn
+logsource-mapping-registry/	Mapping log source theo chuẩn OCSF / OCFS
+rule-view/	Lớp trung gian ánh xạ field giữa rule và log
+rules/	Detection rules độc lập SIEM (base rules)
+rules-tenants/	Rule triển khai thực tế theo từng tenant
+tests/	Test case, validation, simulation
+tools/	Tool & script hỗ trợ build, validate, deploy
+
+Các domain như compliance, DFIR, threat hunting sẽ được mở rộng khi cần.
+
+📐 Chuẩn & nguyên tắc thiết kế
+1️⃣ Detection Rule
+
+Phát hiện theo hành vi (behavior-based)
+
+Ánh xạ MITRE ATT&CK
+
+Không hard-code field SIEM
+
+Có metadata đầy đủ: severity, confidence, coverage
+
+2️⃣ Log & Schema
+
+Ưu tiên chuẩn OCSF / OCFS
+
+Log vendor không chuẩn → xử lý bằng mapping
+
+Field chưa có trong chuẩn → mở rộng có kiểm soát
+
+3️⃣ Vòng đời Detection
+Design → Write → Review → Test → Deploy → Monitor → Tune
+
+
+Detection được quản lý như code:
+
+Git versioning
+
+Pull Request
+
+CI/CD
+
+Test & validation
+
+⚙️ Nền tảng SIEM hỗ trợ
+
+Splunk
+
+Elastic Security
+
+IBM QRadar
+
+Graylog
+
+Có thể mở rộng sang XDR / SOAR / Data Lake
+
+🧪 Testing & Validation
+
+Test logic detection bằng dữ liệu giả lập
+
+Validate logsource mapping
+
+Đánh giá false positive / false negative
+
+Đảm bảo rule hoạt động nhất quán giữa các SIEM
+
+📚 Tham khảo & cảm hứng
+
+MITRE ATT&CK
+
+Splunk Security Content
+
+Sigma Project
+
+OCSF Schema
+
+Detection Engineering Handbook
+
+🤝 Đóng góp
+
+Vui lòng đọc CONTRIBUTING.md
+ trước khi gửi PR
+
+Hoan nghênh đóng góp rule, mapping, tài liệu
+
+PR nên có mô tả mục tiêu detection và test đi kèm
+
+🧭 Ghi chú
+
+Dự án này không nhằm thay thế SIEM, mà nhằm:
+
+Chuẩn hóa và nâng cấp cách SOC xây dựng, quản lý và mở rộng detection theo hướng bền vững và chuyên nghiệp.

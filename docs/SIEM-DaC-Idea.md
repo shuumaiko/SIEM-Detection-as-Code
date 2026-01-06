@@ -9,7 +9,7 @@ DaC Component:
                     Speacial Rule for Vendor
     - Rule of Tenant:
         + Each Tenant => Tenant Config (logsource,...) + Tenant Rule
-    - Log Requirement:
+    - Log Requirement (base OSCF):
         + Device => Vendor => LogSource => LogSourceMapping Base
     - Test Case (Idea)
     - Management Tool:
@@ -22,6 +22,7 @@ Rule Base Format:
     - Custom Field:
         + SIEM Rule
         + SIEM Config for Auto Deployment
+        + Rule Metadata
 
 Demo how DaC work:
     <!-- Prepare for Auto Merge -->
