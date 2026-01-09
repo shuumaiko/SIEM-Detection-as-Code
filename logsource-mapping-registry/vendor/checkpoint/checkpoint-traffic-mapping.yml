@@ -1,0 +1,104 @@
+# <134>1 2026-01-09T01:14:14Z greenfeed-kl22ruyr CheckPoint 16724 - 
+# [action:"Encrypt"; conn_direction:"Outgoing"; flags:"6703364"; ifdir:"inbound"; ifname:"LAN3"; logid:"0"; 
+# loguid:"{0xeac68e74,0x5369b9c4,0xad858d3f,0x28afc776}"; origin:"100.100.29.28"; originsicname:"CN=VNFWCPDNF,
+# O=Management_Service..aaj5mz"; sequencenum:"32"; time:"1767921254"; version:"5"; 
+# __policy_id_tag:"product=VPN-1 & FireWall-1[db_tag={90D1D5AB-2F58-9847-8304-7519B4098359};
+# mgmt=Management_Service;date=1767768340;policy_name=FEED-Factory-Policy\]"; community:"Feed-Factory-VPN-MESH"; 
+# dst:"10.50.20.10"; fw_subproduct:"VPN-1"; inzone:"Internal"; layer_name:"FEED-Factory-Policy Network"; 
+# layer_uuid:"97c115de-145b-4f7f-9840-fe77084450c2"; match_id:"5"; parent_rule:"0"; rule_action:"Accept"; 
+# rule_name:"GF Business rule"; rule_uid:"216bca2e-3cce-4c3a-8cc2-018ea28d54d9"; methods::"ESP: AES-256 + SHA1"; 
+# nat_addtnl_rulenum:"0"; nat_rulenum:"28"; outzone:"External"; peer_gateway:"103.160.85.42"; product:"VPN-1 & FireWall-1"; 
+# proto:"6"; resource:"VNSVGFW-TLIXEPO.greenfeed.com.vn"; s_port:"58571"; scheme::"IKE"; security_inzone:"Internal_IT_Zone"; 
+# security_outzone:"ExternalZone"; service:"443"; service_id:"https"; src:"192.168.50.131"; vpn_feature_name:"VPN"]
+
+ocsflogsource:
+  vendor: checkpoint
+  product: vpn-1_firewall-1
+  service: traffic
+  category: network_traffic
+  author: Anh Pham Tuan
+  date: 2026-01-09
+
+description: >
+  Check Point firewall and VPN traffic logs capturing allowed network
+  connections including source/destination, policy, zones and VPN context.
+
+status: stable
+version: 1.0
+
+inputs:
+  # --- Event ---
+  action:
+    - action
+    - rule_action
+  loguid:
+    - loguid
+  time:
+    - time
+    - eventtime
+
+  # --- Network ---
+  src_ip:
+    - src
+    - source
+    - src_ip
+  dst_ip:
+    - dst
+    - destination
+  src_port:
+    - s_port
+    - src_port
+  dst_port:
+    - service
+    - dst_port
+  protocol:
+    - proto
+
+  # --- Policy ---
+  rule_name:
+    - rule_name
+  rule_uid:
+    - rule_uid
+  layer_name:
+    - layer_name
+
+  # --- Zones ---
+  src_zone:
+    - inzone
+    - security_inzone
+  dst_zone:
+    - outzone
+    - security_outzone
+
+  # --- VPN ---
+  vpn_peer:
+    - peer_gateway
+  vpn_feature:
+    - vpn_feature_name
+
+mapping:
+  # --- Event ---
+  time: ocsf.event.time
+  action: ocsf.event.action
+  loguid: ocsf.event.uid
+
+  # --- Network ---
+  src_ip: ocsf.source.ip
+  src_port: ocsf.source.port
+  dst_ip: ocsf.destination.ip
+  dst_port: ocsf.destination.port
+  protocol: ocsf.network.protocol
+
+  # --- Zones ---
+  src_zone: ocsf.source.zone
+  dst_zone: ocsf.destination.zone
+
+  # --- Policy ---
+  rule_name: ocsf.rule.name
+  rule_uid: ocsf.rule.uid
+  layer_name: ocsf.rule.category
+
+  # --- VPN ---
+  vpn_peer: ocsf.network.tunnel.peer_ip
+  vpn_feature: ocsf.network.tunnel.type
+

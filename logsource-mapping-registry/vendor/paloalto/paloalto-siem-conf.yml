@@ -1,0 +1,4 @@
+x_splunk_es:
+	targets:
+		index: firewall
+		sourcetype: pan:traffic

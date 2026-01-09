@@ -1,0 +1,63 @@
+title: Firewall traffic from public IP (base)
+name: fw_external_connection
+id: e00cc3a0-d141-4495-b67c-390162eed27a
+status: test
+description: Connection from public IP
+references:
+    - Internal: HaoDA4
+author: AnhPT127
+date: 2025-12-17
+modified: 2025-12-17
+tags:
+    - attack.discovery
+    - attack.t1046
+logsource:
+    category: firewall
+    product: paloalto
+    service: traffic
+detection:
+    selection:
+        src_ip|exists: true
+    filter_private_ip:
+        src_ip|cidr:
+            - 10.0.0.0/8
+            - 192.168.0.0/16
+            - 172.16.0.0/12
+    condition: selection and not filter_private_ip
+---
+title: Request reached over threshold
+status: test
+description: Request volume from a single source IP exceeds threshold within 1 hour
+correlation:
+    type: event_count
+    rules:
+        - fw_external_connection
+    group-by:
+        - src_ip
+    timespan: 1h
+    condition:
+        gt: 200000
+fields:
+    - src_ip
+    - dest_ip
+    - action
+    - count
+falsepositives:
+    - Vulnerability scanners / load testing
+level: low
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: pan:traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: low, risk_score: 10 }
+    search_query: |
+        index=firewall sourcetype=pan:traffic
+        | where NOT (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("192.168.0.0/16", src_ip) OR cidrmatch("172.16.0.0/12", src_ip))
+        | bucket _time span=1h
+        | stats count dc(dest_ip) as Total_dest values(action) as Action by _time src_ip
+        | where count > 200000
+        | sort - count

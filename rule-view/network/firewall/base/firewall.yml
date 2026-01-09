@@ -1,0 +1,16 @@
+mapping:
+  # --- Event ---
+  time: ocsf.event.time
+  action: ocsf.event.action
+  loguid: ocsf.event.uid
+
+  # --- Network ---
+  src_ip: ocsf.source.ip
+  src_port: ocsf.source.port
+  dst_ip: ocsf.destination.ip
+  dst_port: ocsf.destination.port
+  protocol: ocsf.network.protocol
+
+  # --- Zones ---
+  src_zone: ocsf.source.zone
+  dst_zone: ocsf.destination.zone
