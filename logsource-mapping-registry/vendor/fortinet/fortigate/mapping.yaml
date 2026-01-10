@@ -24,7 +24,8 @@ inputs:
 
   sentbyte: [sentbyte, bytes_sent, bytesOut]
   rcvdbyte: [rcvdbyte, bytes_received, bytesIn]
-  
+
+# Example log:
 mapping:
   # --- Event metadata ---
   date: ocsf.event.date
