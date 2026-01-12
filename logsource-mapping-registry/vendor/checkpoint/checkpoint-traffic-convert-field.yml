@@ -1,0 +1,45 @@
+# Trường hợp logsource chưa chuẩn hóa
+# Field chưa chuẩn hóa
+# <134>1 2026-01-12T10:54:00Z greenfeed-kl22ruyr CheckPoint 480 - [action:"Accept"; conn_direction:"Outgoing"; contextnum:"1"; flags:"7094548"; ifdir:"inbound"; ifname:"LAN2"; logid:"6"; loguid:"{0x8e8df784,0x10a96cb5,0xb0ea6a47,0xe8959b0}"; origin:"100.100.37.200"; originsicname:"CN=FARM-THANHHOA5,O=Management_Service..aaj5mz"; sequencenum:"18"; time:"1768215240"; version:"5"; __nsons:"0"; __p_dport:"0"; __policy_id_tag:"product=VPN-1 & FireWall-1[db_tag={B1D002A5-A5A0-794A-8EA7-4B4D86476263};mgmt=Management_Service;date=1762871191;policy_name=Farm-SFactory-SOffice1\]"; __pos:"7"; bytes:"11912"; client_inbound_bytes:"5879"; client_inbound_interface:"LAN2"; client_inbound_packets:"18"; client_outbound_bytes:"6033"; client_outbound_packets:"38"; context_num:"1"; dst:"40.126.35.153"; elapsed:"1"; hll_key:"4766145665473811739"; inzone:"Internal"; lastupdatetime:"1768215263"; layer_name:"Farm-SFactory-SOffice1 Network"; layer_uuid:"9e118ab4-7599-44f1-a0ea-d7f7a71e002f"; match_id:"9"; parent_rule:"0"; rule_action:"Accept"; rule_name:"IT Network Access Internet"; rule_uid:"ac7914d0-1fea-4d61-a0ed-382c63a4cd29"; nat_addtnl_rulenum:"0"; nat_rulenum:"120"; outzone:"External"; packets:"56"; product:"VPN-1 & FireWall-1"; proto:"6"; protocol:"HTTPS"; resource:"graph.microsoft.com"; s_port:"61272"; security_inzone:"Internal_IT_Zone"; security_outzone:"ExternalZone"; segment_time:"1768215240"; server_inbound_bytes:"6033"; server_inbound_packets:"19"; server_outbound_bytes:"5879"; server_outbound_packets:"36"; service:"443"; service_id:"https"; sig_id:"4"; src:"10.16.96.193"; start_time:"1768215240"; xlatedport:"0"; xlatedst:"0.0.0.0"; xlatesport:"44702"; xlatesrc:"113.160.183.216"]
+logsource:
+  category: firewall
+  vendor: checkpoint
+  product: vpn-1_firewall-1
+  service: traffic
+  category: network_traffic
+  author: Anh Pham Tuan
+  date: 2026-01-12
+
+description: >
+  Check Point firewall and VPN traffic logs capturing allowed network
+  connections including source/destination, policy, zones and VPN context.
+
+status: stable
+version: 1.0
+
+# Mapping từ SIEM field sang trường raw của log gốc
+siem_fields-map-to-raw_fields:
+    _time: time
+    src_ip: src                         # src:"10.16.96.193"
+    s_port: s_port                      # s_port:"61272"
+    security_inzone: security_inzone    # security_inzone:"Internal_IT_Zone"
+    dest_ip: dst                        # dst:"40.126.35.153"
+    service: service                    # service:"443"
+    security_outzone: security_outzone  # security_outzone:"ExternalZone"
+    action: action                      # action:"Accept"
+    rule_name: rule_name                # rule_name:"IT Network Access Internet"
+    rule_action: rule_action            # rule_action:"Accept"
+    proto: proto                        # proto:"6"
+# Mapping từ trường đang đuợc SIEM sử dụng sang chuẩn OCSF
+siem_fields:
+    _time: ocsf.event.time
+    src_ip: ocsf.source.ip
+    s_port: ocsf.source.port
+    security_inzone: ocsf.source.zone
+    dest_ip: ocsf.destination.ip
+    service: ocsf.destination.port
+    security_outzone: ocsf.destination.zone
+    action: ocsf.event.action
+    rule_name: ocsf.firewall.policy.name
+    rule_action: ocsf.firewall.rule.action
+    proto: ocsf.network.protocol

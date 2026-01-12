@@ -1,0 +1,100 @@
+title: Outbound connection in port 135
+name: fw_outbound_connection_port_135
+id: 2a129a58-7725-48c9-8b3a-0a2264522a68
+status: test
+description: Outbound connection in RPC port (135)
+references:
+    - ELK Security rules
+author: AnhPT127
+date: 2026-01-12
+modified: 2026-01-12
+tags:
+    - attack.initial-access
+    - attack.t1190
+logsource:
+    category: firewall
+    product: any
+    service: traffic
+detection:
+    selection_port:
+        dst_port: 135
+    selection_protocol:
+        protocol:
+            - tcp
+            - 6
+    selection_src_private_ip:
+        src_ip|cidr:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+    filter_private_ip:
+        dest_ip|cidr:
+            - 10.0.0.0/8
+            - 127.0.0.0/8
+            - 169.254.0.0/16
+            - 172.16.0.0/12
+            - 192.0.0.0/24
+            - 192.0.0.0/29
+            - 192.0.0.8/32
+            - 192.0.0.9/32
+            - 192.0.0.10/32
+            - 192.0.0.170/32
+            - 192.0.0.171/32
+            - 192.0.2.0/24
+            - 192.31.196.0/24
+            - 192.52.193.0/24
+            - 192.168.0.0/16
+            - 192.88.99.0/24
+            - 224.0.0.0/4
+            - 100.64.0.0/10
+            - 192.175.48.0/24
+            - 198.18.0.0/15
+            - 198.51.100.0/24
+            - 203.0.113.0/24
+            - 240.0.0.0/4
+    condition: selection_port and selection_protocol and selection_src_private_ip and not filter_private_ip
+---
+title: RPC (Remote Procedure Call) to the Internet
+status: test
+description: Request volume from a single source IP exceeds threshold within 15 minutes
+correlation:
+    type: event_count
+    rules:
+        - fw_outbound_connection_port_135
+    group-by:
+        - src_ip
+    timespan: 15m
+    condition:
+        gt: 0
+fields:
+    - _time
+    - src_ip
+    - src_port
+    - src_zone
+    - dest_ip
+    - dest_port
+    - dest_zone
+    - action
+    - firewall_policy_name
+    - protocol
+    - event_count
+falsepositives:
+    - Unknown
+level: high
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "*/15 * * * *"
+        earliest: "-15m"
+        latest: "now"
+        notable: { enabled: true, severity: high, risk_score: 73 }
+    search_query: |
+        index=firewall sourcetype=traffic dst_port=135 protocol IN ("tcp", 6) src_ip="10.0.0.0/8" OR src_ip="172.16.0.0/12" OR src_ip="192.168.0.0/16" NOT (dest_ip="10.0.0.0/8" OR dest_ip="127.0.0.0/8" OR dest_ip="169.254.0.0/16" OR dest_ip="172.16.0.0/12" OR dest_ip="192.0.0.0/24" OR dest_ip="192.0.0.0/29" OR dest_ip="192.0.0.8/32" OR dest_ip="192.0.0.9/32" OR dest_ip="192.0.0.10/32" OR dest_ip="192.0.0.170/32" OR dest_ip="192.0.0.171/32" OR dest_ip="192.0.2.0/24" OR dest_ip="192.31.196.0/24" OR dest_ip="192.52.193.0/24" OR dest_ip="192.168.0.0/16" OR dest_ip="192.88.99.0/24" OR dest_ip="224.0.0.0/4" OR dest_ip="100.64.0.0/10" OR dest_ip="192.175.48.0/24" OR dest_ip="198.18.0.0/15" OR dest_ip="198.51.100.0/24" OR dest_ip="203.0.113.0/24" OR dest_ip="240.0.0.0/4")
+        | bin _time span=15m
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time 
+        | eval Alert_Severity="High"
+        | stats count as event_count by _time src_ip
+        | search event_count > 0 
+        | table Time,Alert_Severity,src_ip,src_port,src_zone,dest_ip,dest_port,dest_zone,action,firewall_policy_name,protocol,event_count

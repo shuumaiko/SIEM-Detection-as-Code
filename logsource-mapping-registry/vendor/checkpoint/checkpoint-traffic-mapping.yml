@@ -11,7 +11,9 @@
 # proto:"6"; resource:"VNSVGFW-TLIXEPO.greenfeed.com.vn"; s_port:"58571"; scheme::"IKE"; security_inzone:"Internal_IT_Zone"; 
 # security_outzone:"ExternalZone"; service:"443"; service_id:"https"; src:"192.168.50.131"; vpn_feature_name:"VPN"]
 
-ocsflogsource:
+# Field đã chuẩn hóa
+logsource:
+  category: firewall
   vendor: checkpoint
   product: vpn-1_firewall-1
   service: traffic
@@ -77,28 +79,17 @@ inputs:
     - vpn_feature_name
 
 mapping:
-  # --- Event ---
-  time: ocsf.event.time
-  action: ocsf.event.action
-  loguid: ocsf.event.uid
-
-  # --- Network ---
-  src_ip: ocsf.source.ip
-  src_port: ocsf.source.port
-  dst_ip: ocsf.destination.ip
-  dst_port: ocsf.destination.port
-  protocol: ocsf.network.protocol
-
-  # --- Zones ---
-  src_zone: ocsf.source.zone
-  dst_zone: ocsf.destination.zone
-
-  # --- Policy ---
-  rule_name: ocsf.rule.name
-  rule_uid: ocsf.rule.uid
-  layer_name: ocsf.rule.category
-
-  # --- VPN ---
-  vpn_peer: ocsf.network.tunnel.peer_ip
-  vpn_feature: ocsf.network.tunnel.type
+    # --- Firewall Format ---
+    _time: ocsf.event.time
+    src_ip: ocsf.source.ip
+    src_port: ocsf.source.port
+    src_zone: ocsf.source.zone
+    dest_ip: ocsf.destination.ip
+    dest_port: ocsf.destination.port
+    dest_zone: ocsf.destination.zone
+    action: ocsf.event.action
+    firewall_policy_name: ocsf.firewall.policy.name
+    protocol: ocsf.network.protocol
+    # --- Correlation ---
+    event_count: ocsf.event.count
 

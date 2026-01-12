@@ -13,7 +13,7 @@ tags:
     - attack.t1046
 logsource:
     category: firewall
-    product: paloalto
+    product: any
     service: traffic
 detection:
     selection:

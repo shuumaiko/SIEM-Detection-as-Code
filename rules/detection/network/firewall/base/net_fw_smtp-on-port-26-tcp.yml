@@ -1,25 +1,27 @@
-title: Accepted Default Telnet Port Connection (base)
-name: fw_connection_port_23
+title: SMTP on Port 26/TCP (base)
+name: fw_connection_port_26_tcp
 id: 2a129a58-7725-48c9-8b3a-0a2264522a68
 status: test
-description: Connection to Telnet port (23) that is accepted by firewall
+description: Connection to SMTP port (26/TCP) that is accepted by firewall
 references:
     - ELK Security rules
 author: AnhPT127
 date: 2026-01-12
 modified: 2026-01-12
 tags:
-    - attack.lateral-movement
-    - attack.t1021
-    - attack.initial-access
-    - attack.t1190
+    - attack.exfiltration
+    - attack.t1048
 logsource:
     category: firewall
     product: any
     service: traffic
 detection:
-    selection:
-        dst_port: 23
+    selection_port:
+        dst_port: 26
+    selection_protocol:
+        protocol:
+            - tcp
+            - 6
     filter_blocked:
         action:
             - blocked
@@ -27,15 +29,20 @@ detection:
             - denied
             - dropped
             - deny
-    condition: selection and not filter_blocked
+    filter_private_ip:
+        src_ip|cidr:
+            - 10.0.0.0/8
+            - 192.168.0.0/16
+            - 172.16.0.0/12
+    condition: selection_port and selection_protocol and not (filter_blocked and filter_private_ip)
 ---
-title: Accepted Default Telnet Port Connection
+title: SMTP on Port 26/TCP
 status: test
 description: Request volume from a single source IP exceeds threshold within 15 minutes
 correlation:
     type: event_count
     rules:
-        - fw_connection_port_23
+        - fw_connection_port_26_tcp
     group-by:
         - src_ip
     timespan: 15m
@@ -51,12 +58,11 @@ fields:
     - dest_zone
     - action
     - firewall_policy_name
-    - rule_action
     - protocol
     - event_count
 falsepositives:
     - Unknown
-level: medium
+level: low
 
 x_splunk_es:
     targets:
@@ -65,12 +71,12 @@ x_splunk_es:
         schedule_cron: "*/15 * * * *"
         earliest: "-15m"
         latest: "now"
-        notable: { enabled: true, severity: medium, risk_score: 47 }
+        notable: { enabled: true, severity: low, risk_score: 21 }
     search_query: |
-        index=firewall sourcetype=traffic NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")) dest_port=23
-        | bucket _time span=15m
+        index=firewall sourcetype=traffic dst_port=26 protocol IN ("tcp", 6) NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny") src_ip="10.0.0.0/8" OR src_ip="192.168.0.0/16" OR src_ip="172.16.0.0/12")
+        | bin _time span=15m
         | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time 
-        | eval Alert_Severity="Medium"  
+        | eval Alert_Severity="Low"  
         | stats count as event_count by _time src_ip
+        | search event_count > 0 
         | table Time,Alert_Severity,src_ip,src_port,src_zone,dest_ip,dest_port,dest_zone,action,firewall_policy_name,protocol,event_count
-        | sort - event_count
