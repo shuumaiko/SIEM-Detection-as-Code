@@ -1,4 +1,0 @@
-logsource: firewall
-siem_type: Splunk
-vendor: Palo Alto
-product: PAN-OS

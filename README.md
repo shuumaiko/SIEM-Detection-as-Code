@@ -70,11 +70,14 @@ Tài liệu kiến trúc, chuẩn schema, hướng dẫn sử dụng
 **logsource-mapping-registry/**  
 Field mapping cho các logsource theo chuẩn OCSF / OCFS
 
-**rule-view/**  
+**rule-views/**  
 Lớp trung gian ánh xạ field giữa rule logic và log thực tế
 
 **rules/**  
 Detection rules độc lập SIEM (base rules)
+
+**tenant-manager/**  
+Thông tin về tenant gồm device, logsource, ...
 
 **rules-tenants/**  
 Rule triển khai thực tế theo từng tenant hoặc khách hàng

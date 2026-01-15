@@ -1,0 +1,6 @@
+network:
+  traffic_logging: true
+  ssl_inspection: false
+
+endpoint:
+  edr: false

@@ -1,0 +1,5 @@
+- device_id: fg-hq-01
+  vendor: fortinet
+  product: fortigate
+  role: firewall
+  location: hq

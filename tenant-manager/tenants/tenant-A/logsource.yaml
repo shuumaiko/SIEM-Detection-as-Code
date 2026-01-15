@@ -1,0 +1,9 @@
+- vendor: fortinet
+  product: fortigate
+  service: traffic
+  enabled: true
+
+- vendor: fortinet
+  product: fortigate
+  service: utm
+  enabled: false

@@ -61,3 +61,11 @@ OCFS
 Vendor Mapping (logsource-mapping-registry/)
   ↓
 SIEM
+
+Luồng test triển khai Phase 1:
+load tenant-conf.yaml => define device,vendor,logsource -> map to ./rules
+read ./rules
+map ./rule-views => rule field -> oscf.field
+map ./logsource-mapping-registry => oscf.field -> siem field
+export to siem-rule.json
+=> deploy to siem
