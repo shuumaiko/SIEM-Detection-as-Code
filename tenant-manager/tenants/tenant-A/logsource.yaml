@@ -1,9 +1,14 @@
+- vendor: checkpoint
+  product: checkpoint
+  service: traffic
+  enabled: true
+
+- vendor: checkpoint
+  product: checkpoint
+  service: vpn
+  enabled: false
+
 - vendor: fortinet
   product: fortigate
   service: traffic
   enabled: true
-
-- vendor: fortinet
-  product: fortigate
-  service: utm
-  enabled: false

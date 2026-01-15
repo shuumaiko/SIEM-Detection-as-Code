@@ -71,6 +71,10 @@ mapping:
     # --- Correlation ---
     event_count: ocsf.event.count
 
-# Reference: Để lấy raw_field -> siem_field mapping, xem traffic-convert-field.yaml
+# Reference: Raw field mappings are defined in traffic-convert-field.yaml
 raw_field_mapping_reference: traffic-convert-field.yaml
+conversion_chain:
+  - raw_fields: (logsource: checkpoint product: vpn-1_firewall-1)
+  - siem_fields: traffic-convert-field.yaml section [siem_fields-map-to-raw_fields]
+  - ocsf_fields: checkpoint-traffic-mapping.yaml section [mapping]
 
