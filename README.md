@@ -68,7 +68,7 @@ Workflow và automation cho GitHub
 Tài liệu kiến trúc, chuẩn schema, hướng dẫn sử dụng
 
 **logsource-mapping-registry/**  
-Field mapping cho các logsource theo chuẩn OCSF / OCFS
+Field mapping cho các logsource theo chuẩn OCSF
 
 **rule-views/**  
 Lớp trung gian ánh xạ field giữa rule logic và log thực tế
