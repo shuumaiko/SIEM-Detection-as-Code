@@ -3,3 +3,8 @@ schema_version: 1.0
 tenant_id: fis
 device_id: checkpoint_fw
 siem_id: splunk
+
+bindings:
+  traffic:
+    index: checkpoint
+    sourcetype: cp_log

@@ -1,0 +1,48 @@
+title: IOC Cyble Detected - Dest IPv6
+id: 91554a54-2f09-4b30-a63c-69d10babcecd
+status: test
+description: Detects network traffic where the destination IPv6 matches known Indicators of Compromise (IOC) as identified by Cyble threat intelligence.
+references:
+    - https://cyble.com/
+    - Internal: HaoDA
+author: AnhPT127
+date: 2026-02-06
+modified: 2026-02-06
+tags:   
+    - attack.t1071
+    - attack.command_and_control
+logsource:
+    category: firewall
+    product: generic
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_ipv6:
+        # Placeholder for IOC IPv6 addresses from Cyble
+        # lookup Cyble-IOC-IPv6
+    filter_private_ip:
+        dest_ipv6|cidr:
+            - fc00::/7
+            - fe80::/10
+    condition: selection and filter_private_ip
+falsepositives:
+    - Unknown
+level: high
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: high, risk_score: 50 }
+    search_query: |
+        (index=$INDEX$ sourcetype=$SOURCETYPE$) (src="*:*" OR dst="*:*")
+        | bucket _time span=1h
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time 
+        | search 
+            [| inputlookup ioc_cyble_ipv6_dst.csv] ```Input CSV triggred from alert "Input Lookup - IOC Cyble (Source IPv6)"```
+        | eval Alert_Severity="Medium"
+        | stats values(index) as Index values(action) as Action values(src) as src_ip values(dstport) as "Dest Port" count by Alert_Severity Time dst

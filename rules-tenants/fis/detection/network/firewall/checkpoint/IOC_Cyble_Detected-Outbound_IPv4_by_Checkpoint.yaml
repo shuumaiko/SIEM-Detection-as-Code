@@ -1,0 +1,49 @@
+title: IOC Cyble Detected - Outbound IPv4 by Checkpoint
+id: 9d67d3d4-4f1e-4bdd-9e2c-ac339d87b6e0
+status: test
+description: Detects outbound network traffic where the destination IPv4 matches known Indicators of Compromise (IOC) as identified by Cyble threat intelligence.
+references:
+    - https://cyble.com/
+    - Internal: HaoDA
+author: AnhPT127
+date: 2026-02-06
+modified: 2026-02-06
+tags:   
+    - attack.t1071
+    - attack.command_and_control
+logsource:
+    category: firewall
+    product: generic
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_ipv4:
+        # Placeholder for IOC IPv4 addresses from Cyble
+        # lookup Cyble-IOC-IPv4
+    filter_private_ip:
+        dest_ipv4|cidr:
+            - 10.0.0.0/8
+    condition: selection and filter_private_ip
+falsepositives:
+    - Unknown
+level: high
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: high, risk_score: 50 }
+    search_query: |
+        (index=$INDEX$ sourcetype=$SOURCETYPE$) action=Accept
+        | bucket _time span=1h
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time 
+        | search 
+            [| inputlookup ioc_cyble_ipv4_dst.csv] ```Input CSV triggred from alert "Input Lookup - IOC Cyble (Dest IPv4)"```
+        | where 
+        | eval Alert_Severity="Medium"
+        | stats values(index) as Index values(action) as Action values(src) as src_ip values(dest_port) as "Dest Port" count by Alert_Severity Time dst
+        | where count >= 20 AND NOT (dst="11.22.33.45" OR dst="104.21.0.0/16" OR dst="104.26.12.205")
