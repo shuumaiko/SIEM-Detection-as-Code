@@ -1,0 +1,18 @@
+schema_version: 1.0
+
+tenant_id: fis
+device_id: barracuda-waf
+siem_id: splunk
+
+bindings:
+  api:
+    index: bwm_prod
+    sourcetype: bwm:api
+
+  app:
+    index: bwm_prod
+    sourcetype: bwm:app
+
+  system:
+    index: bwm_prod
+    sourcetype: bwm:log_service
