@@ -63,7 +63,7 @@ Vendor Mapping (logsource-mapping-registry/)
 SIEM
 
 Luồng test triển khai Phase 1:
-load tenant-conf.yaml => define device,vendor,logsource -> map to ./rules
+load tenant config trong tenant-manager => define device,vendor,logsource -> map to ./rules
 read ./rules
 map ./rule-views => rule field -> oscf.field
 map ./logsource-mapping-registry => oscf.field -> siem field
