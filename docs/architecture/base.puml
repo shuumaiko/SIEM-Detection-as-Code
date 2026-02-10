@@ -1,0 +1,89 @@
+@startuml DAC_Architecture
+!include domain/tenant.puml
+!include domain/rule.puml
+
+title DAC Platform – Object-centric Architecture
+
+' =========================
+' Style & conventions
+' =========================
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+' =========================
+' Core Objects (Domain)
+' =========================
+
+package "DAC Core Domain" {
+
+' Identity = User request
+  class Identity <<Subject>> {
+    subjectId
+    attributes
+  }
+
+  class Resource <<Object>> {
+    resourceId
+    type
+    attributes
+  }
+
+
+
+  class Policy <<Policy>> {
+    policyId
+    combiningAlgorithm
+  }
+
+  class Context <<Context>> {
+    time
+    location
+    environment
+  }
+
+  class Decision <<Outcome>> {
+    result
+    reason
+  }
+}
+
+' =========================
+' Responsibilities
+' =========================
+
+' Policy "1" o-- "*" Rule : aggregates
+' Tenant "1" o-- "*" Policy : owns
+' Identity --> Tenant : belongs to
+' Resource --> Tenant : scoped to
+
+' Rule ..> Context : evaluates with
+' Rule ..> Identity : evaluates with
+' Rule ..> Resource : evaluates with
+
+' Policy --> Decision : produces
+
+' =========================
+' Orchestration
+' =========================
+
+' package "Decision Orchestration" {
+
+'   class DecisionEngine <<Orchestrator>> {
+'     evaluate()
+'   }
+
+'   class ContextProvider <<Service>> {
+'     collect()
+'   }
+
+' }
+
+' DecisionEngine --> Policy
+' DecisionEngine --> ContextProvider
+' ContextProvider --> Context
+
+' DecisionEngine --> Decision
+
+@enduml
+

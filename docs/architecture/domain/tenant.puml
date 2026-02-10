@@ -1,0 +1,43 @@
+@startuml DAC_Architecture_Tenant
+skinparam classAttributeIconSize 0
+
+' =========================
+' Object: Tenant/tenant-manager
+' tenant_id: Unique identifier for the tenant
+' device_id: Unique identifier for the device
+' siem_id: Unique identifier for the SIEM system
+' devices: List of devices associated with the tenant
+' bingdings: Mapping of devices to SIEM Index, SourceType
+' rule-deployments: Rule enabled/disabled on tenant SIEM
+' Đối tượng Tenant đại diện cho một khách hàng hoặc tổ chức sử dụng nền tảng DAC. Mỗi tenant có một tenant_id duy nhất để phân biệt với các tenant khác. Tenant cũng quản lý các thiết bị (devices) mà khách hàng sử dụng, cùng với các thông tin liên quan như siem_id (định danh hệ thống SIEM), bindings (liên kết giữa thiết bị và SIEM Index, SourceType), và rule-deployments (quản lý việc kích hoạt hoặc vô hiệu hóa các quy tắc trên hệ thống SIEM của tenant).
+' =========================
+class Tenant {
+  +tenant_id: String
+  +siem_id: String
+
+  --
+  devices: List<Device>
+  bindings: Map<Device, SIEMBinding>
+  rule_deployments: List<RuleDeployment>
+}
+
+class Device {
+  +device_id: String
+  +device_name: String
+  +device_type: String
+}
+
+class SIEMBinding {
+  +index: String
+  +sourcetype: String
+}
+
+class RuleDeployment {
+  +rule_id: String
+  +enabled: Boolean
+}
+
+Tenant "1" o-- "*" Device : manages
+Tenant "1" o-- "*" RuleDeployment : controls
+Device "1" --> "1" SIEMBinding : mapped_to
+@enduml
