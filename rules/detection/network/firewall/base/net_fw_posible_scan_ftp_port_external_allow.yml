@@ -4,7 +4,7 @@ id: 2a129a58-7725-48c9-8b3a-0a2264522a68
 status: test
 description: External connection to FTP port (21)
 references:
-    - Internal: HaoDA4
+    - Internal_HaoDA4
 author: AnhPT127
 date: 2025-12-17
 modified: 2025-12-17

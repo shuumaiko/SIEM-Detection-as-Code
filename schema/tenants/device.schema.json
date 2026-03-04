@@ -1,0 +1,68 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/tenants/device.schema.json",
+  "title": "Tenant Device Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "device_type",
+    "device_id",
+    "vendor",
+    "product"
+  ],
+  "properties": {
+    "schema_version": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" }
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "device_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "device_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "vendor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "product": {
+      "type": "string",
+      "minLength": 1
+    },
+    "role": {
+      "type": "string"
+    },
+    "functions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "location": {
+      "type": "string"
+    },
+    "network_zone": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "criticality": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

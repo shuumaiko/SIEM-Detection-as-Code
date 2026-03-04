@@ -1,0 +1,10 @@
+schema_version: 1.0
+ 
+device_id: checkpoint-fw
+
+service:
+    - service_id: traffic
+      description: Firewall traffic logs
+      category: network
+      log_type: security
+      enabled: true

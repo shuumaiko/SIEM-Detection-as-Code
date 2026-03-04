@@ -1,0 +1,60 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/tenants/binding.schema.json",
+  "title": "Tenant Binding Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "device_id",
+    "siem_id",
+    "bindings"
+  ],
+  "properties": {
+    "schema_version": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" }
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "device_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "siem_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bindings": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["index", "sourcetype"],
+        "properties": {
+          "index": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourcetype": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
