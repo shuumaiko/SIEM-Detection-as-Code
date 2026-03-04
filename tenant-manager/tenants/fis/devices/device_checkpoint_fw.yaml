@@ -1,6 +1,7 @@
 schema_version: 1.0
 
 tenant_id: fis
+device_type: firewall
 device_id: checkpoint-fw
 
 vendor: Check Point Software Technologies

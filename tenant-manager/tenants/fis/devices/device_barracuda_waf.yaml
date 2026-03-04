@@ -1,6 +1,7 @@
 schema_version: 1.0
 
 tenant_id: fis
+device_type: waf
 device_id: barracuda-waf
 
 vendor: Barracuda Networks
