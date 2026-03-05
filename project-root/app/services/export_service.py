@@ -1,13 +1,22 @@
-﻿from domain.models.rule import Rule
+from domain.models.rule import Rule
+from domain.models.tenant import Tenant
 
 
 class ExportService:
-    """Application service to shape exported rule payloads."""
+    """Serialize tenant prebuilt rules for downstream deployment."""
 
-    def export_rules(self, rules: list[Rule]) -> list[dict]:
-        """Serialize domain Rule objects into lightweight dictionaries."""
-        # Placeholder: serialize exported rules to file/API payload.
+    def export_rules(self, tenant: Tenant, rules: list[Rule]) -> list[dict]:
         return [
-            {"id": r.rule_id, "category": r.category, "product": r.product}
-            for r in rules
+            {
+                "tenant_id": tenant.tenant_id,
+                "siem_id": tenant.siem_id,
+                "id": rule.rule_id,
+                "display_name": (rule.raw or {}).get("title", rule.rule_id),
+                "category": rule.category,
+                "product": rule.product,
+                "service": ((rule.raw or {}).get("logsource") or {}).get("service"),
+                "search_query": rule.siem_query,
+                "targets": rule.siem_targets or {},
+            }
+            for rule in rules
         ]

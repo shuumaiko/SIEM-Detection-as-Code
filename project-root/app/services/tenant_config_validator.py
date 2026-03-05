@@ -58,7 +58,7 @@ class TenantConfigValidator:
         if rules_file is None:
             warnings.append(
                 f"No rule deployment file found in {tenant_dir} "
-                "(expected rule-deployments.yaml or rule-raw-deployments.yaml)."
+                "(expected rule-deployments.yaml)."
             )
 
         device_by_id: dict[str, dict[str, Any]] = {}
@@ -207,17 +207,8 @@ class TenantConfigValidator:
 
     def _resolve_rule_deployment_file(self, tenant_dir: Path, warnings: list[str]) -> Path | None:
         canonical = tenant_dir / "rule-deployments.yaml"
-        legacy = tenant_dir / "rule-raw-deployments.yaml"
-        if canonical.exists() and legacy.exists():
-            warnings.append(
-                f"Both {canonical.name} and {legacy.name} exist; {canonical.name} is preferred."
-            )
-            return canonical
         if canonical.exists():
             return canonical
-        if legacy.exists():
-            warnings.append(f"Using legacy rule deployment file: {legacy.name}.")
-            return legacy
         return None
 
     def _build_schema_validator(self) -> Any | None:

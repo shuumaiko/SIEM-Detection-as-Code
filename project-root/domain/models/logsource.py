@@ -1,9 +1,8 @@
-﻿from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class LogSource:
     device_id: str
-    service_id: str
-    category: str
     status: str = "active"
+    services: list[dict] = field(default_factory=list)

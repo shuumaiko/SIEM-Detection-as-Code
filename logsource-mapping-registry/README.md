@@ -1,5 +1,5 @@
 # LogSource Mapping Registry
-
+<!-- Phục vụ chuẩn hóa log trên SIEM -->
 Thư mục `logsource-mapping-registry/` là **source of truth** cho toàn bộ
 việc ánh xạ (mapping) log gốc từ các vendor / product khác nhau
 sang schema chuẩn **OCFS**.
@@ -11,7 +11,7 @@ tách biệt hoàn toàn detection rule khỏi vendor, agent và SIEM.
 
 ## Mục tiêu
 
-- Chuẩn hóa field log từ nhiều nguồn khác nhau về một schema thống nhất (OCFS)
+- Chuẩn hóa field log từ nhiều nguồn khác nhau về một schema thống nhất (OCSF)
 - Cho phép viết detection rule **không phụ thuộc vendor**
 - Hỗ trợ triển khai tự động (Detection as Code – DaC)
 
@@ -92,7 +92,7 @@ Log gốc (vendor)
   ↓
 LogSource Mapping Registry
   ↓
-OCFS (semantic layer)
+OCFS (semantic layer)  <===> SIEM Fields
   ↓
 Rule View (rule-view/)
   ↓

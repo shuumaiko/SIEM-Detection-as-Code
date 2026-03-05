@@ -1,15 +1,15 @@
 Base Architecture Note
 Folder Structure:
 - docs/
-- logsource-mapping-registry/
+- logsource-mapping-registry/       => mapping siem fields <=> log fields
     - vendor/
         - product/
             - *.yaml   # logsource mapping
-- rule-views/
+- rule-views/               => map rule fields <=> siem fields
     - category/
         - device/
             - *.yaml    # rule view mapping
-- rules/
+- rules/                # detection rules
     - detections/
         - category/
             - device/
@@ -30,7 +30,13 @@ Folder Structure:
         - logsource/*.yaml          # logsource info for each devices
         - rule-deployments.yaml
         - tenant.yaml
-- tools/
+- tenant-rules/                 # save tenant SIEM rules before done converter (to skip converter when deploy rules to tenant SIEM) for ver 0.1
+    - tenant_name/
+        - detections/
+            - category/
+                - device/
+                    - *.yaml    # rules for tenant after merging with tenant filter and rule view
+                - *.yaml        # rules for tenant after merging with tenant filter and rule view
 
 Base Object:
 Rule:

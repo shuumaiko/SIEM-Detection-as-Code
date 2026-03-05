@@ -1,6 +1,7 @@
-﻿from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 
 from domain.models.rule import Rule
+from domain.models.tenant import Tenant
 
 
 class RuleRepository(ABC):
@@ -8,10 +9,10 @@ class RuleRepository(ABC):
 
     @abstractmethod
     def list_by_category(self, category: str) -> list[Rule]:
-        """Return rules filtered by category."""
+        """Return base rules filtered by category."""
         raise NotImplementedError
 
     @abstractmethod
-    def list_for_tenant(self, tenant_id: str) -> list[Rule]:
-        """Return rules applicable for a tenant."""
+    def list_for_tenant(self, tenant: Tenant) -> list[Rule]:
+        """Return effective rules for one tenant."""
         raise NotImplementedError
