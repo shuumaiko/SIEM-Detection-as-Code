@@ -1,0 +1,20 @@
+schema_version: 1.0
+
+tenant_id: fis
+device_type: endpoint
+device_id: eset-ra
+category: security
+
+vendor: ESET
+product: ESET Remote Administrator
+
+role: Endpoint Management
+
+functions:
+    - Endpoint Security
+
+location: unknown
+network_zone: unknown
+description: unknown
+
+criticality: high

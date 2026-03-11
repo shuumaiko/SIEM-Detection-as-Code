@@ -6,5 +6,5 @@ datasets:
   - dataset_id: traffic
     description: Firewall traffic logs
     category: network
-    log_type: security
+    log_type: traffic
     enabled: true

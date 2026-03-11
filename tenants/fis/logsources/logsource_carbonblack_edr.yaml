@@ -1,0 +1,10 @@
+schema_version: 1.0
+
+device_id: carbonblack-edr
+
+datasets:
+  - dataset_id: carbonblack-edr-alerts
+    description: Alerts generated from Carbon Black Endpoint Detection and Response platform
+    category: security
+    log_type: security
+    enabled: true

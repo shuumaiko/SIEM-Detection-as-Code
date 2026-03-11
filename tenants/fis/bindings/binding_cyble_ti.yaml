@@ -8,3 +8,7 @@ datasets:
   - dataset_id: cyble_alerts
     index: cyble_alerts
     sourcetype: _json
+
+  - dataset_id: cyble_iocs
+    index: cyble_iocv2
+    sourcetype: _json

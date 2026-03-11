@@ -8,3 +8,9 @@ datasets:
     category: threat-intelligence
     log_type: security
     enabled: true
+
+  - dataset_id: cyble_iocs
+    description: Indicators of Compromise (IOCs) from Cyble Threat Intelligence platform
+    category: threat-intelligence
+    log_type: security
+    enabled: true
