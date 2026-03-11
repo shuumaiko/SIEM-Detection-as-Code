@@ -1,5 +1,5 @@
 Base Architecture Note
-Folder Structure:
+OLD Folder Structure:
 - docs/
 - logsource-mapping-registry/       => mapping siem fields <=> log fields
     - vendor/
@@ -37,6 +37,54 @@ Folder Structure:
                 - device/
                     - *.yaml    # rules for tenant after merging with tenant filter and rule view
                 - *.yaml        # rules for tenant after merging with tenant filter and rule view
+
+# New Structure:
+docs/
+
+rules/
+  detections/
+    <category>/
+      <product>/
+        *.yaml
+
+mappings/
+  logsources/
+    <vendor>/
+      <product>/
+        *.yaml
+  rule_views/
+    <category>/
+      <product>/
+        *.yaml
+
+tenants/
+  <tenant_name>/
+    tenant.yaml
+    devices/
+      *.yaml
+    logsources/
+      *.yaml
+    bindings/
+      *.yaml
+    filters/
+      detections/
+        <category>/
+          <product>/
+            *.yaml
+    deployments/
+      rule-deployments.yaml
+
+artifacts/
+  <tenant_name>/
+    tenant-rules/
+      detections/
+        <category>/
+          <product>/
+            *.yaml
+
+# map rule outpout to ocsf fields format ?
+--- ---
+
 
 Base Object:
 Rule:
@@ -97,11 +145,11 @@ Functions:
     [1] func exportRules(tenant_id) 
     ===read tenant_id in Tenant===> load tenant_config ===> siem_id
     ===read tenant_id in devices ===> device_id, device_type
-    ===read device_id in logsource ===> service_id, status, category
-    ===read siem_id + service_id===> index, sourcetype
+    ===read device_id in logsource ===> dataset_id, status, category
+    ===read siem_id + dataset_id===> index, sourcetype
     Output: tenant source for rules tenant_source.yaml:
         - category
-        - service_id
+        - dataset_id
         - device_type
         - device_id
         - status

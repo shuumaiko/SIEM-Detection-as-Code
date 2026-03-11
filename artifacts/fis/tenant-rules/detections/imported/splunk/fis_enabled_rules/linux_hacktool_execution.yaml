@@ -1,0 +1,26 @@
+title: FPT - Linux HackTool Execution
+id: 9b2df355-6d71-53a3-97b3-ee332f931770
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Linux HackTool Execution'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: 'index=* sourcetype=linux_syslog ((path="*/sqlmap" OR path="*/teamserver" OR path="*/aircrack-ng" OR path="*/john" OR path="*/setoolkit" OR path="*/wpscan" OR path="*/hydra" OR path="*/nikto" OR path="*/ebpfkit" OR path="*/bpfdos" OR path="*/exechijack" OR path="*/pidhide" OR path="*/writeblocker") OR path="*/linpeas*")
+
+    |stats values(user) as User values(path) as Path count by Alert_Severity _time ip'

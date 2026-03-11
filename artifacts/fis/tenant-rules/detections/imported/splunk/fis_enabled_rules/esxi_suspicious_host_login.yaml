@@ -1,0 +1,24 @@
+title: FPT - ESXi Suspicious Host Login
+id: 7f1c76fe-414a-56d5-a7fb-77e91f14136b
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - ESXi Suspicious Host Login'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=esxi sourcetype=* Successful login \nNOT src_ip IN (10.14.124.28, 10.14.60.228, 10.33.33.33, 10.15.225.120, 10.14.124.53)\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\" \n| stats values(src_ip) as src_ip count by Alert_Severity Time User host"

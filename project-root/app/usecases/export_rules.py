@@ -21,7 +21,7 @@ class ExportRulesUseCase:
 
     def execute(self, tenant_id: str) -> list[dict]:
         tenant = self.tenant_repository.get_by_id(tenant_id)
-        rules = self.rule_service.load_rules_for_tenant(tenant)
+        rules = self.rule_service.load_rules_for_tenant(tenant, include_all=True)
         exported = self.export_service.export_rules(tenant, rules)
         mapped_rules, deployment_payload = self.deployment_builder.build(tenant, exported)
         self.tenant_repository.save_rule_deployments(tenant_id, deployment_payload)

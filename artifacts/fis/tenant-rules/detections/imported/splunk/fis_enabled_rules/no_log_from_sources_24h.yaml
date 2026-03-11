@@ -1,0 +1,40 @@
+title: FPT - No log from sources (24h)
+id: c9864a40-e7b9-5d77-b0ac-e956d5c2918b
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - No log from sources (24h)'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: '| tstats count where index=* by _time source
+
+    | eventstats latest(_time) as latest_Time_source by source
+
+    | eventstats latest(_time) as latest_Time_all
+
+    | eval conditions=latest_Time_all - latest_Time_source
+
+    | eval Status=if(conditions>=86400,"Missing Data!","OK!")
+
+    | eval Alert_Severity="High"
+
+    | stats values(Status) as Status values(conditions) as Lost_Time_(Seconds) values(latest_Time_source) as Last_seen_on_Source values(latest_Time_all) as Real_Time by Alert_Severity source
+
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(Last_seen_on_Source) as Last_seen_on_Source,  ctime(Real_Time) as Real_Time, ctime(''Lost_Time_(Seconds)'') as Lost_Time_(Seconds)
+
+    | search Status="Missing Data!" (source="tcp:*" OR source="udp:*")'

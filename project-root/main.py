@@ -28,9 +28,9 @@ def build_app() -> tuple[
     tenant_repo = FileTenantRepository(base_path=workspace_root / "tenants")
     rule_repo = FileRuleRepository(
         base_path=workspace_root / "rules",
-        tenant_rules_path=workspace_root / "tenant-rules",
+        tenant_rules_path=workspace_root / "artifacts",
     )
-    registry_loader = RegistryLoader(root=workspace_root / "logsource-mapping-registry")
+    registry_loader = RegistryLoader(root=workspace_root / "mappings" / "logsources")
     deployment_builder = RuleDeploymentBuilder(registry_loader=registry_loader)
     siem_adapter = SplunkAdapter()
     tenant_validator = TenantConfigValidator(

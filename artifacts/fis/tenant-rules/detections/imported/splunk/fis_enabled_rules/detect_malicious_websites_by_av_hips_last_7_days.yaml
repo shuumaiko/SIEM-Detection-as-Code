@@ -1,0 +1,36 @@
+title: FPT - Detect Malicious Websites By AV HIPS Last 7 Days
+id: e651bd6b-cdd6-5884-a4eb-9d8976b4f056
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Detect Malicious Websites By AV HIPS Last 7 Days'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: 'index=* sourcetype=*eset* event_type=FilteredWebsites_Event NOT *chrome.exe* NOT *msedge.exe* NOT *Ultraviewer* NOT *Skype.exe* NOT *brave.exe* NOT *coccoc* NOT *firefox.exe* NOT *UrbanVPN* NOT *Hola* NOT *opera* NOT *BigNoxVM* NOT "*popcorn time*" NOT "*FormatFactory*" NOT *pinaview* rule_id!="Blocked by PUA blacklist" rule_id!="Website certificate revoked"
+
+    |  bucket _time span=7d
+
+    |  convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
+
+    | eval Alert_Severity="High"
+
+    |  stats earliest("occured") as Start_Time latest("occured") as End_Time values(processname) as Process_Name, values(object_uri) as object_uri, values(target_address) as target_address, values(hostname) as hostname, values(event) as event, values(rule_id) as rule_id, values(action_taken) as action_taken count by Alert_Severity Time ipv4
+
+    |  sort - count
+
+    |  where count > 10'

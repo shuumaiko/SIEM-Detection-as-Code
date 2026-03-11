@@ -1,0 +1,34 @@
+title: FPT - iOS Implant URL Pattern
+id: 86ff4fbd-6cb1-57e4-814c-557c1b715b53
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - iOS Implant URL Pattern'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: 'index=* sourcetype="nginx:plus:access" source="/var/log/audit/log/*access.log*" "*/list/suc\?name=*"
+
+    | bucket _time span=15m
+
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
+
+    | eval Alert_Severity="Medium"
+
+    |  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(vendor_product) as vendor_product , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time http_x_forwarded_for
+
+    |  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent'

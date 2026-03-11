@@ -15,12 +15,12 @@ class FileRuleRepository(RuleRepository):
         self.loader = YamlLoader()
 
     def list_by_category(self, category: str) -> list[Rule]:
-        category_path = self.base_path / "detection" / category
+        category_path = self._resolve_rules_root() / category
         return self._scan_base_rules(category_path)
 
-    def list_for_tenant(self, tenant: Tenant) -> list[Rule]:
-        tenant_root = self.tenant_rules_path / tenant.tenant_id
-        if not tenant_root.exists():
+    def list_for_tenant(self, tenant: Tenant, include_all: bool = False) -> list[Rule]:
+        tenant_root = self._resolve_tenant_rules_root(tenant.tenant_id)
+        if tenant_root is None:
             return []
 
         enabled_rule_ids = tenant.enabled_rule_ids()
@@ -34,7 +34,7 @@ class FileRuleRepository(RuleRepository):
                 continue
 
             rule_id = data.get("id", path.stem)
-            if enabled_rule_ids and rule_id not in enabled_rule_ids:
+            if not include_all and enabled_rule_ids and rule_id not in enabled_rule_ids:
                 continue
 
             siem_ext = data.get("x_splunk_es", {}) if tenant.siem_id == "splunk" else {}
@@ -50,6 +50,27 @@ class FileRuleRepository(RuleRepository):
                 )
             )
         return result
+
+    def _resolve_rules_root(self) -> Path:
+        candidates = (
+            self.base_path / "detections",
+            self.base_path / "detection",
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return candidates[0]
+
+    def _resolve_tenant_rules_root(self, tenant_id: str) -> Path | None:
+        candidates = (
+            self.tenant_rules_path / tenant_id / "tenant-rules" / "detections",
+            self.tenant_rules_path / tenant_id / "tenant-rules" / "detection-raw",
+            self.tenant_rules_path / tenant_id,
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return None
 
     def _scan_base_rules(self, root: Path) -> list[Rule]:
         if not root.exists():

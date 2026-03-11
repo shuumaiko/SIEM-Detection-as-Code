@@ -9,5 +9,5 @@ class RuleService:
     def __init__(self, rule_repository: RuleRepository) -> None:
         self.rule_repository = rule_repository
 
-    def load_rules_for_tenant(self, tenant: Tenant) -> list[Rule]:
-        return self.rule_repository.list_for_tenant(tenant)
+    def load_rules_for_tenant(self, tenant: Tenant, include_all: bool = False) -> list[Rule]:
+        return self.rule_repository.list_for_tenant(tenant, include_all=include_all)

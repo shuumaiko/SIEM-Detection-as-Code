@@ -1,7 +1,0 @@
-devices:
-  fg-hq-01:
-    firmware: "7.0.12"
-
-platforms:
-  windows:
-    min: "2019"

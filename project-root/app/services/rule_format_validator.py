@@ -63,7 +63,7 @@ class RuleFormatValidator:
                 warnings=warnings,
             )
 
-        detection_root = self.rules_root / "detection"
+        detection_root = self._resolve_detection_root()
         if not detection_root.exists():
             errors.append(f"Detection rules directory not found: {detection_root}")
             return self._result(
@@ -226,3 +226,13 @@ class RuleFormatValidator:
             elif isinstance(value, date):
                 normalized[key] = value.isoformat()
         return normalized
+
+    def _resolve_detection_root(self) -> Path:
+        candidates = (
+            self.rules_root / "detections",
+            self.rules_root / "detection",
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+        return candidates[0]

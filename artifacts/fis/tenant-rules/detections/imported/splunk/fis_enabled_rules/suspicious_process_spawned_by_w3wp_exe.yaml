@@ -1,0 +1,24 @@
+title: FPT - Suspicious process spawned by w3wp.exe
+id: d4084821-ad63-5eb7-b9af-d4bcf4b08071
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Suspicious process spawned by w3wp.exe'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=*winevent* (ParentProcessName=\"*w3wp.exe\" OR ParentProcessName=\"*httpd.exe\") NOT ((process_path=\"*csc.exe\" OR process_path=\"*vbc.exe\" OR process_path=\"*TranscodingService.exe\" OR process_path=\"*w3wp.exe\" OR process_path=\"*httpd.exe\" OR process_path=\"*inetinfo.exe\" OR process_path=\"*aspnet_wp.exe\"))\nNOT (Computer=\"FISS-WEB02-PROD.fsoft.fpt.vn\" AND src_user=\"Bot ServiceDesk\" AND process_path=C:\\\\Windows\\\\System32\\\\where.exe)\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\"  \n| stats values(status) as status values(process_path) as Process_Path values(ProcessCommandLine) as ProcessCommandLine values(src_user) as src_user count by Alert_Severity Time Computer"

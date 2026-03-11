@@ -58,12 +58,12 @@ class TenantConfigValidator:
         if rules_file is None:
             warnings.append(
                 f"No rule deployment file found in {tenant_dir} "
-                "(expected rule-deployments.yaml)."
+                "(expected deployments/rule-deployments.yaml)."
             )
 
         device_by_id: dict[str, dict[str, Any]] = {}
-        logsource_services_by_device: dict[str, set[str]] = {}
-        binding_services_by_device: dict[str, set[str]] = {}
+        logsource_datasets_by_device: dict[str, set[str]] = {}
+        binding_datasets_by_device: dict[str, set[str]] = {}
 
         for file_path in device_files:
             data = self._load_yaml(file_path, errors)
@@ -96,26 +96,28 @@ class TenantConfigValidator:
             if device_id not in device_by_id:
                 errors.append(f"{file_path}: unknown device_id '{device_id}' (not found in devices/*).")
 
-            services = data.get("service") or []
-            if not isinstance(services, list):
-                errors.append(f"{file_path}: field 'service' must be an array.")
+            datasets = data.get("datasets")
+            if datasets is None:
+                datasets = data.get("service") or []
+            if not isinstance(datasets, list):
+                errors.append(f"{file_path}: field 'datasets' must be an array.")
                 continue
 
-            service_ids: set[str] = set()
-            for item in services:
+            dataset_ids: set[str] = set()
+            for item in datasets:
                 if not isinstance(item, dict):
-                    errors.append(f"{file_path}: each item in 'service' must be an object.")
+                    errors.append(f"{file_path}: each item in 'datasets' must be an object.")
                     continue
-                service_id = item.get("service_id")
-                if not service_id:
-                    errors.append(f"{file_path}: service item missing 'service_id'.")
+                dataset_id = item.get("dataset_id") or item.get("service_id")
+                if not dataset_id:
+                    errors.append(f"{file_path}: dataset item missing 'dataset_id'.")
                     continue
-                if service_id in service_ids:
-                    errors.append(f"{file_path}: duplicate service_id '{service_id}'.")
+                if dataset_id in dataset_ids:
+                    errors.append(f"{file_path}: duplicate dataset_id '{dataset_id}'.")
                     continue
-                service_ids.add(service_id)
+                dataset_ids.add(dataset_id)
 
-            logsource_services_by_device[device_id] = service_ids
+            logsource_datasets_by_device[device_id] = dataset_ids
 
         for file_path in binding_files:
             data = self._load_yaml(file_path, errors)
@@ -139,25 +141,46 @@ class TenantConfigValidator:
                     f"(tenant '{tenant_siem_id}', binding '{binding_siem_id}')."
                 )
 
+            datasets = data.get("datasets")
+            if datasets is not None:
+                if not isinstance(datasets, list):
+                    errors.append(f"{file_path}: field 'datasets' must be an array.")
+                    continue
+                dataset_ids: set[str] = set()
+                for item in datasets:
+                    if not isinstance(item, dict):
+                        errors.append(f"{file_path}: each item in 'datasets' must be an object.")
+                        continue
+                    dataset_id = item.get("dataset_id")
+                    if not dataset_id:
+                        errors.append(f"{file_path}: dataset item missing 'dataset_id'.")
+                        continue
+                    if dataset_id in dataset_ids:
+                        errors.append(f"{file_path}: duplicate dataset_id '{dataset_id}'.")
+                        continue
+                    dataset_ids.add(dataset_id)
+                binding_datasets_by_device[device_id] = dataset_ids
+                continue
+
             bindings = data.get("bindings") or {}
             if not isinstance(bindings, dict):
                 errors.append(f"{file_path}: field 'bindings' must be an object.")
                 continue
-            binding_services_by_device[device_id] = set(bindings.keys())
+            binding_datasets_by_device[device_id] = set(bindings.keys())
 
-        for device_id in sorted(set(logsource_services_by_device) | set(binding_services_by_device)):
-            log_services = logsource_services_by_device.get(device_id, set())
-            bind_services = binding_services_by_device.get(device_id, set())
+        for device_id in sorted(set(logsource_datasets_by_device) | set(binding_datasets_by_device)):
+            log_datasets = logsource_datasets_by_device.get(device_id, set())
+            bind_datasets = binding_datasets_by_device.get(device_id, set())
 
-            missing = sorted(log_services - bind_services)
-            extra = sorted(bind_services - log_services)
+            missing = sorted(log_datasets - bind_datasets)
+            extra = sorted(bind_datasets - log_datasets)
             if missing:
                 errors.append(
-                    f"device_id '{device_id}': missing bindings for service_id(s): {', '.join(missing)}."
+                    f"device_id '{device_id}': missing bindings for dataset_id(s): {', '.join(missing)}."
                 )
             if extra:
                 errors.append(
-                    f"device_id '{device_id}': bindings refer unknown service_id(s): {', '.join(extra)}."
+                    f"device_id '{device_id}': bindings refer unknown dataset_id(s): {', '.join(extra)}."
                 )
 
         if rules_file is not None:
@@ -206,9 +229,13 @@ class TenantConfigValidator:
         }
 
     def _resolve_rule_deployment_file(self, tenant_dir: Path, warnings: list[str]) -> Path | None:
-        canonical = tenant_dir / "rule-deployments.yaml"
-        if canonical.exists():
-            return canonical
+        candidates = (
+            tenant_dir / "deployments" / "rule-deployments.yaml",
+            tenant_dir / "rule-deployments.yaml",
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
         return None
 
     def _build_schema_validator(self) -> Any | None:

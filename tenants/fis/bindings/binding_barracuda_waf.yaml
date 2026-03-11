@@ -4,15 +4,15 @@ tenant_id: fis
 device_id: barracuda-waf
 siem_id: splunk
 
-bindings:
-  api:
+datasets:
+  - dataset_id: api
     index: bwm_prod
     sourcetype: bwm:api
 
-  app:
+  - dataset_id: app
     index: bwm_prod
     sourcetype: bwm:app
 
-  system:
+  - dataset_id: system
     index: bwm_prod
     sourcetype: bwm:log_service

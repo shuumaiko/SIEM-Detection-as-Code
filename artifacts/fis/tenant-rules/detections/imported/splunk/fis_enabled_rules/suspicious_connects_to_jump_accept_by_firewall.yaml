@@ -1,0 +1,25 @@
+title: FPT - Suspicious Connects to JUMP Accept by Firewall
+id: 0e270b99-bfb9-5e3e-a360-eef0a6c62a83
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Suspicious Connects to JUMP Accept by Firewall'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=\"10.15.225.28\" OR srcip=\"10.15.226.228\" OR srcip=\"10.15.225.73\" OR srcip=\"10.15.183.57\" OR srcip=\"10.15.225.225\" OR srcip=\"10.15.225.169\" OR srcip=\"10.15.226.83\" OR srcip=\"10.15.225.42\" OR srcip=\"10.86.133.252\" OR srcip=\"10.86.132.150\" OR srcip=\"10.15.225.204\" OR srcip=\"10.15.226.75\" OR srcip=\"10.15.225.149\" OR srcip=\"10.15.225.36\" OR srcip=\"10.15.225.20\" OR srcip=\"15.10.8.17\" OR srcip=\"15.10.8.32\" OR srcip=\"15.10.8.10\" OR srcip=\"15.10.8.19\" OR srcip=\"15.10.8.5\" OR srcip=\"15.10.8.7\" OR srcip=\"10.15.6.11\" OR srcip=\"10.15.180.107\" OR srcip=\"10.15.225.131\" OR srcip=\"10.15.225.120\" OR srcip=\"10.15.226.105\") dstip=\"10.14.51.55\" (proto=6 OR proto=17) action=accept \nNOT srcip IN (10.15.30.15, 10.15.152.43, 10.15.225.54)\n| convert timeformat=\"%m/%d/%Y\" ctime(_time) as Time | eval Alert_Severity=\"High\" \n| stats values(dstip) as Dest_IP\
+    \ values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto\n| replace 6 with TCP, 17 with UDP in proto"

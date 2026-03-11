@@ -1,0 +1,24 @@
+title: FPT - Suspicious Cobalt Strike DNS Beaconing
+id: 4c720413-36e3-58f7-b32a-92c7b68fcca9
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Suspicious Cobalt Strike DNS Beaconing'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51)\n| eval questionname=replace(questionname,\"(\\(\\d+)\\)\",\".\") \n| eval questionname=replace(questionname,\"^.\",\"\") \n| eval questionname=replace(questionname,\".$\",\"\")\n| search (questionname = \"aaa.stage.*\" OR questionname = \"post.1*\")\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\" \n| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip"

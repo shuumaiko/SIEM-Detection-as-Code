@@ -1,0 +1,32 @@
+title: FPT - Empty User Agent
+id: 3ce79047-6b8d-5528-b85f-c3163996e928
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Empty User Agent'
+author: soc_monitor
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: 'index=* sourcetype="nginx:plus:access" source="/var/log/audit/log/*access.log*" (http_user_agent="" OR Agent="")
+
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
+
+    | eval Alert_Severity="Medium"
+
+    |  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+
+    |  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent'

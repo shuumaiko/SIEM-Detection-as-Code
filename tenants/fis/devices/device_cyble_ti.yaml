@@ -1,0 +1,20 @@
+schema_version: 1.0
+
+tenant_id: fis
+device_type: ti
+device_id: cyble-ti
+category: security
+
+vendor: Cyble
+product: Cyble Threat Intelligence
+
+role: Threat Intelligence
+
+functions:
+    - Threat Prevention
+
+location: unknown
+network_zone: unknown
+description: unknown
+
+criticality: high

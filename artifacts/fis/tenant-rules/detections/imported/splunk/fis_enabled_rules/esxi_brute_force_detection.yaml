@@ -1,0 +1,24 @@
+title: FPT - ESXi Brute-force Detection
+id: 07748ce7-ce50-56c8-8ba3-f0686d15123b
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - ESXi Brute-force Detection'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=esxi sourcetype=* login eventtype=failed_login\n| bucket _time span=15m\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\" \n| stats values(src_ip) as src_ip count by Alert_Severity Time User host\n| where count>=50"

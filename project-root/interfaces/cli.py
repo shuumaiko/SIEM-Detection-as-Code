@@ -37,7 +37,7 @@ def create_parser() -> argparse.ArgumentParser:
     scope_group.add_argument(
         "--all",
         action="store_true",
-        help="Validate all detection rules under rules/detection",
+        help="Validate all detection rules under rules/detections",
     )
     scope_group.add_argument(
         "--since",

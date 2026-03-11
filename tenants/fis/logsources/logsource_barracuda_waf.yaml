@@ -2,21 +2,21 @@ schema_version: 1.0
 
 device_id: barracuda-waf
 
-service:
-    - service_id: api
-      description: API security events
-      category: application
-      log_type: security
-      enabled: true
+datasets:
+  - dataset_id: api
+    description: API security events
+    category: application
+    log_type: security
+    enabled: true
 
-    - service_id: app
-      description: Web application firewall events
-      category: application
-      log_type: security
-      enabled: true
+  - dataset_id: app
+    description: Web application firewall events
+    category: application
+    log_type: security
+    enabled: true
 
-    - service_id: system
-      description: System and service logs
-      category: system
-      log_type: operational
-      enabled: true
+  - dataset_id: system
+    description: System and service logs
+    category: system
+    log_type: operational
+    enabled: true

@@ -1,0 +1,24 @@
+title: FPT - No Log from Firewall LogSource over 1 hour
+id: b176efca-dd0c-5ff6-8ca9-b037070eddff
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - No Log from Firewall LogSource over 1 hour'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: "| tstats count where index=* by _time sourcetype source\n| eventstats latest(_time) as latest_Time_source by source\n| eventstats latest(_time) as latest_Time_all\n| eval conditions=latest_Time_all - latest_Time_source\n| eval Status=if(conditions>=3600,\"Missing Data!\",\"OK!\")\n| eval Alert_Severity=\"Medium\"\n| stats values(Status) as Status values(conditions) as conditions values(latest_Time_source) as Latest_Time values(latest_Time_all) as Curent_Time by Alert_Severity sourcetype source\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(Latest_Time) as Latest_Time  ctime(Curent_Time) as Curent_Time \n| search (source=tcp:2910 OR source=udp:1514) Status=\"Missing Data!\""

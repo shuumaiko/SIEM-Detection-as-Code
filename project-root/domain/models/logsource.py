@@ -5,4 +5,4 @@ from dataclasses import dataclass, field
 class LogSource:
     device_id: str
     status: str = "active"
-    services: list[dict] = field(default_factory=list)
+    datasets: list[dict] = field(default_factory=list)

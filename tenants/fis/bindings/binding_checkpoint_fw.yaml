@@ -3,7 +3,7 @@ tenant_id: fis
 device_id: checkpoint-fw
 siem_id: splunk
 
-bindings:
-  traffic:
+datasets:
+  - dataset_id: traffic
     index: checkpoint
     sourcetype: cp_log

@@ -1,0 +1,25 @@
+title: FPT - xPlat - Possible Scan IP Status Code 4XX 5XX Over Threshold 50Req/Hour
+id: 3b2b514e-d589-5988-80dd-65a51b440392
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - xPlat - Possible Scan IP Status Code 4XX 5XX Over Threshold 50Req/Hour'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: "`xplat_access_log`\n| search status_code != \"1*\" AND status_code != \"2*\" AND status_code != \"3*\" AND http_request_uri_without_query!=*.woff2 AND http_request_uri_without_query!=*.css AND http_request_uri_without_query!=*.png  AND http_request_uri_without_query!=*.ico  AND http_request_uri_without_query!=*.svg AND http_request_uri_without_query!=*.json AND http_request_uri_without_query!=*.chunk.js AND http_request_uri_without_query!=//assets/*  AND http_request_uri_without_query!=/assets/* AND http_request_uri_without_query!=/rest/sms/latest/relationship/isApiError/*\n| bucket _time span=1h\n| convert timeformat=\"%m-%d-%Y %H:%M:%S\" ctime(_time) as \"Detected Time\" \n| lookup local=t asn ip AS client_ip\n| iplocation client_ip \n| rex field=service_name \"^(?<service_name>[^-]*-[^-]*-[^-]*)\"\n| join type=left service_name [inputlookup xplat_service_owner_2.csv \n    |  table service_name service_owner]\n| stats count values(status_code)  values(http_method) values(server_name)\
+    \ values(service_name) values(service_owner)  values(http_request_uri) by \"Detected Time\" client_ip autonomous_system Country \n| sort - count\n| where count > 50\n| rename values(status_code) as \"Status Code\", values(http_method) as \"HTTP Method\", values(server_name) as \"Server Name\", values(http_request_uri) as \"HTTP Request URI\", values(service_name) as \"Service Name\", values(service_owner) as \"Service Owner\""

@@ -1,0 +1,24 @@
+title: 'FPT - Connection to C2 detected by Checkpoint (Rule: BLOCK WEB VIRUS 2)'
+id: c2351bd3-061b-5797-b34f-a5104f5290a1
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Connection to C2 detected by Checkpoint (Rule: BLOCK WEB VIRUS 2)'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=cp_log rule_name=BLOCK_WEB_VIRUS_2\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\"  \n| stats earliest(Time) as Earliest_Time latest(Time) as Latest_Time values(action) as Action values(dest_ip) as Dest_IP values(dest_port) as Dest_Port values(rule_name) as Firewall_Rule_Name count by Alert_Severity src_ip\n| rename src_ip as Source_IP"

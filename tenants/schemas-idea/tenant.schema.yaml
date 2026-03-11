@@ -1,5 +1,0 @@
-tenant_id: tenant-a
-name: Company A
-environment: production
-timezone: Asia/Ho_Chi_Minh
-siem_target: splunk

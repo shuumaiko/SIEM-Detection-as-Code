@@ -1,0 +1,24 @@
+title: FPT - Suspicious Connects to vCenter Accept by Firewall
+id: 02a07360-74ec-536b-a3a0-d154b3fe5235
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Suspicious Connects to vCenter Accept by Firewall'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=10.14.124.53 OR srcip=10.14.124.22 OR srcip=10.14.51.53 OR srcip=10.14.124.19 OR srcip=10.14.51.54 OR srcip=10.14.124.28 OR srcip=10.15.225.120 OR srcip=\"172.16.68.3\" OR srcip=10.14.128.10 OR srcip=\"10.14.124.210\") (dstip=\"10.15.31.14\" OR dstip=\"10.14.60.100\") action=accept\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\" \n| stats values(dstip) as Dest_IP values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto\n| replace 6 with TCP, 17 with UDP in proto"

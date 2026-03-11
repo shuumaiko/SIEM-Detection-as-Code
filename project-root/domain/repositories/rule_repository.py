@@ -13,6 +13,6 @@ class RuleRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list_for_tenant(self, tenant: Tenant) -> list[Rule]:
+    def list_for_tenant(self, tenant: Tenant, include_all: bool = False) -> list[Rule]:
         """Return effective rules for one tenant."""
         raise NotImplementedError

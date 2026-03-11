@@ -39,6 +39,8 @@ class FileTenantRepository(TenantRepository):
     def _load_devices(self, tenant_root: Path, tenant_id: str) -> dict[str, Device]:
         result: dict[str, Device] = {}
         devices_root = tenant_root / "devices"
+        if not devices_root.exists():
+            return result
         for file_path in sorted(devices_root.glob("*.y*ml")):
             data = self.loader.load(file_path)
             device_id = data.get("device_id")
@@ -67,23 +69,41 @@ class FileTenantRepository(TenantRepository):
             result[device_id] = LogSource(
                 device_id=device_id,
                 status="active",
-                services=data.get("service", []),
+                datasets=data.get("datasets") or data.get("service", []),
             )
         return result
 
     def _load_bindings(self, tenant_root: Path) -> dict[str, Binding]:
         result: dict[str, Binding] = {}
         bindings_root = tenant_root / "bindings"
+        if not bindings_root.exists():
+            return result
         for file_path in sorted(bindings_root.glob("*.y*ml")):
             data = self.loader.load(file_path)
             device_id = data.get("device_id")
             if not device_id:
                 continue
+            datasets = data.get("datasets")
+            bindings = data.get("bindings")
+            if isinstance(datasets, list):
+                normalized_bindings = {}
+                for item in datasets:
+                    if not isinstance(item, dict):
+                        continue
+                    dataset_id = item.get("dataset_id")
+                    if not dataset_id:
+                        continue
+                    normalized_bindings[dataset_id] = {
+                        "index": item.get("index"),
+                        "sourcetype": item.get("sourcetype"),
+                    }
+            else:
+                normalized_bindings = bindings or {}
             result[device_id] = Binding(
                 tenant_id=data.get("tenant_id", ""),
                 device_id=device_id,
                 siem_id=data.get("siem_id", ""),
-                bindings=data.get("bindings", {}),
+                bindings=normalized_bindings,
             )
         return result
 
@@ -118,14 +138,19 @@ class FileTenantRepository(TenantRepository):
         return result
 
     def _resolve_rule_deployment_file(self, tenant_root: Path) -> Path | None:
-        canonical = tenant_root / "rule-deployments.yaml"
-        if canonical.exists():
-            return canonical
+        candidates = (
+            tenant_root / "deployments" / "rule-deployments.yaml",
+            tenant_root / "rule-deployments.yaml",
+        )
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
         return None
 
     def save_rule_deployments(self, tenant_id: str, payload: dict) -> None:
         tenant_root = self.base_path / tenant_id
-        tenant_root.mkdir(parents=True, exist_ok=True)
-        target_path = tenant_root / "rule-deployments.yaml"
+        target_dir = tenant_root / "deployments"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target_path = target_dir / "rule-deployments.yaml"
         with open(target_path, "w", encoding="utf-8") as file:
             yaml.safe_dump(payload, file, sort_keys=False, allow_unicode=True)

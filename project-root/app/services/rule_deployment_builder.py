@@ -11,6 +11,9 @@ class RuleDeploymentBuilder:
         mapped_rules: list[dict] = []
         deployments: list[dict] = []
         seen_rule_ids: set[str] = set()
+        existing_enabled_by_rule_id = {
+            item.rule_id: item.enabled for item in (tenant.rule_deployments or []) if item.rule_id
+        }
 
         for item in exported_rules:
             mapped = dict(item)
@@ -24,7 +27,7 @@ class RuleDeploymentBuilder:
             deployments.append(
                 {
                     "rule_id": rule_id,
-                    "enabled": True,
+                    "enabled": existing_enabled_by_rule_id.get(rule_id, True),
                     "display_name": mapped.get("display_name") or mapped.get("id"),
                 }
             )
@@ -43,7 +46,7 @@ class RuleDeploymentBuilder:
         if current_index and current_sourcetype:
             return {"index": current_index, "sourcetype": current_sourcetype}
 
-        service = item.get("service")
+        dataset = item.get("dataset") or item.get("service")
         category = item.get("category")
         for device_id, device in tenant.devices.items():
             if device.device_type and category and device.device_type != category:
@@ -51,13 +54,13 @@ class RuleDeploymentBuilder:
             logsource = tenant.logsources.get(device_id)
             if not logsource:
                 continue
-            services = logsource.services or []
-            if service and not any(svc.get("service_id") == service for svc in services):
+            datasets = logsource.datasets or []
+            if dataset and not any(svc.get("dataset_id") == dataset or svc.get("service_id") == dataset for svc in datasets):
                 continue
 
             binding = tenant.bindings.get(device_id)
             if binding:
-                bind_cfg = binding.bindings.get(service, {})
+                bind_cfg = binding.bindings.get(dataset, {})
                 if bind_cfg.get("index") or bind_cfg.get("sourcetype"):
                     return {
                         "index": bind_cfg.get("index"),

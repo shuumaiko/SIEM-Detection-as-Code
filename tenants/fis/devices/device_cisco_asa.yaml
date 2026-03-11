@@ -1,0 +1,20 @@
+schema_version: 1.0
+
+tenant_id: fis
+device_type: firewall
+device_id: cisco-asa
+category: network
+
+vendor: Cisco Systems
+product: Cisco ASA
+
+role: Firewall
+functions:
+    - Network Security
+    - Threat Prevention
+    
+location: unknown
+network_zone: unknown
+description: unknown
+
+criticality: high

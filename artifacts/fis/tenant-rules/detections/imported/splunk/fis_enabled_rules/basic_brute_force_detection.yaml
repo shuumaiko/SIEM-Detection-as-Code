@@ -1,0 +1,24 @@
+title: FPT - Basic Brute Force Detection
+id: 46a29545-7c15-5cd4-a1bb-c75fa9708606
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Basic Brute Force Detection'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=\"*WinEventLog*\" (EventID=4624 OR EventID=4625) user!=\"\" src!=- src_ip!=- user!=*$\n| bucket _time span=15m\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time \n| eval Alert_Severity=\"Medium\"\n| eval src_dst=\"Source IP:\" + src_ip + \" Dest:\"+ dest\n| stats count(eval(action=\"success\")) as successes count(eval(action=\"failure\")) as failures values(Source_Workstation) as Source_Workstation values(src_dst) as \"Source IP and Dest\" by Alert_Severity Time user \n| where failures>=100 AND successes>0\n| sort - failures"

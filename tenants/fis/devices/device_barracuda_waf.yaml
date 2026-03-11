@@ -3,6 +3,7 @@ schema_version: 1.0
 tenant_id: fis
 device_type: waf
 device_id: barracuda-waf
+category: application
 
 vendor: Barracuda Networks
 product: Barracuda Web Application Firewall

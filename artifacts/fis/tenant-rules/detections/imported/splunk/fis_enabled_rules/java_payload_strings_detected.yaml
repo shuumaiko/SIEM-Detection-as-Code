@@ -1,0 +1,25 @@
+title: FPT - Java Payload Strings Detected
+id: fa03e53b-7702-5ec9-b182-203dd01b173d
+status: test
+description: 'Imported from fis-enabled-rules.csv for tenant fis: FPT - Java Payload Strings Detected'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.fis
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=\"nginx:plus:access\" source=\"/var/log/audit/log/*access.log*\" (\"%24%7B%28%23a%3D%40\" OR \"${(#a=@\" OR \"%24%7B%40java\" OR \"${@java\" OR \"u0022java\" OR \"%2F%24%7B%23\" OR \"/${#\" OR \"new+java.\" OR \"getRuntime().exec(\" OR \"getRuntime%28%29.exec%28\") NOT Status_Code=4*  NOT src_ip=\"10.14.128.10\"\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\"  \n|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity\
+    \ Time vendor_product\n|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent"
