@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/tenants/field_binding.schema.json",
+  "title": "Tenant Field Binding Schema",
+  "type": "object",
+  "required": ["schema_version", "tenant_id", "siem_id", "device_id"],
+  "anyOf": [
+    { "required": ["default_field_mapping"] },
+    { "required": ["datasets"] }
+  ],
+  "properties": {
+    "schema_version": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" }
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "siem_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "device_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "default_field_mapping": {
+      "$ref": "#/$defs/field_mapping"
+    },
+    "datasets": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["field_mapping"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "field_mapping": {
+            "$ref": "#/$defs/field_mapping"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "field_mapping": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^canonical\\.[A-Za-z0-9_.-]+$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": false
+}

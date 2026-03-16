@@ -1,0 +1,25 @@
+schema_version: 1.0
+tenant_id: fis
+siem_id: splunk
+device_id: checkpoint-fw
+
+description: >
+  Canonical-field to tenant SIEM-field mapping for Check Point firewall logs
+  in tenant fis.
+
+default_field_mapping:
+  canonical.event.time: _time
+  canonical.source.ip: src_ip
+  canonical.source.port: s_port
+  canonical.source.zone: security_inzone
+  canonical.destination.ip: dest_ip
+  canonical.destination.port: service
+  canonical.destination.zone: security_outzone
+  canonical.event.action: action
+  canonical.firewall.policy.name: rule_name
+  canonical.network.protocol: proto
+
+datasets:
+  traffic:
+    field_mapping:
+      canonical.event.count: event_count

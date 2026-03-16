@@ -17,6 +17,7 @@ def test_tenant_repository_reads_deployments_from_new_structure() -> None:
         "index": "cyble_alerts",
         "sourcetype": "_json",
     }
+    assert tenant.bindings["checkpoint-fw"].field_mappings["traffic"]["canonical.source.ip"] == "src_ip"
     assert (workspace_root / "tenants" / "fis" / "deployments" / "rule-deployments.yaml").exists()
 
 

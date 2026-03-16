@@ -78,7 +78,13 @@ class FileTenantRepository(TenantRepository):
         bindings_root = tenant_root / "bindings"
         if not bindings_root.exists():
             return result
-        for file_path in sorted(bindings_root.glob("*.y*ml")):
+        ingest_root = bindings_root / "ingest"
+        ingest_files = (
+            sorted(ingest_root.glob("*.y*ml"))
+            if ingest_root.exists()
+            else sorted(bindings_root.glob("*.y*ml"))
+        )
+        for file_path in ingest_files:
             data = self.loader.load(file_path)
             device_id = data.get("device_id")
             if not device_id:
@@ -105,6 +111,26 @@ class FileTenantRepository(TenantRepository):
                 siem_id=data.get("siem_id", ""),
                 bindings=normalized_bindings,
             )
+
+        fields_root = bindings_root / "fields"
+        if fields_root.exists():
+            for file_path in sorted(fields_root.glob("*.y*ml")):
+                data = self.loader.load(file_path)
+                device_id = data.get("device_id")
+                if not device_id:
+                    continue
+                binding = result.get(device_id)
+                if binding is None:
+                    binding = Binding(
+                        tenant_id=data.get("tenant_id", ""),
+                        device_id=device_id,
+                        siem_id=data.get("siem_id", ""),
+                    )
+                    result[device_id] = binding
+                field_mapping = data.get("field_mapping") or {}
+                dataset_id = data.get("dataset_id") or "_default"
+                if isinstance(field_mapping, dict):
+                    binding.field_mappings[dataset_id] = field_mapping
         return result
 
     def _load_rule_deployments(self, tenant_root: Path, siem_id: str | None) -> list[RuleDeployment]:

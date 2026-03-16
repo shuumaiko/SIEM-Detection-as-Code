@@ -33,8 +33,8 @@ Có thể nhìn hệ thống theo 3 trục:
 Trục này quản lý tri thức detection:
 
 - `rules/`: rule gốc, theo category / product
-- `mappings/rule_views/`: lớp ánh xạ từ logic rule sang field view trung gian
-- `mappings/logsources/`: lớp ánh xạ từ vendor/product log sang field hoặc cấu hình SIEM
+- `mappings/detections/`: lớp ánh xạ từ source rule field sang canonical field theo domain
+- `tenants/.../bindings/fields/`: lớp ánh xạ từ canonical field sang tenant SIEM field thực tế
 
 Đây là phần "nội dung chuẩn" của hệ thống, có mục tiêu tái sử dụng và hạn chế phụ thuộc tenant cụ thể.
 
@@ -67,14 +67,15 @@ Trục này phục vụ quá trình validate, build, export, deploy:
 
 ```mermaid
 flowchart LR
-    A[Raw vendor logs] --> B[mappings/logsources\nLogsource mapping]
-    B --> C[Normalized / resolved data view]
+    A[External or base rules] --> B[mappings/detections\nSource to canonical mapping]
+    B --> C[Canonical field requirement]
+    C --> D[tenants/bindings/fields\nCanonical to tenant SIEM field]
 
-    D[rules/\nBase detection rules] --> E[mappings/rule_views\nRule view mapping]
-    E --> F[SIEM-agnostic detection logic]
+    E[rules/\nBase detection rules] --> C
+    C --> F[SIEM-agnostic detection logic]
 
     G[tenants/\nTenant configuration] --> H[Render / export pipeline]
-    C --> H
+    D --> H
     F --> H
 
     H --> I[artifacts/<tenant>/tenant-rules]
@@ -110,34 +111,35 @@ Trong ý tưởng dài hạn:
 
 Thư mục `mappings/` là lớp nối giữa detection logic, logsource vendor, và SIEM thực tế.
 
-Hai nhánh chính hiện có:
+Các nhánh chính được định hướng là:
 
-- `mappings/logsources/`
-- `mappings/rule_views/`
+- `mappings/detections/`
+- `tenants/.../bindings/fields/`
 
-### `mappings/logsources/`
-
-Vai trò:
-
-- chuẩn hóa cách hiểu log theo vendor / product
-- lưu field mapping, SIEM config, hoặc thông tin ingest liên quan
-- hỗ trợ resolve `index`, `sourcetype`, field name, hoặc các knowledge cần cho render/deploy
-
-Ví dụ hiện có:
-
-- `mappings/logsources/vendor/checkpoint/...`
-- `mappings/logsources/vendor/fortinet/fortigate/...`
-
-### `mappings/rule_views/`
+### `mappings/detections/`
 
 Vai trò:
 
-- là lớp view trung gian giữa detection rule và dữ liệu thực tế
-- hỗ trợ ánh xạ logic rule sang field set phù hợp cho từng nhóm nguồn log
+- ánh xạ field của rule nguồn sang canonical field của project
+- được tổ chức song song với taxonomy của `rules/`
+- ưu tiên shared field dictionary theo domain thay vì 1 file mapping cho từng rule
+- metadata trong file mapping nên dùng cùng field với `rule.logsource`, tức là `category`, `product`, `service`
+
+Ví dụ đề xuất:
+
+- `mappings/detections/network/firewall/firewall.fields.yml`
+
+### `tenants/.../bindings/fields/`
+
+Vai trò:
+
+- là lớp ánh xạ từ canonical field sang field thực tế của từng tenant trên SIEM
+- phản ánh khác biệt theo tenant, device, dataset, và SIEM thực tế
 
 Trong kiến trúc ý tưởng:
 
-- `rule_views` giúp rule logic không bị dính trực tiếp vào field vendor hoặc field SIEM
+- `detections` giúp ingest rule từ nhiều nguồn field vocabulary khác nhau
+- `bindings/fields` giúp nối canonical field với field set thực tế của tenant
 
 ## 3. `tenants/` - Tenant configuration layer
 
@@ -156,7 +158,10 @@ tenants/
     logsources/
       *.yaml
     bindings/
-      *.yaml
+      ingest/
+        *.yaml
+      fields/
+        *.yml
     filters/
       detections/
         <category>/
@@ -186,7 +191,8 @@ tenants/
 
 `bindings/`
 
-- ánh xạ `dataset_id` sang `index` / `sourcetype` hoặc cấu hình ingest thực tế trên SIEM
+- `bindings/ingest/` ánh xạ `dataset_id` sang `index` / `sourcetype` hoặc cấu hình ingest thực tế trên SIEM
+- `bindings/fields/` ánh xạ canonical field sang field thực tế của tenant trên SIEM
 
 `filters/`
 
@@ -228,6 +234,7 @@ Nói cách khác:
 Chi tiết hơn về tenant layer đã được ghi riêng trong:
 
 - [tenants-relationship.md](./tenants-relationship.md)
+- [mappings-relationship.md](./mappings-relationship.md)
 
 ## 4. `artifacts/` - Rendered output layer
 
@@ -331,7 +338,7 @@ Trong kiến trúc mục tiêu, đây là lớp đảm bảo:
 1. Nạp tenant config từ `tenants/<tenant>/`.
 2. Xác định tenant đang dùng SIEM nào và có những nguồn log nào.
 3. Nạp base rules từ `rules/`.
-4. Nạp mapping từ `mappings/logsources/` và `mappings/rule_views/`.
+4. Nạp mapping từ `mappings/detections/` và `tenants/.../bindings/fields/`.
 5. Áp tenant bindings và tenant filters.
 6. Quyết định tập rule khả dụng theo `deployments/rule-deployments.yaml`.
 7. Render rule đầu ra theo tenant.

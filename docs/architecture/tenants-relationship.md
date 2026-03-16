@@ -23,7 +23,10 @@ tenants/
     logsources/
       *.yaml
     bindings/
-      *.yaml
+      ingest/
+        *.yaml
+      fields/
+        *.yml
     filters/
       detections/
         <category>/
@@ -38,7 +41,8 @@ Trong tenant `fis` hiện đang có các nhóm file sau:
 - `tenant.yaml`
 - `devices/*.yaml`
 - `logsources/*.yaml`
-- `bindings/*.yaml`
+- `bindings/ingest/*.yaml`
+- `bindings/fields/*.yml`
 - `deployments/rule-deployments.yaml`
 
 Hiện trạng dữ liệu của `fis`:
@@ -46,7 +50,8 @@ Hiện trạng dữ liệu của `fis`:
 - `1` tenant config
 - `11` device definitions
 - `11` logsource definitions
-- `11` binding definitions
+- `11` ingest binding definitions
+- `1` field binding definition
 - `1` deployment manifest
 
 ## Sơ đồ quan hệ
@@ -56,18 +61,20 @@ flowchart TD
     A[tenant.yaml\nTenant config] --> B[devices/*.yaml\nThiết bị của tenant]
     B --> C[logsources/*.yaml\nDataset logic theo device_id]
 
-    A --> D[bindings/*.yaml\nBinding theo tenant_id + device_id + siem_id]
+    A --> D[bindings/ingest/*.yaml\nIngest binding theo tenant_id + device_id + siem_id]
     C --> D
+    A --> E[bindings/fields/*.yml\nCanonical field to tenant SIEM field]
 
-    A --> E[filters/detections/**\nTenant rule filters]
-    A --> F[deployments/rule-deployments.yaml\nRule deployment manifest]
+    A --> F[filters/detections/**\nTenant rule filters]
+    A --> G[deployments/rule-deployments.yaml\nRule deployment manifest]
 
-    G[Base rules] --> H[Rule rendering]
+    H[Base rules] --> I[Rule rendering]
     D --> H
-    E --> H
-    F --> H
+    E --> I
+    F --> I
+    G --> I
 
-    H --> I[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
+    I --> J[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
 ```
 
 ## Quan hệ giữa các thành phần
@@ -136,9 +143,9 @@ Quan hệ:
 - `device` 1-1 `logsource file`
 - `logsource file` 1-n `dataset`
 
-### 4. `bindings/*.yaml` ánh xạ dataset logic vào SIEM thực tế
+### 4. `bindings/ingest/*.yaml` ánh xạ dataset logic vào SIEM thực tế
 
-Binding là lớp nối giữa dữ liệu logic trong `logsource` và dữ liệu ingest thực tế trên SIEM.
+Ingest binding là lớp nối giữa dữ liệu logic trong `logsource` và dữ liệu ingest thực tế trên SIEM.
 
 Mỗi binding dùng các khóa:
 
@@ -151,7 +158,7 @@ Mỗi dataset trong binding sẽ map sang:
 - `index`
 - `sourcetype`
 
-Ví dụ `binding_eset_ra.yaml`:
+Ví dụ `bindings/ingest/binding_eset_ra.yaml`:
 
 - `dataset_id: eset-ra-alerts`
 - `index: epav`
@@ -160,16 +167,49 @@ Ví dụ `binding_eset_ra.yaml`:
 Ý nghĩa:
 
 - `logsource` trả lời câu hỏi "device này có dataset nào?"
-- `binding` trả lời câu hỏi "dataset đó nằm ở đâu trên SIEM?"
+- `ingest binding` trả lời câu hỏi "dataset đó nằm ở đâu trên SIEM?"
 
 Quan hệ:
 
 - `tenant` 1-n `binding`
-- `binding` gắn với đúng một `device_id`
-- `binding.dataset_id` phải khớp với `logsource.dataset_id`
-- `binding.siem_id` phải khớp với `tenant.yaml.siem_id` khi render cho SIEM hiện hành
+- `ingest binding` gắn với đúng một `device_id`
+- `ingest binding.dataset_id` phải khớp với `logsource.dataset_id`
+- `ingest binding.siem_id` phải khớp với `tenant.yaml.siem_id` khi render cho SIEM hiện hành
 
-### 5. `filters/` là tenant rule filter dùng khi render từ base rule
+### 5. `bindings/fields/*.yml` ánh xạ canonical field sang field thực tế của tenant
+
+Field binding là lớp mô tả cách canonical field của detection content được gắn vào field thực tế trên SIEM của tenant.
+
+Mỗi file field binding có thể dùng các khóa:
+
+- `tenant_id`
+- `siem_id`
+- `device_id`
+- `dataset_id`
+
+Mỗi field binding sẽ map:
+
+- `canonical field`
+- sang `tenant SIEM field`
+
+Ví dụ `bindings/fields/checkpoint-fw.fields.yml`:
+
+- `canonical.source.ip: src_ip`
+- `canonical.destination.port: service`
+- `canonical.network.protocol: proto`
+
+Ý nghĩa:
+
+- `mappings/detections/.../*.fields.yml` trả lời câu hỏi "field của rule nguồn tương ứng với canonical field nào?"
+- `bindings/fields/*.yml` trả lời câu hỏi "canonical field đó hiện đang là field nào trên SIEM của tenant?"
+
+Quan hệ:
+
+- `tenant` 1-n `field binding`
+- `field binding` có thể gắn với `device_id` hoặc `dataset_id`
+- `field binding.siem_id` phải khớp với `tenant.yaml.siem_id` khi render cho SIEM hiện hành
+
+### 6. `filters/` là tenant rule filter dùng khi render từ base rule
 
 `filters/` là lớp filter đặc thù theo tenant. Đây không phải nguồn log và cũng không phải rule đầu ra; nó là input của quá trình render rule.
 
@@ -195,7 +235,7 @@ Quan hệ:
 - `filters` thường được tra cứu theo `category`, `product`, hoặc tập nguồn log tương ứng
 - đầu ra sau khi áp filter sẽ được ghi vào `artifacts/<tenant>/tenant-rules/`
 
-### 6. `deployments/rule-deployments.yaml` quyết định rule nào được bật cho tenant
+### 7. `deployments/rule-deployments.yaml` quyết định rule nào được bật cho tenant
 
 File này lưu danh sách rule theo từng SIEM trong khóa `rule_deployments_by_siem`.
 
@@ -234,12 +274,14 @@ Luồng dữ liệu hợp lý của hệ thống là:
 1. Đọc `tenant.yaml` để xác định `tenant_id`, `siem_id`, và cấu hình chung.
 2. Đọc `devices/*.yaml` để lấy danh sách device thuộc tenant.
 3. Với từng `device_id`, đọc `logsources/*.yaml` để biết device phát ra các dataset nào.
-4. Dùng `bindings/*.yaml` để ánh xạ từng `dataset_id` sang `index` và `sourcetype` trên SIEM tương ứng.
-5. Đọc `deployments/rule-deployments.yaml` để lấy danh sách rule bật/tắt theo `siem_id`.
-6. Nạp `filters/` để áp tenant-specific filter lên base rule trong quá trình render.
+4. Dùng `bindings/ingest/*.yaml` để ánh xạ từng `dataset_id` sang `index` và `sourcetype` trên SIEM tương ứng.
+5. Dùng `bindings/fields/*.yml` để ánh xạ canonical field sang field thực tế của tenant trên SIEM.
+6. Đọc `deployments/rule-deployments.yaml` để lấy danh sách rule bật/tắt theo `siem_id`.
+7. Nạp `filters/` để áp tenant-specific filter lên base rule trong quá trình render.
 7. Kết hợp:
    - base rules
-   - bindings đã resolve ra SIEM fields
+   - ingest bindings đã resolve ra `index` và `sourcetype`
+   - field bindings đã resolve canonical field ra tenant SIEM field
    - tenant rule filters
    - trạng thái enable/disable trong deployments
 8. Sinh rule đầu ra vào `artifacts/<tenant>/tenant-rules/`.
@@ -252,13 +294,15 @@ Ví dụ với `eset-ra`:
    - khai báo đây là endpoint security product của tenant `fis`
 2. `logsources/logsource_eset_ra.yaml`
    - khai báo dataset `eset-ra-alerts`
-3. `bindings/binding_eset_ra.yaml`
+3. `bindings/ingest/binding_eset_ra.yaml`
    - map `eset-ra-alerts` sang `index: epav`, `sourcetype: eset:ra` trên `splunk`
-4. `filters/detections/...`
+4. `bindings/fields/*.yml`
+   - nếu có, map canonical field của rule sang field thực tế của tenant
+5. `filters/detections/...`
    - nếu có, sẽ bổ sung điều kiện hoặc ngoại lệ riêng cho tenant khi render base rule
-5. `deployments/rule-deployments.yaml`
+6. `deployments/rule-deployments.yaml`
    - quyết định rule nào cho `splunk` được bật
-6. Kết quả render xuất hiện trong:
+7. Kết quả render xuất hiện trong:
    - `artifacts/fis/tenant-rules/...`
 
 ## Phân biệt `tenants/` và `artifacts/`
@@ -278,7 +322,8 @@ Quan hệ cốt lõi trong kiến trúc tenant là:
 
 - `tenant` sở hữu `devices`
 - mỗi `device` có `logsource`
-- `binding` nối `logsource dataset` với SIEM ingestion thực tế
+- `ingest binding` nối `logsource dataset` với SIEM ingestion thực tế
+- `field binding` nối canonical field với field thực tế của tenant trên SIEM
 - `filters` tinh chỉnh base rule cho tenant trong lúc render
 - `deployment` quyết định rule nào được phép đi tiếp
 - đầu ra cuối cùng được materialize trong `artifacts/<tenant>/tenant-rules`

@@ -1,0 +1,78 @@
+schema_version: 1.0
+mapping_type: detection_fields
+
+logsource:
+  category: firewall
+  product: any
+  service: traffic
+
+description: >
+  Shared source-rule-field to canonical-field mapping for firewall detection
+  content.
+
+fields:
+  - canonical_field: canonical.event.time
+    source_fields:
+      - _time
+      - Time
+      - event_time
+
+  - canonical_field: canonical.source.ip
+    source_fields:
+      - src_ip
+      - src
+      - source.ip
+
+  - canonical_field: canonical.source.port
+    source_fields:
+      - src_port
+      - sport
+      - s_port
+
+  - canonical_field: canonical.source.zone
+    source_fields:
+      - src_zone
+      - source_zone
+      - security_inzone
+
+  - canonical_field: canonical.destination.ip
+    source_fields:
+      - dest_ip
+      - dst_ip
+      - dst
+      - destination.ip
+
+  - canonical_field: canonical.destination.port
+    source_fields:
+      - dest_port
+      - dst_port
+      - dport
+      - service
+
+  - canonical_field: canonical.destination.zone
+    source_fields:
+      - dest_zone
+      - destination_zone
+      - security_outzone
+
+  - canonical_field: canonical.event.action
+    source_fields:
+      - action
+      - act
+      - rule_action
+
+  - canonical_field: canonical.firewall.policy.name
+    source_fields:
+      - firewall_policy_name
+      - rule_name
+      - policy_name
+
+  - canonical_field: canonical.network.protocol
+    source_fields:
+      - protocol
+      - proto
+
+  - canonical_field: canonical.event.count
+    source_fields:
+      - event_count
+      - count

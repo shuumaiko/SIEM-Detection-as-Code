@@ -46,14 +46,20 @@ class TenantConfigValidator:
 
         device_files = sorted((tenant_dir / "devices").glob("*.yaml"))
         logsource_files = sorted((tenant_dir / "logsources").glob("*.yaml"))
-        binding_files = sorted((tenant_dir / "bindings").glob("*.yaml"))
+        bindings_dir = tenant_dir / "bindings"
+        ingest_binding_files = (
+            sorted((bindings_dir / "ingest").glob("*.yaml"))
+            if (bindings_dir / "ingest").exists()
+            else sorted(bindings_dir.glob("*.yaml"))
+        )
+        field_binding_files = sorted((bindings_dir / "fields").glob("*.yaml"))
         rules_file = self._resolve_rule_deployment_file(tenant_dir, warnings)
 
         if not device_files:
             warnings.append(f"No device files found in {(tenant_dir / 'devices')}.")
         if not logsource_files:
             warnings.append(f"No logsource files found in {(tenant_dir / 'logsources')}.")
-        if not binding_files:
+        if not ingest_binding_files:
             warnings.append(f"No binding files found in {(tenant_dir / 'bindings')}.")
         if rules_file is None:
             warnings.append(
@@ -119,7 +125,7 @@ class TenantConfigValidator:
 
             logsource_datasets_by_device[device_id] = dataset_ids
 
-        for file_path in binding_files:
+        for file_path in ingest_binding_files:
             data = self._load_yaml(file_path, errors)
             if data is None:
                 continue
@@ -167,6 +173,34 @@ class TenantConfigValidator:
                 errors.append(f"{file_path}: field 'bindings' must be an object.")
                 continue
             binding_datasets_by_device[device_id] = set(bindings.keys())
+
+        for file_path in field_binding_files:
+            data = self._load_yaml(file_path, errors)
+            if data is None:
+                continue
+            files_checked += 1
+            self._validate_tenant_id(file_path, data.get("tenant_id"), tenant_id, errors)
+
+            device_id = data.get("device_id")
+            if not device_id:
+                errors.append(f"{file_path}: missing required field 'device_id'.")
+                continue
+            if device_id not in device_by_id:
+                errors.append(f"{file_path}: unknown device_id '{device_id}' (not found in devices/*).")
+
+            binding_siem_id = data.get("siem_id")
+            if tenant_siem_id and binding_siem_id and binding_siem_id != tenant_siem_id:
+                errors.append(
+                    f"{file_path}: siem_id mismatch "
+                    f"(tenant '{tenant_siem_id}', binding '{binding_siem_id}')."
+                )
+
+            field_mapping = data.get("field_mapping")
+            if field_mapping is None:
+                errors.append(f"{file_path}: missing required field 'field_mapping'.")
+                continue
+            if not isinstance(field_mapping, dict):
+                errors.append(f"{file_path}: field 'field_mapping' must be an object.")
 
         for device_id in sorted(set(logsource_datasets_by_device) | set(binding_datasets_by_device)):
             log_datasets = logsource_datasets_by_device.get(device_id, set())
