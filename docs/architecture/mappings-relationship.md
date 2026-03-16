@@ -176,6 +176,82 @@ Vì vậy trong version hiện tại:
 - không nên dùng `domain` như key chính để resolve mapping
 - nên dùng `logsource.category`, `logsource.product`, và khi cần là `logsource.service`
 
+## Phạm vi tạo canonical field
+
+Một vấn đề thực tế của kiến trúc mapping là:
+
+- mỗi logsource có thể có rất nhiều field
+- nhưng detection rule thường chỉ dùng một phần nhỏ trong số đó
+- nếu cố map toàn bộ field của logsource sang canonical ngay từ đầu thì chi phí rất lớn
+- sau đó còn phát sinh thêm chi phí chuẩn hóa semantic theo OCSF
+
+Vì vậy trong version hiện tại, không nên xem việc canonical hóa toàn bộ logsource là điều kiện bắt buộc trước khi viết hoặc triển khai rule.
+
+Thay vào đó, hướng phù hợp hơn là:
+
+- tạo canonical field theo nhu cầu detection thực tế
+- bắt đầu từ `source rule field required`
+- sau đó map các canonical field đó sang field thực tế trên SIEM của từng logsource hoặc tenant
+
+Nói ngắn gọn:
+
+```text
+source rule required fields
+  -> canonical fields cần thiết cho detection
+  -> tenant SIEM fields
+```
+
+Trong phạm vi v1.0, canonical field nên ưu tiên được tạo cho các nhóm sau:
+
+- field bắt buộc để rule hoạt động
+- field dùng cho correlation
+- field dùng cho output, notable, hoặc review vận hành
+
+Các field khác của logsource có thể chưa cần canonical hóa ngay.
+
+## Lợi ích của cách tiếp cận này
+
+Cách làm `canonical by detection need` mang lại các lợi ích thực tế:
+
+- giảm đáng kể effort ban đầu
+- giúp team content triển khai rule nhanh hơn
+- canonical được sinh ra từ nhu cầu detection thật, thay vì từ mô hình dữ liệu lý tưởng
+- tránh tốn thời gian chuẩn hóa những field chưa mang lại giá trị detection
+- phù hợp với trạng thái hiện tại khi hardcoded SPL vẫn là execution artifact chính
+
+Đây là cách tiếp cận thực dụng hơn cho version `0.x` hoặc `1.0`.
+
+## Trade-off của cách tiếp cận này
+
+Việc không canonical hóa toàn bộ logsource upfront cũng có trade-off rõ ràng:
+
+- canonical ban đầu sẽ mang tính `detection-driven`, không phải `data-model-driven`
+- có nguy cơ phát sinh các canonical field gần nghĩa nhau nếu không có review tốt
+- mức độ bao phủ semantic giữa các logsource sẽ tăng dần theo rule coverage, không đầy đủ ngay từ đầu
+- về sau có thể cần refactor hoặc gộp lại một số canonical field khi hệ thống trưởng thành hơn
+
+Tuy vậy, đây là trade-off chấp nhận được trong bối cảnh hiện tại vì:
+
+- mục tiêu chính là làm cho rule có thể dùng được trong pipeline
+- team content không sở hữu toàn bộ lớp raw log parsing
+- giá trị ngắn hạn nằm ở detection coverage và khả năng tái sử dụng content, không nằm ở việc mô hình hóa toàn bộ dữ liệu upfront
+
+## Nguyên tắc vận hành cho canonical
+
+Để tránh canonical phát triển rời rạc, nên áp dụng nguyên tắc sau:
+
+1. Khi có rule mới, liệt kê các `source rule field` mà rule thực sự sử dụng.
+2. Kiểm tra xem các field đó đã có canonical tương ứng chưa.
+3. Nếu đã có thì dùng lại.
+4. Nếu chưa có thì thêm mới canonical field vào registry nội bộ.
+5. Chỉ sau đó mới map canonical field sang tenant SIEM field.
+
+Điều này giúp:
+
+- không phải map toàn bộ logsource upfront
+- vẫn giữ được một lớp contract semantic ổn định
+- giảm nguy cơ trùng nghĩa giữa các canonical field khi số lượng rule tăng lên
+
 ### 3. `tenants/<tenant>/bindings/fields/`
 
 Đây là lớp map từ canonical field sang field thực tế trên SIEM của từng tenant.
