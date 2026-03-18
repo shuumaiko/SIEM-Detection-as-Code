@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from infrastructure.repositories.file_rule_repository import FileRuleRepository
 from infrastructure.repositories.file_tenant_repository import FileTenantRepository
@@ -8,7 +8,7 @@ def test_tenant_repository_reads_deployments_from_new_structure() -> None:
     workspace_root = Path(__file__).resolve().parents[2]
     repository = FileTenantRepository(workspace_root / "tenants")
 
-    tenant = repository.get_by_id("fis")
+    tenant = repository.get_by_id("lab")
 
     assert tenant.siem_id == "splunk"
     assert tenant.rule_deployments
@@ -18,7 +18,7 @@ def test_tenant_repository_reads_deployments_from_new_structure() -> None:
         "sourcetype": "_json",
     }
     assert tenant.bindings["checkpoint-fw"].field_mappings["traffic"]["canonical.source.ip"] == "src_ip"
-    assert (workspace_root / "tenants" / "fis" / "deployments" / "rule-deployments.yaml").exists()
+    assert (workspace_root / "tenants" / "lab" / "deployments" / "rule-deployments.yaml").exists()
 
 
 def test_rule_repository_reads_artifacts_from_new_structure() -> None:
@@ -29,7 +29,7 @@ def test_rule_repository_reads_artifacts_from_new_structure() -> None:
         tenant_rules_path=workspace_root / "artifacts",
     )
 
-    tenant = tenant_repository.get_by_id("fis")
+    tenant = tenant_repository.get_by_id("lab")
     rules = rule_repository.list_for_tenant(tenant, include_all=True)
 
     assert rules
@@ -37,10 +37,11 @@ def test_rule_repository_reads_artifacts_from_new_structure() -> None:
     assert (
         workspace_root
         / "artifacts"
-        / "fis"
+        / "lab"
         / "tenant-rules"
         / "detections"
         / "network"
         / "firewall"
         / "checkpoint"
     ).exists()
+

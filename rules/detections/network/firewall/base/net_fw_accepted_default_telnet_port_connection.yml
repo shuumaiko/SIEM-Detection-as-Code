@@ -28,6 +28,7 @@ detection:
             - dropped
             - deny
     condition: selection and not filter_blocked
+level: info
 ---
 title: Accepted Default Telnet Port Connection
 status: test

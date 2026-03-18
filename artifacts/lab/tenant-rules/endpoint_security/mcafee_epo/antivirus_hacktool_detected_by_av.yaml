@@ -1,0 +1,26 @@
+﻿title: FPT - Antivirus Hacktool Detected by AV
+id: 91ff9de1-7bf4-5b60-98bf-f92a8258b12d
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Antivirus Hacktool Detected by AV'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=* (sourcetype=*mcafee* OR sourcetype=*eset*) ((signature=\"HTOOL*\" OR signature=\"HKTL*\" OR signature=\"SecurityTool*\" OR signature=\"Adfind*\" OR signature=\"ATK/*\" OR signature=\"Exploit.Script.CVE*\" OR signature=\"PWS.*\" OR signature=\"PWSX*\") OR (signature=\"*Hacktool*\" OR signature=\"*ATK/*\" OR signature=\"*Potato*\" OR signature=\"*Rozena*\" OR signature=\"*Sbelt*\" OR signature=\"*Seatbelt*\" OR signature=\"*SecurityTool*\" OR signature=\"*SharpDump*\" OR signature=\"*Sliver*\" OR signature=\"*Splinter*\" OR signature=\"*Swrort*\" OR signature=\"*Impacket*\" OR signature=\"*Koadic*\" OR signature=\"*Lazagne*\" OR signature=\"*Metasploit*\" OR signature=\"*Meterpreter*\" OR signature=\"*MeteTool*\" OR signature=\"*Mimikatz*\" OR signature=\"*Mpreter*\" OR signature=\"*Nighthawk*\" OR signature=\"*PentestPowerShell*\" OR signature=\"*PowerSploit*\" OR signature=\"*PowerSSH*\" OR signature=\"*PshlSpy*\" OR signature=\"*PSWTool*\" OR signature=\"*PWCrack*\"\
+    \ OR signature=\"*Brutel*\" OR signature=\"*BruteR*\" OR signature=\"*Cobalt*\" OR signature=\"*COBEACON*\" OR signature=\"*Cometer*\" OR signature=\"*DumpCreds*\" OR signature=\"*FastReverseProxy*\" OR signature=\"*PWDump*\"))\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\" \n| stats values(file_name) as File_name values(file_hash) as File_hash values(sourcetype) as \"Source Type\" values(action_taken) as Action_Taken values(signature) as Signature count by Alert_Severity Time host hostname\n| rename Time as \"Detected Time\""
+

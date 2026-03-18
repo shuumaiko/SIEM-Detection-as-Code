@@ -1,0 +1,25 @@
+﻿title: FPT - Possible VMware VM Abuse from ESXi via cmdline
+id: 7983d469-3cc3-5fe0-a116-107502489446
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Possible VMware VM Abuse from ESXi via cmdline'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=\"*WinEvent*\" source=\"WinEventLog:*\" ((parent_process_path=\"*vmtoolsd.exe\" OR parent_process_name=\"vmtoolsd.exe\") (Process_Name=\"*cmd.exe\" OR Process_Name=\"*powershell.exe\"))\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\"  \n| stats values(status) as status values(process_path) as Process_Path values(ProcessCommandLine) as ProcessCommandLine values(src_user) as src_user count by Alert_Severity Alert_Severity Time Computer"
+

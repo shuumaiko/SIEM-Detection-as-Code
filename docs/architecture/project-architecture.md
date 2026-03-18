@@ -1,69 +1,81 @@
-# Kiến trúc tổng quan dự án SIEM-DaC
+﻿# Kiến trúc tổng quan dự án SIEM-Detection-as-Code
 
-## Mục đích tài liệu
+> English mirror: [project-architecture.md](../en/architecture/project-architecture.md)
 
-Tài liệu này mô tả kiến trúc chung của toàn bộ project ở mức ý tưởng, nhưng vẫn bám theo cấu trúc source code và thư mục hiện tại của repository.
+## 1. Mục đích và phạm vi
 
-Đây là tài liệu khung để thống nhất cách nhìn về hệ thống. Một số phần đang được mô tả sơ bộ trước, đặc biệt là `tenants/`. Các phần khác sẽ được bổ sung chi tiết dần khi kiến trúc và implementation ổn định hơn.
+Tài liệu này mô tả kiến trúc tổng quan của repository `SIEM-Detection-as-Code` trên cơ sở cấu trúc thư mục và hiện trạng source code đang có.
 
-## Mục tiêu của project
+Mục đích của tài liệu là:
 
-`SIEM-DaC` là repository phục vụ mô hình `Detection as Code`, với mục tiêu:
+- xác định mô hình kiến trúc chuẩn để sử dụng trong các tài liệu tiếp theo
+- chuẩn hóa cách hiểu giữa các thành phần `rules`, `mappings`, `tenants`, `artifacts`, và `project-root`
+- làm cơ sở tham chiếu cho việc phát triển, rà soát, và mở rộng repository
 
-- tách logic detection khỏi vendor log cụ thể
-- tách logic detection khỏi SIEM implementation cụ thể
+Tài liệu này tập trung vào kiến trúc logic và tổ chức dữ liệu. Các chi tiết implementation cụ thể có thể thay đổi theo tiến độ hoàn thiện của `project-root/`.
+
+## 2. Mục tiêu hệ thống
+
+`SIEM-Detection-as-Code` là repository triển khai mô hình `Detection as Code` với các mục tiêu sau:
+
+- tách detection logic khỏi vendor log cụ thể
+- tách detection logic khỏi SIEM implementation cụ thể
 - quản lý detection rule như code
-- hỗ trợ build, validate, render, và deploy rule theo tenant
-- tạo khả năng tái sử dụng rule giữa nhiều khách hàng / tenant / SIEM
+- hỗ trợ validate, render, export, và deploy rule theo tenant
+- tăng khả năng tái sử dụng rule giữa nhiều tenant và nhiều nền tảng SIEM
 
-Theo tinh thần từ `README.md`, hệ thống được thiết kế theo các lớp chính:
+Theo mô hình này, hệ thống được tổ chức thành các lớp riêng biệt cho:
 
-- nguồn log và chuẩn hóa dữ liệu
-- detection rule độc lập SIEM
-- lớp mapping / view / triển khai
-- lớp cấu hình tenant
-- lớp artifact đầu ra để deploy vào SIEM
+- nội dung detection
+- chuẩn hóa field và mapping
+- cấu hình tenant
+- artifact đầu ra phục vụ export hoặc deploy
+- application engine để đọc, validate, render, và điều phối quy trình
 
-## Góc nhìn kiến trúc
+## 3. Mô hình kiến trúc
 
-Có thể nhìn hệ thống theo 3 trục:
+Kiến trúc hiện tại có thể được mô tả theo 3 trục chính.
 
-### 1. Trục nội dung detection
+### 3.1. Trục nội dung detection
 
-Trục này quản lý tri thức detection:
+Trục này quản lý detection content ở mức chuẩn và có khả năng tái sử dụng:
 
-- `rules/`: rule gốc, theo category / product
-- `mappings/detections/`: lớp ánh xạ từ source rule field sang canonical field theo domain
-- `tenants/.../bindings/fields/`: lớp ánh xạ từ canonical field sang tenant SIEM field thực tế
+- `rules/`: base detection rules theo category và product
+- `mappings/detections/`: ánh xạ từ source rule field sang canonical field
+- `tenants/.../bindings/fields/`: ánh xạ từ canonical field sang field thực tế trên SIEM của tenant
 
-Đây là phần "nội dung chuẩn" của hệ thống, có mục tiêu tái sử dụng và hạn chế phụ thuộc tenant cụ thể.
+Mục tiêu của trục này là duy trì detection intent ổn định và giảm phụ thuộc trực tiếp vào naming hoặc parser của từng môi trường triển khai.
 
-### 2. Trục cấu hình tenant
+### 3.2. Trục cấu hình tenant
 
-Trục này mô tả môi trường thực tế của từng tenant:
+Trục này mô tả hiện trạng triển khai thực tế của từng tenant:
 
-- `tenants/`: tenant config, devices, logsources, bindings, filters, deployments
+- `tenant.yaml`: định danh tenant, `siem_id`, và metadata vận hành
+- `devices/`: thiết bị hoặc platform phát sinh log
+- `logsources/`: dataset logic của từng device
+- `bindings/ingest/`: ánh xạ `dataset_id` sang ingest target thực tế như `index`, `sourcetype`
+- `bindings/fields/`: ánh xạ canonical field sang field thực tế trên SIEM
+- `filters/`: tenant-specific filter áp dụng trong quá trình render
+- `deployments/rule-deployments.yaml`: manifest bật hoặc tắt rule theo SIEM
 
-Đây là phần giúp quyết định:
+Trục này trả lời các câu hỏi chính:
 
 - tenant có những nguồn log nào
 - dataset nào đang active
-- dataset đó vào SIEM bằng `index` / `sourcetype` nào
-- rule nào được enable cho tenant
-- filter nào cần áp khi render từ base rule
+- dataset đó được ingest vào SIEM như thế nào
+- rule nào được bật cho tenant
+- filter nào phải được áp khi render từ base rule
 
-### 3. Trục vận hành và đầu ra
+### 3.3. Trục vận hành và đầu ra
 
-Trục này phục vụ quá trình validate, build, export, deploy:
+Trục này phục vụ validate, build, export, và deploy:
 
 - `project-root/`: CLI, use cases, services, repositories, adapters
-- `schema/`: JSON schema để validate rule và tenant config
-- `tests/`: test cho validator, folder structure, deployment builder
-- `artifacts/`: kết quả render / export dành riêng cho từng tenant
+- `schema/`: contract dùng để validate rule và tenant config
+- `tests/`: quality gate ở mức validator, smoke test, và cấu trúc thư mục
+- `artifacts/`: output đã được render hoặc export cho từng tenant
 
-Đây là phần "engine" và "output" của hệ thống.
-
-## Sơ đồ kiến trúc tổng quan
+## 4. Sơ đồ kiến trúc tổng quan
 
 ```mermaid
 flowchart LR
@@ -87,310 +99,153 @@ flowchart LR
     I --> M
 ```
 
-## 1. `rules/` - Base detection rules
+## 5. Thành phần chính
 
-Đây là nơi lưu detection rule gốc của hệ thống.
+### 5.1. `rules/`
+
+`rules/` là nguồn lưu detection rule gốc của hệ thống.
 
 Vai trò:
 
-- lưu rule nền tảng theo category / product
+- lưu rule nền tảng theo taxonomy chung
 - giữ detection logic ở mức tương đối độc lập với SIEM
-- làm nguồn đầu vào cho quá trình render sang tenant-specific rules
+- cung cấp đầu vào cho quá trình render tenant-specific rule
 
-Hiện trạng:
+Về nguyên tắc kiến trúc, `rules/` là nguồn chuẩn của detection content; output trong `artifacts/` không thay thế vai trò này.
 
-- đang có cấu trúc như `rules/detections/...`
-- có cả rule theo category chung và rule theo product / base
+### 5.2. `mappings/`
 
-Trong ý tưởng dài hạn:
-
-- rule ở đây nên là nguồn chuẩn
-- rule tenant trong `artifacts/` chỉ nên là kết quả build, không phải nơi chỉnh tay chính
-
-## 2. `mappings/` - Mapping layer
-
-Thư mục `mappings/` là lớp nối giữa detection logic, logsource vendor, và SIEM thực tế.
-
-Các nhánh chính được định hướng là:
-
-- `mappings/detections/`
-- `tenants/.../bindings/fields/`
-
-### `mappings/detections/`
+`mappings/` là lớp chuẩn hóa field và ngữ nghĩa dữ liệu.
 
 Vai trò:
 
-- ánh xạ field của rule nguồn sang canonical field của project
-- được tổ chức song song với taxonomy của `rules/`
-- ưu tiên shared field dictionary theo domain thay vì 1 file mapping cho từng rule
-- metadata trong file mapping nên dùng cùng field với `rule.logsource`, tức là `category`, `product`, `service`
+- ánh xạ source rule field sang canonical field
+- cung cấp vocabulary chung cho detection content
+- tạo nền cho việc nối detection logic với field thực tế của tenant
 
-Ví dụ đề xuất:
+Trong kiến trúc hiện tại, `mappings/detections/` là lớp mapping chuẩn ở phía content; `tenants/.../bindings/fields/` là lớp mapping triển khai theo tenant.
 
-- `mappings/detections/network/firewall/firewall.fields.yml`
+### 5.3. `tenants/`
 
-### `tenants/.../bindings/fields/`
-
-Vai trò:
-
-- là lớp ánh xạ từ canonical field sang field thực tế của từng tenant trên SIEM
-- phản ánh khác biệt theo tenant, device, dataset, và SIEM thực tế
-
-Trong kiến trúc ý tưởng:
-
-- `detections` giúp ingest rule từ nhiều nguồn field vocabulary khác nhau
-- `bindings/fields` giúp nối canonical field với field set thực tế của tenant
-
-## 3. `tenants/` - Tenant configuration layer
-
-`tenants/` là lớp cấu hình đầu vào cho từng tenant.
-
-Đây là phần hiện đã có cấu trúc tương đối rõ và là thành phần cần được mô tả sơ bộ đầu tiên trong kiến trúc tổng thể.
-
-### Cấu trúc ý tưởng
-
-```text
-tenants/
-  <tenant_name>/
-    tenant.yaml
-    devices/
-      *.yaml
-    logsources/
-      *.yaml
-    bindings/
-      ingest/
-        *.yaml
-      fields/
-        *.yml
-    filters/
-      detections/
-        <category>/
-          <product>/
-            *.yaml
-    deployments/
-      rule-deployments.yaml
-```
-
-### Vai trò của từng nhóm file
-
-`tenant.yaml`
-
-- định danh tenant
-- xác định `siem_id`
-- lưu metadata và default setting của tenant
-
-`devices/`
-
-- mô tả tài sản hoặc platform phát sinh log
-- định danh bằng `device_id`
-
-`logsources/`
-
-- mô tả các dataset logic của từng `device_id`
-- chưa gắn chặt với ingest thực tế của SIEM
-
-`bindings/`
-
-- `bindings/ingest/` ánh xạ `dataset_id` sang `index` / `sourcetype` hoặc cấu hình ingest thực tế trên SIEM
-- `bindings/fields/` ánh xạ canonical field sang field thực tế của tenant trên SIEM
-
-`filters/`
-
-- là lớp `tenant rule filter`
-- được dùng khi render từ base rule sang rule áp dụng cho tenant
-- cho phép thêm ngoại lệ, giới hạn, hoặc điều kiện riêng theo tenant
-
-`deployments/rule-deployments.yaml`
-
-- lưu quyết định enable / disable rule theo từng SIEM
-- là manifest phục vụ render và deploy
-
-### Quan hệ sơ bộ trong tenant layer
-
-```mermaid
-flowchart TD
-    A[tenant.yaml] --> B[devices]
-    B --> C[logsources]
-    A --> D[bindings]
-    C --> D
-    A --> E[filters]
-    A --> F[deployments]
-```
-
-### Vai trò của `tenants/` trong toàn hệ thống
-
-`tenants/` là điểm nối giữa:
-
-- rule chuẩn của hệ thống
-- mapping chuẩn của hệ thống
-- hiện trạng nguồn log thực tế của khách hàng / tenant
-
-Nói cách khác:
-
-- `rules/` trả lời "nên phát hiện hành vi gì?"
-- `mappings/` trả lời "dữ liệu và field được hiểu như thế nào?"
-- `tenants/` trả lời "tenant này thực sự có gì và deploy cái gì?"
-
-Chi tiết hơn về tenant layer đã được ghi riêng trong:
-
-- [tenants-relationship.md](./tenants-relationship.md)
-- [mappings-relationship.md](./mappings-relationship.md)
-
-## 4. `artifacts/` - Rendered output layer
-
-`artifacts/` là nơi chứa kết quả đầu ra dành riêng cho từng tenant.
-
-Ví dụ hiện tại:
-
-- `artifacts/fis/tenant-rules/...`
+`tenants/` là lớp cấu hình đầu vào của từng tenant.
 
 Vai trò:
 
-- lưu rule đã được materialize cho tenant
-- phản ánh kết quả sau khi áp:
-  - base rule
-  - mapping
-  - tenant filter
-  - deployment decision
+- mô tả nguồn log, device, dataset, ingest binding, field binding, filter, và deployment manifest
+- làm đầu vào trực tiếp cho quá trình render hoặc deploy
+- phản ánh hiện trạng triển khai thực tế của từng tenant
 
-Về nguyên tắc kiến trúc:
+Chi tiết quan hệ trong tenant layer được mô tả riêng tại [tenants-relationship.md](./tenants-relationship.md).
 
-- `artifacts/` là output
-- `artifacts/` không phải nguồn cấu hình chuẩn để chỉnh tay lâu dài
+### 5.4. `artifacts/`
 
-## 5. `project-root/` - Application engine
+`artifacts/` là lớp output đã được materialize cho từng tenant.
 
-`project-root/` là phần code thực thi của hệ thống.
+Vai trò:
 
-Hiện trạng code cho thấy project đang theo hướng phân tầng tương đối rõ:
+- lưu kết quả sau khi áp base rule, mapping, filter, và deployment decision
+- làm đầu ra phục vụ review, export, hoặc deploy
 
-- `interfaces/`: CLI / API entrypoint
-- `app/usecases/`: use case orchestration
-- `app/services/`: nghiệp vụ mức ứng dụng
-- `domain/models/`: model nghiệp vụ
-- `domain/repositories/`: contract repository
-- `infrastructure/repositories/`: repository đọc file
-- `infrastructure/file_loader/`: YAML / registry loader
-- `infrastructure/siem/`: adapter triển khai theo SIEM
+`artifacts/` là output của pipeline, không phải lớp cấu hình chuẩn để chỉnh tay dài hạn.
+
+### 5.5. `project-root/`
+
+`project-root/` là application engine của hệ thống.
+
+Cấu trúc hiện tại cho thấy project đang được tổ chức theo hướng phân tầng:
+
+- `interfaces/`: entrypoint cho CLI hoặc API
+- `app/usecases/`: orchestration theo use case
+- `app/services/`: application service
+- `domain/models/`: domain model
+- `domain/repositories/`: repository contract
+- `infrastructure/repositories/`: repository đọc dữ liệu từ file
+- `infrastructure/file_loader/`: loader cho YAML hoặc registry
+- `infrastructure/siem/`: SIEM adapter
 - `infrastructure/converter/`: converter layer
 
-### Luồng code hiện tại
+Hiện trạng này cho thấy repository không chỉ là kho YAML, mà đã có application layer phục vụ validate, render, export, và chuẩn bị deploy.
 
-```mermaid
-flowchart LR
-    A[CLI] --> B[Use Cases]
-    B --> C[Application Services]
-    C --> D[Domain Models]
-    C --> E[Repositories]
-    E --> F[File-backed data in repo]
-    C --> G[SIEM Adapters]
-```
+### 5.6. `schema/`
 
-### Các use case đã thấy trong code
-
-- `load-tenant`
-- `export-rules`
-- `deploy-rules`
-- `validate-tenant`
-- `validate-rules`
-
-Ý nghĩa kiến trúc:
-
-- project không chỉ là kho YAML
-- project đã có engine để đọc cấu hình, build deployment payload, validate, và chuẩn bị deploy
-
-## 6. `schema/` - Validation contract
-
-`schema/` là lớp contract để kiểm tra định dạng file.
-
-Hiện có:
-
-- schema cho tenant objects
-- schema cho rule objects
+`schema/` là lớp contract để kiểm tra tính hợp lệ của file cấu hình và rule.
 
 Vai trò:
 
 - giảm lỗi cấu trúc file
-- tạo chuẩn chung cho contributor và automation
-- hỗ trợ validation trong CLI / test pipeline
+- cung cấp chuẩn chung cho contributor và automation
+- hỗ trợ validation trong CLI và test pipeline
 
-## 7. `tests/` - Quality gate
+### 5.7. `tests/`
 
-`tests/` giữ vai trò kiểm tra cơ bản cho hệ thống.
+`tests/` là quality gate cơ bản của hệ thống.
 
-Hiện đã có các hướng kiểm thử như:
+Vai trò:
 
-- validate tenant config
-- smoke test
-- rule deployment builder
-- folder architecture
+- phát hiện sai lệch cấu trúc hoặc quan hệ dữ liệu
+- kiểm tra validator, smoke flow, và deployment builder
+- giảm nguy cơ regression khi thay đổi rule, mapping, hoặc tenant config
 
-Trong kiến trúc mục tiêu, đây là lớp đảm bảo:
+## 6. Luồng xử lý tổng quát
 
-- thay đổi mapping không phá render
-- thay đổi tenant config không phá quan hệ chéo
-- rule output giữ tính nhất quán
-
-## Luồng nghiệp vụ tổng quát
-
-Ở mức ý tưởng, pipeline chung của project là:
+Pipeline kiến trúc hiện tại có thể được mô tả như sau:
 
 1. Nạp tenant config từ `tenants/<tenant>/`.
-2. Xác định tenant đang dùng SIEM nào và có những nguồn log nào.
+2. Xác định `tenant_id`, `siem_id`, danh sách device, và danh sách dataset.
 3. Nạp base rules từ `rules/`.
-4. Nạp mapping từ `mappings/detections/` và `tenants/.../bindings/fields/`.
-5. Áp tenant bindings và tenant filters.
-6. Quyết định tập rule khả dụng theo `deployments/rule-deployments.yaml`.
-7. Render rule đầu ra theo tenant.
-8. Ghi output vào `artifacts/<tenant>/tenant-rules/`.
-9. Nếu cần, dùng SIEM adapter để deploy rule sang nền tảng đích.
+4. Nạp detection mappings từ `mappings/detections/`.
+5. Resolve ingest binding từ `tenants/.../bindings/ingest/`.
+6. Resolve field binding từ `tenants/.../bindings/fields/`.
+7. Áp tenant filters từ `tenants/.../filters/`.
+8. Đọc `deployments/rule-deployments.yaml` để chọn tập rule bật cho tenant.
+9. Render output vào `artifacts/<tenant>/tenant-rules/`.
+10. Nếu cần, dùng adapter trong `project-root/` để export hoặc deploy sang SIEM đích.
 
-## Nguyên tắc thiết kế chung
+## 7. Nguyên tắc kiến trúc
 
-Từ `README.md`, tài liệu cũ, và cấu trúc hiện tại, các nguyên tắc thiết kế nên được giữ nhất quán là:
+Các nguyên tắc sau phải được giữ nhất quán trong quá trình phát triển:
 
-- detection logic không phụ thuộc vendor log trực tiếp
-- detection logic không phụ thuộc SIEM trực tiếp
-- mapping, tenant config, và deployment được tách thành lớp riêng
-- output deployable là artifact được sinh ra, không phải source of truth chính
-- cấu hình tenant là đầu vào điều phối việc render và deploy
-- validation và test phải đi cùng cấu hình và rule content
+- detection logic không phụ thuộc trực tiếp vào vendor log
+- detection logic không phụ thuộc trực tiếp vào SIEM implementation
+- mapping, tenant config, và deployment được tách thành các lớp riêng
+- deployable output được sinh ra dưới dạng artifact, không phải nguồn chuẩn chính
+- tenant configuration là đầu vào điều phối render và deploy
+- validation và testing phải phát triển song song với rule content và configuration
 
-## Trạng thái hiện tại của kiến trúc
+## 8. Trạng thái hiện tại
 
-Nhìn theo project hiện tại, có thể chia thành 3 mức trưởng thành:
+Ở thời điểm hiện tại, mức độ trưởng thành của kiến trúc có thể chia thành 3 nhóm:
 
-### Mức đã hiện diện rõ
+### 8.1. Thành phần đã hiện diện rõ
 
 - tenant layer
 - rendered artifacts
 - CLI / use case engine
 - schema validation
-- một phần mappings và SIEM adapter
+- một phần mappings và SIEM adapters
 
-### Mức đã có khung nhưng chưa hoàn thiện đầy đủ
+### 8.2. Thành phần đã có khung nhưng chưa hoàn thiện đầy đủ
 
 - rule view layer
 - converter layer
 - chuẩn hóa end-to-end giữa base rule và rendered rule
-- chuẩn `filters/` cho toàn bộ tenant
+- chuẩn `filters/` áp dụng nhất quán cho toàn bộ tenant
 
-### Mức định hướng tương lai
+### 8.3. Định hướng mở rộng
 
 - UI quản lý rule
-- auto merge / auto tuning workflow
-- triển khai đa SIEM đầy đủ
+- workflow hỗ trợ merge hoặc tuning
+- hỗ trợ đa SIEM ở mức đầy đủ hơn
 - pipeline build-deploy hoàn chỉnh theo tenant
 
-## Kết luận
+## 9. Kết luận
 
-Kiến trúc tổng quan của project có thể hiểu ngắn gọn như sau:
+Kiến trúc của `SIEM-Detection-as-Code` được tổ chức quanh 5 lớp chính:
 
 - `rules/` giữ detection knowledge gốc
-- `mappings/` giữ lớp chuẩn hóa dữ liệu và field
-- `tenants/` giữ cấu hình thực tế của từng tenant
-- `project-root/` là engine đọc, validate, render, và deploy
-- `artifacts/` giữ output rule đã render cho tenant
-- `schema/` và `tests/` giữ vai trò quality gate
+- `mappings/` giữ contract chuẩn hóa field và dữ liệu
+- `tenants/` giữ cấu hình triển khai thực tế của từng tenant
+- `artifacts/` giữ output đã render
+- `project-root/` giữ application engine để đọc, validate, render, và deploy
 
-Ở thời điểm hiện tại, phần `tenants/` là khối đã nhìn thấy rõ nhất về quan hệ dữ liệu, nên được mô tả trước trong tài liệu tổng quan này. Các phần còn lại có thể được mở rộng thành tài liệu riêng ở các bước tiếp theo.
+Trong giai đoạn hiện tại, `tenants/` là khối có quan hệ dữ liệu rõ nhất và ổn định nhất. Các tài liệu chi tiết tiếp theo được xây dựng xoay quanh khối này và lớp mapping để hình thành bộ tài liệu chuẩn cho repository.

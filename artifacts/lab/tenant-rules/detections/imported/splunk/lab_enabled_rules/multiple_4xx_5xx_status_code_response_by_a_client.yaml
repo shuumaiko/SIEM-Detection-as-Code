@@ -1,0 +1,26 @@
+﻿title: FPT - Multiple 4xx/5xx Status Code Response by a Client
+id: 807e1bff-e34b-5fb4-869f-e84aaa618bd9
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Multiple 4xx/5xx Status Code Response by a Client'
+author: soc_monitor
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: low
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=\"nginx:plus:access\" source=\"/var/log/audit/log/*access.log*\" (Status_Code=4* OR Status_Code=5*) NOT (client_ip=\"10.14.131.3\" OR client_ip=\"10.14.128.10\")\n| bucket _time span=45m \n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time \n| eval Alert_Severity=\"Low\"\n|  stats values(src_ip) as src_ip, values(vendor_product) as vendor_product , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL_(Limit_10_Lines) , values(user) as user, values(Agent) as Agent_(Limit_10_Lines) dc(Status_Code) as number_of_statuscode count by Alert_Severity Time client_ip\n| eval URL_(Limit_10_Lines)=mvindex('URL_(Limit_10_Lines)',0,9)\n\
+    | eval Agent_(Limit_10_Lines)=mvindex('Agent_(Limit_10_Lines)',0,9)\n| where number_of_statuscode >= 5\n| sort - count\n| fillnull value=N/A client_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent"
+

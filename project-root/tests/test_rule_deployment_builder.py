@@ -1,4 +1,4 @@
-from types import SimpleNamespace
+﻿from types import SimpleNamespace
 
 from app.services.rule_deployment_builder import RuleDeploymentBuilder
 from domain.models.rule_deployment import RuleDeployment
@@ -12,7 +12,7 @@ class _RegistryLoaderStub:
 def test_build_keeps_existing_enabled_value_for_existing_rule() -> None:
     builder = RuleDeploymentBuilder(registry_loader=_RegistryLoaderStub())
     tenant = SimpleNamespace(
-        tenant_id="fis",
+        tenant_id="lab",
         siem_id="splunk",
         rule_deployments=[
             RuleDeployment(rule_id="existing-rule", enabled=False, display_name="Existing Rule"),
@@ -36,3 +36,4 @@ def test_build_keeps_existing_enabled_value_for_existing_rule() -> None:
         {"rule_id": "existing-rule", "enabled": False, "display_name": "Existing Rule"},
         {"rule_id": "new-rule", "enabled": True, "display_name": "New Rule"},
     ]
+

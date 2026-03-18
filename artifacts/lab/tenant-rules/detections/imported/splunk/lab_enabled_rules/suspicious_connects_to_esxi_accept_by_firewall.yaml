@@ -1,0 +1,26 @@
+﻿title: FPT - Suspicious Connects to ESXi Accept by Firewall
+id: 2ba0d3fe-3426-5507-a508-33363d858040
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Suspicious Connects to ESXi Accept by Firewall'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=10.14.51.53 OR srcip=10.14.124.19 OR srcip=10.14.51.54 OR srcip=10.14.124.28 OR srcip=172.16.68.3 OR srcip=10.15.225.54) (dstip=\"10.15.31.11\" OR dstip=\"10.15.31.12\" OR dstip=\"10.15.31.13\" OR dstip=\"10.14.60.101\" OR dstip=\"10.14.60.102\" OR dstip=\"10.14.60.103\" OR dstip=\"10.14.60.104\" OR dstip=\"10.14.60.105\" OR dstip=\"10.14.60.106\" OR dstip=\"10.14.60.107\" OR dstip=\"10.14.60.108\" OR dstip=\"10.14.60.109\" OR dstip=\"10.14.60.110\" OR dstip=\"10.14.60.111\" OR dstip=\"10.14.60.112\" OR dstip=\"10.14.60.113\" OR dstip=\"10.14.60.115\" OR dstip=\"10.14.60.114\" OR dstip=\"10.14.60.116\" OR dstip=\"10.14.60.117\" OR dstip=\"10.14.60.118\" OR dstip=\"10.14.60.119\" OR dstip=\"10.14.60.120\" OR dstip=\"10.14.60.121\" OR dstip=\"10.14.60.122\" OR dstip=\"10.14.60.123\" OR dstip=\"10.14.60.124\" OR dstip=\"10.14.60.125\" OR dstip=\"10.14.60.126\" OR dstip=\"10.14.60.127\" OR\
+    \ dstip=\"10.14.60.128\" OR dstip=\"10.14.60.129\" OR dstip=\"10.14.60.130\" OR dstip=\"10.14.60.171\" OR dstip=\"10.14.60.172\") action=accept\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\" \n| stats values(dstip) as Dest_IP values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto\n| replace 6 with TCP, 17 with UDP in proto"
+

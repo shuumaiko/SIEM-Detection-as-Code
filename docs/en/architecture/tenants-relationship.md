@@ -1,18 +1,33 @@
-# Tenant Component Architecture
+﻿# Tenant Component Architecture
 
-## Scope
+> Vietnamese source: [tenants-relationship.md](../../architecture/tenants-relationship.md)
 
-This document standardizes the relationships between components inside the `tenants/` directory, based on the current `fis` tenant structure and the project's rule rendering model.
+## 1. Purpose and Scope
 
-The purpose of `tenants/` is to store tenant-specific configuration so the system can:
+This document defines the standard structure and data relationships of the `tenants/` directory in the `SIEM-Detection-as-Code` repository.
 
-- identify the tenant's available log sources
-- map those log sources to the actual SIEM ingestion model
-- decide which rules apply to the tenant
-- apply tenant-specific rule filters when rendering from base rules
-- generate output rules in `artifacts/<tenant>/tenant-rules/`
+Its scope includes:
 
-## Standard structure
+- the standard folder structure of a tenant
+- the role of each file group in the tenant layer
+- the main linkage keys between tenant objects
+- the standard processing flow from tenant configuration to rendered output
+
+This document uses tenant `lab` as a reference example for the current data state, but the model applies to the tenant layer in general.
+
+## 2. Objectives of the Tenant Layer
+
+`tenants/` is the tenant-specific input configuration layer. It is used to:
+
+- identify the log sources currently available for a tenant
+- describe devices and logical datasets owned by the tenant
+- map datasets to the actual SIEM ingestion model
+- map canonical fields to actual SIEM fields
+- apply tenant-specific filters during rendering
+- determine which rules are enabled or disabled by tenant and SIEM
+- generate output under `artifacts/<tenant>/tenant-rules/`
+
+## 3. Standard Structure
 
 ```text
 tenants/
@@ -23,7 +38,10 @@ tenants/
     logsources/
       *.yaml
     bindings/
-      *.yaml
+      ingest/
+        *.yaml
+      fields/
+        *.yml
     filters/
       detections/
         <category>/
@@ -33,48 +51,54 @@ tenants/
       rule-deployments.yaml
 ```
 
-The current `fis` tenant contains these file groups:
+In tenant `lab`, the current file groups are:
 
 - `tenant.yaml`
 - `devices/*.yaml`
 - `logsources/*.yaml`
-- `bindings/*.yaml`
+- `bindings/ingest/*.yaml`
+- `bindings/fields/*.yml`
 - `deployments/rule-deployments.yaml`
 
-Current `fis` data shape:
+Current data snapshot of `lab` at the time of writing:
 
 - `1` tenant config
 - `11` device definitions
 - `11` logsource definitions
-- `11` binding definitions
+- `11` ingest binding definitions
+- `1` field binding definition
 - `1` deployment manifest
 
-## Relationship diagram
+## 4. Relationship Diagram
 
 ```mermaid
 flowchart TD
     A[tenant.yaml\nTenant config] --> B[devices/*.yaml\nTenant devices]
     B --> C[logsources/*.yaml\nLogical datasets by device_id]
 
-    A --> D[bindings/*.yaml\nBindings by tenant_id + device_id + siem_id]
+    A --> D[bindings/ingest/*.yaml\nIngest bindings by tenant_id + device_id + siem_id]
     C --> D
+    A --> E[bindings/fields/*.yml\nCanonical field to tenant SIEM field]
 
-    A --> E[filters/detections/**\nTenant rule filters]
-    A --> F[deployments/rule-deployments.yaml\nRule deployment manifest]
+    A --> F[filters/detections/**\nTenant rule filters]
+    A --> G[deployments/rule-deployments.yaml\nRule deployment manifest]
 
-    G[Base rules] --> H[Rule rendering]
+    H[Base rules] --> I[Rule rendering]
     D --> H
-    E --> H
-    F --> H
+    E --> I
+    F --> I
+    G --> I
 
-    H --> I[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
+    I --> J[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
 ```
 
-## Component relationships
+## 5. Data Components
 
-### 1. `tenant.yaml` is the root tenant object
+### 5.1. `tenant.yaml`
 
-This file stores the tenant identity and its default SIEM configuration, for example:
+`tenant.yaml` is the root object of a tenant.
+
+Typical content:
 
 - `tenant_id`
 - `name`
@@ -84,10 +108,10 @@ This file stores the tenant identity and its default SIEM configuration, for exa
 - `default_index`
 - operational metadata such as `owner`, `contact`, `criticality`
 
-Responsibilities:
+Role:
 
 - identify the tenant
-- declare which SIEM the tenant uses
+- define which SIEM the tenant uses
 - provide shared context for downstream components
 
 Relationships:
@@ -97,38 +121,38 @@ Relationships:
 - `tenant.yaml` 1-n `filters`
 - `tenant.yaml` 1-1 `deployments/rule-deployments.yaml`
 
-### 2. `devices/*.yaml` describes tenant assets or log-emitting platforms
+### 5.2. `devices/*.yaml`
 
 Each device file belongs to a tenant through `tenant_id` and is identified by `device_id`.
 
-Examples from `fis`:
+Examples in `lab`:
 
 - `device_eset_ra.yaml` has `device_id: eset-ra`
 - `device_checkpoint_fw.yaml` has `device_id: checkpoint-fw`
 
-Responsibilities:
+Role:
 
-- describe the device type or product
+- describe the device or product that generates logs
 - declare `device_type`, `vendor`, `product`, `role`, and `functions`
-- provide the anchor for matching to `logsource`
+- serve as the anchor point to `logsource`
 
 Relationships:
 
 - `tenant` 1-n `device`
-- one `device_id` maps to one `logsource_*` file
+- one `device_id` corresponds to one `logsource_*`
 
-### 3. `logsources/*.yaml` defines the logical datasets for each device
+### 5.3. `logsources/*.yaml`
 
-Each logsource file references a `device_id` and defines the `dataset_id` values produced by that device.
+Each logsource file references a `device_id` and defines the `dataset_id` values generated by that device.
 
 Examples:
 
-- `logsource_eset_ra.yaml` defines `eset-ra-alerts`
-- `logsource_barracuda_waf.yaml` defines `api`, `app`, and `system`
+- `logsource_eset_ra.yaml` defines dataset `eset-ra-alerts`
+- `logsource_barracuda_waf.yaml` defines datasets `api`, `app`, and `system`
 
-Responsibilities:
+Role:
 
-- define the logical data layer before SIEM-specific ingestion mapping
+- describe the logical data layer prior to actual SIEM ingestion mapping
 - store metadata such as `category`, `log_type`, `description`, and `enabled`
 
 Relationships:
@@ -136,42 +160,75 @@ Relationships:
 - `device` 1-1 `logsource file`
 - `logsource file` 1-n `dataset`
 
-### 4. `bindings/*.yaml` maps logical datasets to the real SIEM ingestion model
+### 5.4. `bindings/ingest/*.yaml`
 
-Bindings connect the logical data defined in `logsource` to the actual representation used by the SIEM.
+An ingest binding maps logical datasets to the actual SIEM ingestion model.
 
-Each binding uses these keys:
+Each binding uses the following keys:
 
 - `tenant_id`
 - `device_id`
 - `siem_id`
 
-Each dataset entry maps to:
+Each dataset in the binding maps to values such as:
 
 - `index`
 - `sourcetype`
 
-Example from `binding_eset_ra.yaml`:
+Example `bindings/ingest/binding_eset_ra.yaml`:
 
 - `dataset_id: eset-ra-alerts`
 - `index: epav`
 - `sourcetype: eset:ra`
 
-Meaning:
+Role:
 
-- `logsource` answers "which datasets does this device produce?"
-- `binding` answers "where does that dataset live in the SIEM?"
+- connect `logsource.dataset_id` with the actual ingestion target in the SIEM
+- provide the information required to render or deploy rules for the tenant
 
 Relationships:
 
 - `tenant` 1-n `binding`
-- each `binding` belongs to exactly one `device_id`
-- `binding.dataset_id` must match `logsource.dataset_id`
-- `binding.siem_id` must match `tenant.yaml.siem_id` for the active render target
+- an `ingest binding` belongs to exactly one `device_id`
+- `ingest binding.dataset_id` must match `logsource.dataset_id`
+- `ingest binding.siem_id` must match `tenant.yaml.siem_id` for the active render target
 
-### 5. `filters/` is the tenant rule filter layer used during base rule rendering
+### 5.5. `bindings/fields/*.yml`
 
-`filters/` is a tenant-specific filtering layer. It is neither a log source definition nor a rendered rule output; it is an input to the rule rendering pipeline.
+A field binding maps canonical fields to the tenant's actual SIEM fields.
+
+Each field binding file may use keys such as:
+
+- `tenant_id`
+- `siem_id`
+- `device_id`
+- `dataset_id`
+
+Each field binding describes:
+
+- which canonical field is used
+- which actual SIEM field corresponds to it for the tenant
+
+Example `bindings/fields/checkpoint-fw.fields.yml`:
+
+- `canonical.source.ip: src_ip`
+- `canonical.destination.port: service`
+- `canonical.network.protocol: proto`
+
+Role:
+
+- receive input from the canonical field layer
+- provide the actual fields required for correct tenant-specific rendering or deployment
+
+Relationships:
+
+- `tenant` 1-n `field binding`
+- a `field binding` may be scoped by `device_id` or `dataset_id`
+- `field binding.siem_id` must match `tenant.yaml.siem_id` for the active render target
+
+### 5.6. `filters/`
+
+`filters/` is the tenant rule filter layer applied during rendering.
 
 Standard structure:
 
@@ -183,102 +240,98 @@ filters/
         *.yaml
 ```
 
-Responsibilities:
+Role:
 
-- constrain or refine base rule logic for a specific tenant
-- support exceptions, allowlists, environmental conditions, or source-specific conditions
-- allow reuse of base rules without forking separate rules per tenant
+- constrain or refine base-rule logic according to tenant-specific characteristics
+- apply exceptions, allowlists, environment conditions, or source constraints
+- allow reuse of a `base rule` without maintaining a separate fork per tenant
 
 Relationships:
 
-- `filters` participates in the rule rendering stage
-- `filters` is typically resolved by `category`, `product`, or the corresponding source set
-- the filtered output is written to `artifacts/<tenant>/tenant-rules/`
+- `filters` participates directly in the rendering step
+- `filters` is typically resolved by `category`, `product`, or the relevant source set
+- output after applying filters is written to `artifacts/<tenant>/tenant-rules/`
 
-### 6. `deployments/rule-deployments.yaml` decides which rules are enabled for the tenant
+### 5.7. `deployments/rule-deployments.yaml`
 
-This file stores rule deployment decisions by SIEM under `rule_deployments_by_siem`.
+This file stores rule enable or disable decisions by SIEM under `rule_deployments_by_siem`.
 
 Current example:
 
-- tenant `fis`
+- tenant `lab`
 - SIEM `splunk`
-- each rule has `rule_id`, `enabled`, and `display_name`
+- each rule includes `rule_id`, `enabled`, and `display_name`
 
-Responsibilities:
+Role:
 
-- serve as the tenant's rule deployment manifest
-- separate enable/disable decisions from log source definitions
-- provide the selection input for render and deployment
+- serve as the rule deployment manifest for the tenant
+- separate enable or disable decisions from source definitions
+- provide the rule set used for rendering or deployment
 
 Relationships:
 
 - `tenant.yaml.siem_id` selects the relevant branch in `rule_deployments_by_siem`
-- only enabled rules should continue through the render/deploy pipeline
+- only enabled rules continue into the render or deploy pipeline
 
-## Main linkage keys
+## 6. Main Linkage Keys
 
-The current model is centered around four main keys:
+The current tenant model revolves around 4 primary keys:
 
 | Key | Appears in | Meaning |
 | --- | --- | --- |
-| `tenant_id` | `tenant.yaml`, `devices`, `bindings`, `deployments` | tenant identity |
-| `device_id` | `devices`, `logsources`, `bindings` | log source or platform identity |
-| `dataset_id` | `logsources`, `bindings` | logical dataset identity for a device |
-| `siem_id` | `tenant.yaml`, `bindings`, `deployments` | target SIEM identity |
+| `tenant_id` | `tenant.yaml`, `devices`, `bindings`, `deployments` | tenant identifier |
+| `device_id` | `devices`, `logsources`, `bindings` | log-source or platform identifier |
+| `dataset_id` | `logsources`, `bindings` | logical dataset identifier for a device |
+| `siem_id` | `tenant.yaml`, `bindings`, `deployments` | target SIEM identifier |
 
-## Standard processing flow
+## 7. Standard Processing Sequence
 
-The expected system flow is:
+The standard processing sequence of the tenant layer is as follows:
 
-1. Read `tenant.yaml` to determine `tenant_id`, `siem_id`, and shared configuration.
+1. Read `tenant.yaml` to determine `tenant_id`, `siem_id`, and common configuration.
 2. Read `devices/*.yaml` to collect the tenant's devices.
-3. For each `device_id`, read `logsources/*.yaml` to identify the datasets produced by that device.
-4. Use `bindings/*.yaml` to map each `dataset_id` to the appropriate `index` and `sourcetype` in the target SIEM.
-5. Read `deployments/rule-deployments.yaml` to get rule enable/disable decisions for the active `siem_id`.
-6. Load `filters/` to apply tenant-specific filters to base rules during rendering.
-7. Combine:
-   - base rules
-   - SIEM-resolved bindings
-   - tenant rule filters
-   - deployment decisions
-8. Generate rendered rules in `artifacts/<tenant>/tenant-rules/`.
+3. For each `device_id`, read `logsources/*.yaml` to determine the related datasets.
+4. Resolve `bindings/ingest/*.yaml` to map each `dataset_id` to `index` and `sourcetype` on the target SIEM.
+5. Resolve `bindings/fields/*.yml` to map canonical fields to the tenant's actual fields.
+6. Read `deployments/rule-deployments.yaml` to obtain rule enable or disable decisions by `siem_id`.
+7. Load `filters/` to apply tenant-specific filters during rendering.
+8. Combine base rules, ingest bindings, field bindings, tenant filters, and deployment decisions.
+9. Generate output under `artifacts/<tenant>/tenant-rules/`.
 
-## End-to-end example
+## 8. Reference Data Flow Example
 
-Example for `eset-ra`:
+Example using `eset-ra`:
 
-1. `devices/device_eset_ra.yaml`
-   - declares this endpoint security product for tenant `fis`
-2. `logsources/logsource_eset_ra.yaml`
-   - defines dataset `eset-ra-alerts`
-3. `bindings/binding_eset_ra.yaml`
-   - maps `eset-ra-alerts` to `index: epav`, `sourcetype: eset:ra` on `splunk`
-4. `filters/detections/...`
-   - if present, adds tenant-specific conditions or exceptions during base rule rendering
-5. `deployments/rule-deployments.yaml`
-   - decides which `splunk` rules are enabled
-6. The rendered output appears under:
-   - `artifacts/fis/tenant-rules/...`
+1. `devices/device_eset_ra.yaml` declares this endpoint security product for tenant `lab`.
+2. `logsources/logsource_eset_ra.yaml` declares dataset `eset-ra-alerts`.
+3. `bindings/ingest/binding_eset_ra.yaml` maps `eset-ra-alerts` to `index: epav` and `sourcetype: eset:ra` on `splunk`.
+4. `bindings/fields/*.yml`, if present, maps the rule's canonical fields to tenant-specific fields.
+5. `filters/detections/...`, if present, adds tenant-specific conditions or exceptions during rendering.
+6. `deployments/rule-deployments.yaml` determines which rules are enabled for `splunk`.
+7. The rendered output is written to `artifacts/lab/tenant-rules/...`.
 
-## `tenants/` vs `artifacts/`
+## 9. Distinction Between `tenants/` and `artifacts/`
 
 - `tenants/` is the tenant input configuration layer
-- `filters/` inside `tenants/` is an input filtering layer used during rendering
-- `artifacts/<tenant>/tenant-rules/` is the rendered output layer
+- `filters/` under `tenants/` is input used during rendering
+- `artifacts/<tenant>/tenant-rules/` is the output layer already rendered for the tenant
 
-In short:
+In summary:
 
 - `tenants/` stores configuration and rendering policy
-- `artifacts/` stores rules after mapping, filtering, and deployment decisions are applied
+- `artifacts/` stores the result after applying mappings, filters, and deployment decisions
 
-## Conclusion
+## 10. Conclusion
 
-The core relationship in the tenant architecture is:
+In the current architecture:
 
-- `tenant` owns `devices`
+- a `tenant` owns `devices`
 - each `device` has a `logsource`
-- `binding` connects `logsource datasets` to real SIEM ingestion fields
-- `filters` refines base rules for a specific tenant during rendering
-- `deployment` decides which rules are allowed to continue
-- the final output is materialized in `artifacts/<tenant>/tenant-rules/`
+- an `ingest binding` connects a `logsource dataset` to the actual SIEM ingestion model
+- a `field binding` connects canonical fields to tenant-specific fields
+- `filters` refine base rules during rendering
+- `deployment` determines which rules are allowed to continue
+- the final output is materialized under `artifacts/<tenant>/tenant-rules`
+
+This document is the normative reference for all changes related to tenant structure, tenant bindings, and tenant-driven rendering in the repository.
+

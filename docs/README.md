@@ -1,91 +1,94 @@
-# 📚 SIEM Detection - Complete Documentation
+# SIEM-Detection-as-Code Documentation
 
-**Organization**: Phase 1 Architecture & Implementation Documentation
+This `docs/` directory contains the architecture and supporting notes for the `SIEM-Detection-as-Code` repository.
 
----
+The current documentation is organized around the new repository architecture, with separate Vietnamese and English architecture documents so the team can maintain both views in parallel.
 
-## 📂 Folder Structure
+## Documentation Structure
 
-```
+```text
 docs/
-├── phase1/                                    [Phase 1 Complete Package]
-│   ├── DOCUMENTATION_INDEX.md                 [Navigation guide - START HERE]
-│   │
-│   ├── architecture/
-│   │   └── ARCHITECTURE_ANALYSIS.md          [System design & data flows]
-│   │
-│   ├── implementation/
-│   │   └── IMPLEMENTATION_GUIDE.md           [Function specifications]
-│   │
-│   ├── summary/
-│   │   └── PHASE1_SUMMARY.md                 [Executive summary]
-│   │
-│   ├── guides/
-│   │   ├── QUICK_REFERENCE.md                [One-page lookup]
-│   │   └── README_PHASE1.md                  [Delivery summary]
-│   │
-│   ├── overview/
-│   │   └── VISUAL_SUMMARY.txt                [ASCII diagrams & visual overview]
-│   │
-│   └── demo/
-│       └── PHASE1_DEMO.ipynb                 [Interactive Jupyter notebook]
-│
-└── README.md                                  [This file]
+|-- README.md
+|-- architecture/
+|   |-- project-architecture.md
+|   |-- tenants-relationship.md
+|   `-- mappings-relationship.md
+|-- en/
+|   `-- architecture/
+|       |-- project-architecture.md
+|       |-- tenants-relationship.md
+|       `-- mappings-relationship.md
+`-- note/
+    |-- base-note.txt
+    `-- SIEM-DaC-Idea.md
 ```
 
----
+## What Each Area Contains
 
-## 🎯 Quick Navigation
+### `architecture/`
 
-### 📖 **For Understanding Architecture**
-1. Start: `phase1/DOCUMENTATION_INDEX.md`
-2. Read: `phase1/architecture/ARCHITECTURE_ANALYSIS.md`
-3. Review: `phase1/summary/PHASE1_SUMMARY.md`
-4. Demo: `phase1/demo/PHASE1_DEMO.ipynb`
+Vietnamese architecture documents for the current repository model:
 
-### 💻 **For Implementation**
-1. Quick start: `phase1/guides/QUICK_REFERENCE.md`
-2. Specifications: `phase1/implementation/IMPLEMENTATION_GUIDE.md`
-3. Demo: `phase1/demo/PHASE1_DEMO.ipynb`
+- `project-architecture.md`: overall project architecture
+- `tenants-relationship.md`: tenant-layer structure and relationships
+- `mappings-relationship.md`: mapping-layer scope, contracts, and direction
 
-### 📊 **For Overview**
-1. Visual summary: `phase1/overview/VISUAL_SUMMARY.txt`
-2. Delivery info: `phase1/guides/README_PHASE1.md`
+### `en/architecture/`
 
----
+English versions of the main architecture documents, kept in a mirrored structure:
 
-## 📋 Phase 1 Documentation Files
+- `project-architecture.md`
+- `tenants-relationship.md`
+- `mappings-relationship.md`
 
-All files are organized in subfolders for easy navigation. Total size: ~77 KB
+### `note/`
 
----
+Working notes and earlier thinking that provide historical context or raw design ideas:
 
-## 🚀 Getting Started
+- `base-note.txt`
+- `SIEM-DaC-Idea.md`
 
-Start with: **`phase1/DOCUMENTATION_INDEX.md`**
+These notes are useful for reference, but the main architecture source of truth should be the documents under `architecture/` and `en/architecture/`.
 
-This navigation guide will direct you to the right documents based on your role.
+## Recommended Reading Order
 
-**Quick Overview** (5 min):
-- `phase1/guides/QUICK_REFERENCE.md`
+### If you want the current architecture overview
 
-**Complete Understanding** (1 hour):
-- `phase1/DOCUMENTATION_INDEX.md` → Follow learning path
+1. `architecture/project-architecture.md`
+2. `architecture/tenants-relationship.md`
+3. `architecture/mappings-relationship.md`
 
-**Implementation Ready** (2 hours):
-- `phase1/implementation/IMPLEMENTATION_GUIDE.md`
-- `phase1/demo/PHASE1_DEMO.ipynb`
+### If you want the English version
 
----
+1. `en/architecture/project-architecture.md`
+2. `en/architecture/tenants-relationship.md`
+3. `en/architecture/mappings-relationship.md`
 
-## ✅ Phase 1 Status
+### If you want historical context
 
-✅ Phase 1a: Architecture & Analysis - COMPLETE  
-→ Phase 1b: Implementation - READY  
-→ Phase 1c: Manual Testing - READY  
-→ Phase 1d: Production - READY
+1. `note/base-note.txt`
+2. `note/SIEM-DaC-Idea.md`
 
----
+## Documentation Intent
 
-**Created**: January 15, 2026  
-**Status**: Complete & Ready for Implementation
+The documentation in this folder reflects the current direction of the repository:
+
+- keep `Detection as Code` as the core operating model
+- move away from manual rule deployment and manual rule management
+- standardize how rules, mappings, tenant configuration, and rendered artifacts relate to each other
+- provide a clearer architecture reference while implementation code is still catching up
+
+## Current Status
+
+At this stage:
+
+- the architecture documents are more reliable than older implementation assumptions
+- `docs/architecture/` is the primary reference in Vietnamese
+- `docs/en/architecture/` is the primary reference in English
+- some older note files may still use legacy naming such as `SIEM-DaC`
+
+## Summary
+
+Use this folder as the entry point for understanding how `SIEM-Detection-as-Code` is structured today.
+
+For architecture, start from `architecture/` or `en/architecture/`. For older thinking and design history, use `note/`.

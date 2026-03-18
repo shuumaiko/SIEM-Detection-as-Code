@@ -1,82 +1,66 @@
-# Kiến trúc thành phần Mapping
+﻿# Kiến trúc thành phần Mapping
 
-## Phạm vi
+> English mirror: [mappings-relationship.md](../en/architecture/mappings-relationship.md)
 
-Tài liệu này mô tả vai trò của thư mục `mappings/` trong kiến trúc hiện tại của dự án, với góc nhìn thực tế từ phạm vi làm việc của team content.
+## 1. Mục đích và phạm vi
 
-Ở thời điểm hiện tại:
+Tài liệu này xác định vai trò, phạm vi trách nhiệm, và nguyên tắc tổ chức của thư mục `mappings/` trong repository `SIEM-Detection-as-Code`.
 
-- team content là bên quản lý detection content, rule logic, và field vocabulary dùng cho rule
-- team deploy là bên vận hành SIEM thực tế, chịu trách nhiệm trạng thái ingest, parser, và field đang tồn tại trên SIEM
-- đầu vào từ team deploy thường là SIEM đã được triển khai, đã thu thập log, và đã parse log ở một mức nào đó
+Tài liệu tập trung vào lớp mapping phục vụ detection content và tenant-specific rendering. Tài liệu không mô tả toàn bộ bài toán từ raw log đến parser implementation của từng SIEM.
 
-Vì vậy trong version hiện tại, `mappings/` không nên bị hiểu là lớp bắt buộc giải quyết toàn bộ bài toán từ raw log đến field cuối cùng trên SIEM. Thay vào đó, nó nên được hiểu là lớp contract để team content chuẩn hóa detection field và nối detection logic với field thực tế đang có trên SIEM của từng tenant.
+## 2. Vai trò của mapping layer
 
-## Mục tiêu của `mappings/`
+Trong kiến trúc hiện tại, `mappings/` là lớp contract phục vụ chuẩn hóa field và ngữ nghĩa detection content.
 
-Trong phạm vi của team content, `mappings/` có 4 mục tiêu chính:
+Lớp này có các mục tiêu chính sau:
 
-- tạo một vocabulary field chung để viết detection rule
-- giảm phụ thuộc của rule vào naming cá nhân của người viết rule
-- cho phép map detection field chuẩn sang field thực tế của tenant trên SIEM
-- tạo nền cho automation render rule theo tenant, ngay cả khi hiện trạng field trên SIEM chưa được chuẩn hóa
+- cung cấp vocabulary field chung để viết và duy trì detection rule
+- giảm phụ thuộc của rule vào naming riêng của từng nguồn content
+- nối source rule field với canonical field của project
+- tạo nền cho việc nối canonical field với field thực tế của tenant trên SIEM
+- hỗ trợ render rule theo tenant trong khi converter tổng quát chưa hoàn thiện đầy đủ
 
-Nói ngắn gọn:
+Theo mô hình này:
 
-- `rules/` trả lời "cần phát hiện hành vi gì?"
-- `mappings/` trả lời "rule đang nói về field nào theo nghĩa chuẩn?"
-- `tenants/` trả lời "tenant này thực tế đang có field nào và deploy vào đâu?"
+- `rules/` định nghĩa hành vi cần phát hiện
+- `mappings/` định nghĩa field được hiểu như thế nào trong ngữ cảnh chuẩn
+- `tenants/` định nghĩa tenant đang có field nào và deploy vào đâu
 
-## Cấu trúc folder đề xuất
+## 3. Mô hình folder chuẩn
 
-Để giữ nguyên kiến trúc hiện tại của `rules/` và giảm chi phí áp dụng trong version hiện tại, phần `mappings/` nên được gom lại thành các folder phản ánh trực tiếp các mapping thực tế mà pipeline cần dùng.
-
-Cấu trúc đề xuất:
+Trong giai đoạn hiện tại, lớp mapping được tổ chức theo 2 nhánh chính:
 
 ```text
 mappings/
   detections/
-    network/
-      firewall/
-        firewall.fields.yml
+    <domain>/
+      <product>/
+        *.fields.yml
 tenants/
   <tenant>/
     bindings/
       ingest/
-        <device>.yml
+        *.yaml
       fields/
-        <device>.fields.yml
+        *.fields.yml
 ```
 
-Nguyên tắc đặt tên:
+Nguyên tắc tổ chức:
 
-- dùng tên folder ngắn, rõ nghĩa, thống nhất theo kiểu kebab-case
-- mỗi folder phải phản ánh đúng loại mapping đang chứa
-- tránh tách thêm folder trung gian nếu pipeline cuối cùng vẫn phải ghép chúng lại bằng logic ngoài
+- `mappings/detections/` lưu mapping chuẩn từ `source rule field` sang `canonical field`
+- `tenants/.../bindings/fields/` lưu mapping từ `canonical field` sang `tenant SIEM field`
+- taxonomy của `mappings/detections/` phải bám sát taxonomy của `rules/`
+- tránh nhân bản file mapping theo từng rule nếu nhiều rule cùng dùng một field vocabulary
 
-Trong mô hình này:
+## 4. `mappings/detections/`
 
-- `mappings/detections/`
-  - chứa mapping thực tế từ `source rule field -> canonical field`
-- `tenants/.../bindings/fields/`
-  - chứa mapping thực tế từ `canonical field -> tenant SIEM field`
-
-Như vậy kiến trúc folder sẽ tập trung vào:
-
-- một lớp mapping chuẩn hóa dùng chung trong `mappings/`
-- một lớp mapping triển khai thực tế theo tenant trong `tenants/`
-
-### 1. `mappings/detections/`
-
-Đây là lớp mapping chính của team content trong v1.0.
+`mappings/detections/` là lớp mapping chuẩn ở phía detection content.
 
 Vai trò:
 
 - chuẩn hóa field của rule nguồn về canonical field
-- hỗ trợ ingest rule từ nhiều nguồn khác nhau
-- giảm việc phải viết mapping riêng cho từng rule nếu chúng dùng chung một field vocabulary
-
-Lớp này nên được tổ chức theo domain giống cấu trúc của `rules/`.
+- hỗ trợ ingest rule từ nhiều nguồn field vocabulary khác nhau
+- tạo shared field dictionary theo domain hoặc product
 
 Ví dụ:
 
@@ -95,20 +79,17 @@ mappings/
         firewall.fields.yml
 ```
 
-Ở đây:
+Trong mô hình này, `firewall.fields.yml` là shared field dictionary cho nhóm rule firewall; file này không phải là mapping riêng cho một rule đơn lẻ.
 
-- `rules/` vẫn giữ detection logic như hiện tại
-- `firewall.fields.yml` là shared field dictionary cho toàn bộ rule firewall
+## 5. Shared field dictionary theo domain
 
-### 2. `firewall.fields.yml` là shared field dictionary theo domain
+Một file như `firewall.fields.yml` phải được hiểu như một dictionary chuẩn theo domain.
 
-File như `firewall.fields.yml` không nên bị hiểu là mapping của từng rule riêng lẻ.
+Vai trò của file dạng này:
 
-Nó nên được hiểu là:
-
-- một bộ quy tắc mapping chung cho `network/firewall`
-- nơi gom các source field alias khác nhau về cùng canonical field
-- lớp giải bài toán `many source fields -> one canonical field`
+- gom nhiều source field alias về cùng một canonical field
+- chuẩn hóa vocabulary chung cho một nhóm rule
+- giảm duplication trong quá trình maintain mapping
 
 Ví dụ:
 
@@ -116,42 +97,23 @@ Ví dụ:
 - `src`
 - `source.ip`
 
-Có thể cùng map về:
+có thể cùng ánh xạ về:
 
 - `canonical.source.ip`
 
-Cách tổ chức này phù hợp hơn với thực tế content team vì:
+File dictionary này chỉ mô tả quan hệ ánh xạ field; file này không thay thế cho field requirement riêng của từng rule.
 
-- nhiều rule firewall thường dùng lặp lại cùng một field vocabulary
-- tránh duplication nếu mỗi rule phải có một file mapping riêng
-- dễ review và maintain hơn khi cần đổi một quy ước field chung
+## 6. Metadata dùng để resolve mapping
 
-Điều quan trọng là:
+Metadata trong file mapping phải dùng cùng ngôn ngữ với metadata của rule, thay vì tạo một vocabulary riêng cho mapping.
 
-- `firewall.fields.yml` là field dictionary
-- nó không thay thế requirement riêng của từng rule
-
-Tức là file này trả lời:
-
-- field nào có thể hiểu là canonical field nào
-
-Nhưng không nhất thiết trả lời:
-
-- rule nào bắt buộc field nào
-- field nào optional
-- field nào chỉ dùng cho output
-
-### Metadata chung giữa `rule` và `mapping`
-
-Để resolver chọn đúng file mapping, metadata trong file mapping nên dùng cùng ngôn ngữ với `rule`, thay vì tạo một vocabulary riêng cho mapping.
-
-Các field chung nên được dùng là:
+Các field được sử dụng để resolve mapping bao gồm:
 
 - `category`
 - `product`
 - `service`
 
-Trong thực tế, cách biểu diễn nên bám theo cấu trúc `logsource` của rule, ví dụ:
+Ví dụ:
 
 ```yaml
 logsource:
@@ -160,113 +122,74 @@ logsource:
   service: traffic
 ```
 
-Ý nghĩa:
+Nguyên tắc áp dụng:
 
-- `category`
-  - là nhóm logsource hoặc detection chính, ví dụ `firewall`
-- `product`
-  - là product scope của rule hoặc mapping, ví dụ `any`, `checkpoint`, `paloalto`
-- `service`
-  - là dataset hoặc service logic, ví dụ `traffic`
+- metadata dùng để match phải bám theo `rule.logsource.*`
+- taxonomy thư mục vẫn có giá trị tổ chức file, nhưng không thay thế metadata dùng để resolve
+- trong giai đoạn hiện tại, không sử dụng `domain` như key chính để resolve mapping
 
-Phần taxonomy trong folder như `network/firewall/` vẫn hữu ích để tổ chức file, nhưng metadata dùng để match giữa `rule` và `mapping` nên thống nhất với `rule.logsource.*`.
+## 7. Mô hình canonical field
 
-Vì vậy trong version hiện tại:
+Trong ngữ cảnh của project này, `canonical field` là bộ field chuẩn nội bộ của repository.
 
-- không nên dùng `domain` như key chính để resolve mapping
-- nên dùng `logsource.category`, `logsource.product`, và khi cần là `logsource.service`
+Đặc tính mong muốn của canonical field:
 
-## Phạm vi tạo canonical field
+- ổn định hơn field đang tồn tại trên từng tenant
+- không phụ thuộc trực tiếp vào raw log của vendor
+- không phụ thuộc trực tiếp vào parser implementation hiện tại của từng SIEM
+- đủ nhỏ để có thể duy trì trong thực tế, nhưng đủ rõ để giữ semantic contract chung
 
-Một vấn đề thực tế của kiến trúc mapping là:
+`canonical field` có thể tham chiếu semantic từ OCSF, nhưng không bắt buộc phải là bản triển khai đầy đủ của OCSF trong giai đoạn hiện tại.
 
-- mỗi logsource có thể có rất nhiều field
-- nhưng detection rule thường chỉ dùng một phần nhỏ trong số đó
-- nếu cố map toàn bộ field của logsource sang canonical ngay từ đầu thì chi phí rất lớn
-- sau đó còn phát sinh thêm chi phí chuẩn hóa semantic theo OCSF
+## 8. Phạm vi canonical hóa dữ liệu
 
-Vì vậy trong version hiện tại, không nên xem việc canonical hóa toàn bộ logsource là điều kiện bắt buộc trước khi viết hoặc triển khai rule.
+Không phải mọi field của logsource đều cần được canonical hóa ngay từ đầu.
 
-Thay vào đó, hướng phù hợp hơn là:
-
-- tạo canonical field theo nhu cầu detection thực tế
-- bắt đầu từ `source rule field required`
-- sau đó map các canonical field đó sang field thực tế trên SIEM của từng logsource hoặc tenant
-
-Nói ngắn gọn:
-
-```text
-source rule required fields
-  -> canonical fields cần thiết cho detection
-  -> tenant SIEM fields
-```
-
-Trong phạm vi v1.0, canonical field nên ưu tiên được tạo cho các nhóm sau:
+Trong giai đoạn hiện tại, canonical field được tạo theo nguyên tắc `detection-driven`, tức là ưu tiên theo nhu cầu thực tế của rule. Các nhóm field nên được ưu tiên gồm:
 
 - field bắt buộc để rule hoạt động
 - field dùng cho correlation
 - field dùng cho output, notable, hoặc review vận hành
 
-Các field khác của logsource có thể chưa cần canonical hóa ngay.
+Mô hình xử lý tương ứng là:
 
-## Lợi ích của cách tiếp cận này
+```text
+source rule field
+  -> canonical field
+  -> tenant SIEM field
+```
 
-Cách làm `canonical by detection need` mang lại các lợi ích thực tế:
+Cách tiếp cận này giúp:
 
-- giảm đáng kể effort ban đầu
-- giúp team content triển khai rule nhanh hơn
-- canonical được sinh ra từ nhu cầu detection thật, thay vì từ mô hình dữ liệu lý tưởng
-- tránh tốn thời gian chuẩn hóa những field chưa mang lại giá trị detection
-- phù hợp với trạng thái hiện tại khi hardcoded SPL vẫn là execution artifact chính
+- giảm effort ban đầu
+- giảm chi phí canonical hóa toàn bộ logsource upfront
+- ưu tiên giá trị detection trước khi mở rộng data model
 
-Đây là cách tiếp cận thực dụng hơn cho version `0.x` hoặc `1.0`.
+## 9. Quy tắc vận hành canonical field
 
-## Trade-off của cách tiếp cận này
+Để tránh phát sinh canonical field trùng nghĩa hoặc thiếu kiểm soát, quy trình vận hành tối thiểu nên gồm:
 
-Việc không canonical hóa toàn bộ logsource upfront cũng có trade-off rõ ràng:
+1. Liệt kê các `source rule field` mà rule thực sự sử dụng.
+2. Kiểm tra xem các field đó đã có canonical tương ứng hay chưa.
+3. Nếu đã có, sử dụng lại canonical field hiện hữu.
+4. Nếu chưa có, bổ sung canonical field mới vào dictionary hoặc registry phù hợp.
+5. Chỉ sau đó mới ánh xạ canonical field sang `tenant SIEM field`.
 
-- canonical ban đầu sẽ mang tính `detection-driven`, không phải `data-model-driven`
-- có nguy cơ phát sinh các canonical field gần nghĩa nhau nếu không có review tốt
-- mức độ bao phủ semantic giữa các logsource sẽ tăng dần theo rule coverage, không đầy đủ ngay từ đầu
-- về sau có thể cần refactor hoặc gộp lại một số canonical field khi hệ thống trưởng thành hơn
+## 10. `tenants/.../bindings/fields/`
 
-Tuy vậy, đây là trade-off chấp nhận được trong bối cảnh hiện tại vì:
-
-- mục tiêu chính là làm cho rule có thể dùng được trong pipeline
-- team content không sở hữu toàn bộ lớp raw log parsing
-- giá trị ngắn hạn nằm ở detection coverage và khả năng tái sử dụng content, không nằm ở việc mô hình hóa toàn bộ dữ liệu upfront
-
-## Nguyên tắc vận hành cho canonical
-
-Để tránh canonical phát triển rời rạc, nên áp dụng nguyên tắc sau:
-
-1. Khi có rule mới, liệt kê các `source rule field` mà rule thực sự sử dụng.
-2. Kiểm tra xem các field đó đã có canonical tương ứng chưa.
-3. Nếu đã có thì dùng lại.
-4. Nếu chưa có thì thêm mới canonical field vào registry nội bộ.
-5. Chỉ sau đó mới map canonical field sang tenant SIEM field.
-
-Điều này giúp:
-
-- không phải map toàn bộ logsource upfront
-- vẫn giữ được một lớp contract semantic ổn định
-- giảm nguy cơ trùng nghĩa giữa các canonical field khi số lượng rule tăng lên
-
-### 3. `tenants/<tenant>/bindings/fields/`
-
-Đây là lớp map từ canonical field sang field thực tế trên SIEM của từng tenant.
+`tenants/.../bindings/fields/` là lớp triển khai mapping theo tenant.
 
 Vai trò:
 
-- là source of truth cho hiện trạng field thực tế của tenant
+- là nguồn chuẩn cho field thực tế trên SIEM của tenant
 - phản ánh khác biệt theo `tenant_id`, `siem_id`, `device_id`, và khi cần là `dataset_id`
-- cho phép team deploy và team content trao đổi trên cùng một field contract nhưng không ép mọi tenant phải giống nhau
+- cung cấp lớp nối cuối cùng giữa canonical field và field thực thi thực tế
 
 Ví dụ:
 
 ```text
 tenants/
-  fis/
+  lab/
     bindings/
       fields/
         checkpoint-fw.fields.yml
@@ -275,294 +198,88 @@ tenants/
 Trong file này có thể mô tả:
 
 - canonical field nào map sang field nào trên SIEM của tenant
-- phạm vi mapping đó đang áp cho device hoặc dataset nào
+- mapping đó áp dụng cho device hoặc dataset nào
 
-### 4. Bỏ `canonical-views/`, `siem-fields/`, và `logsources/` khỏi lớp folder chuẩn hiện tại
+## 11. Quan hệ giữa source rule field, canonical field, OCSF, và tenant field
 
-Trong mô hình folder mới:
+Các lớp field trong kiến trúc hiện tại được phân tách như sau:
 
-- không cần giữ `canonical-views/` như một folder riêng nếu semantic field đã được thể hiện ngay trong file mapping thực tế
-- không cần giữ `siem-fields/` như một folder chuẩn nếu mapping thực tế phụ thuộc tenant và device
-- không xem `logsources/` là một nhánh chuẩn trong kiến trúc folder hiện tại
+- `source rule field`: field xuất hiện trong rule nguồn hoặc content legacy
+- `canonical field`: field chuẩn nội bộ của project
+- `OCSF`: semantic reference để thiết kế canonical field
+- `tenant SIEM field`: field vật lý thực tế đang tồn tại trên SIEM của tenant
 
-Nếu cần giữ dữ liệu cũ hoặc tri thức về vendor log:
-
-- có thể giữ lại như legacy data
-- hoặc chuyển dần sang một khu vực tài liệu hoặc registry phụ trợ riêng
-
-Phần pipeline chính chỉ nên tập trung vào:
-
-- `mappings/detections/`
-- `tenants/.../bindings/fields/`
-
-## Canonical là gì
-
-Trong ngữ cảnh của dự án này, `canonical field` nên được hiểu là:
-
-- bộ field chuẩn nội bộ của project
-- ổn định hơn field đang tồn tại trên từng tenant
-- không phụ thuộc trực tiếp vào raw log của vendor
-- không phụ thuộc trực tiếp vào cách parse hiện thời của từng SIEM deployment
-
-`canonical` không nhất thiết phải là OCSF đầy đủ 100%.
-
-Ở v1.0, cách thực dụng hơn là:
-
-- dùng OCSF như semantic reference
-- chọn ra một tập field đủ nhỏ và đủ ổn định cho từng domain detection
-- xem đó là canonical vocabulary của project
-
-Ví dụ:
-
-- canonical firewall field có thể là `src_ip`, `dest_ip`, `dest_port`, `protocol`, `action`
-- tenant A có thể dùng `src`, `dst`, `dport`, `proto`, `act`
-- tenant B có thể dùng `src_ip`, `dest_ip`, `dest_port`, `protocol`, `action`
-
-Khi đó:
-
-- người viết rule chỉ cần dùng canonical field
-- tenant binding sẽ chịu trách nhiệm map canonical field sang field SIEM thực tế của tenant
-
-## Rule field từ source bên ngoài
-
-Trong thực tế, không phải mọi detection rule đi vào hệ thống đều được viết trực tiếp bằng canonical field của project.
-
-Ví dụ:
-
-- rule lấy từ Sigma
-- rule lấy từ Elastic Security
-- rule lấy từ content cũ trong nội bộ
-
-Các rule này thường mang theo field vocabulary riêng của nguồn gốc. Vì vậy ở v1.0, cần phân biệt rõ:
-
-- `source rule field`
-  - là field xuất hiện trong rule gốc từ nguồn bên ngoài
-- `canonical field`
-  - là field chuẩn nội bộ của project
-
-Trong bối cảnh này, một hướng thiết kế hợp lý là:
-
-```text
-source rule field => canonical field
-```
-
-Thông qua một file mapping hoặc config, nhiều source field khác nhau có thể map về cùng một canonical field.
-
-Trong version hiện tại, config này nên được đặt ở dạng shared field dictionary theo domain, ví dụ:
-
-```text
-mappings/
-  detections/
-    network/
-      firewall/
-        firewall.fields.yml
-```
-
-Ví dụ:
-
-- `src_ip`
-- `src`
-- `source.ip`
-
-Có thể cùng map về:
-
-- `canonical.source.ip`
-
-Cách tiếp cận này giúp:
-
-- tận dụng được content từ nguồn ngoài
-- giảm công rewrite rule bằng tay
-- vẫn giữ được một semantic contract chung trong nội bộ project
-- không bắt người viết content phải tạo một file mapping riêng cho từng rule nếu chúng cùng một domain field vocabulary
-
-## Quan hệ giữa canonical, OCSF, và SIEM field
-
-Trong version hiện tại, nên nhìn 3 lớp này như sau:
-
-- `source rule field`
-  - là field của rule gốc từ nguồn bên ngoài hoặc content legacy
-- `canonical field`
-  - là contract chính của team content
-  - là lớp field chuẩn nội bộ mà project hướng tới
-- `OCSF`
-  - là semantic reference để thiết kế canonical field
-  - không bắt buộc phải được triển khai đầy đủ ở v1.0
-- `tenant SIEM field`
-  - là field vật lý thực tế trên Splunk hoặc SIEM khác của tenant
-  - có thể khác nhau giữa các tenant
-
-Vì vậy, trong v1.0, pipeline hợp lý hơn là:
+Pipeline mục tiêu ở giai đoạn hiện tại là:
 
 ```text
 source rule field <=> canonical field <=> tenant SIEM field
 ```
 
-Thay vì kỳ vọng ngay:
+Mô hình này phù hợp hơn với hiện trạng của project so với việc giả định một pipeline đầy đủ từ raw log đến parser, OCSF, rồi render end-to-end.
 
-```text
-raw log => parser => SIEM field => OCSF => rule render end-to-end
-```
+## 12. Vai trò của hardcoded SPL
 
-## Vai trò của hardcoded SPL trong kiến trúc hiện tại
+Trong hiện trạng của project, hardcoded SPL hoặc query đặc thù theo SIEM vẫn là execution artifact hợp lệ.
 
-Hiện tại dự án vẫn còn giữ các phần `SPL hardcode query`.
+Việc này phản ánh một quyết định kiến trúc có kiểm soát, dựa trên các lý do sau:
 
-Điều này không nên bị xem là mâu thuẫn kiến trúc, mà là một quyết định ứng phó có kiểm soát.
+- converter tổng quát từ detection rule chuẩn sang SIEM rule chưa ổn định
+- pipeline vẫn cần output có thể review, export, hoặc deploy
+- detection intent và field contract vẫn cần được giữ ở lớp chuẩn
 
-Nguyên nhân:
+Vì vậy:
 
-- bài toán convert từ detection rule chuẩn sang SIEM rule cụ thể vẫn là một bài toán lớn
-- các converter bên ngoài có thể hỗ trợ một phần nhưng chất lượng đầu ra chưa đáp ứng mong muốn
-- để pipeline vẫn chạy được, content team đang tạo ra SPL thủ công với vai trò tương đương output của converter
+- detection rule chuẩn giữ semantic intent và field requirement
+- hardcoded SPL giữ vai trò execution artifact tạm thời
+- canonical field tiếp tục giữ vai trò contract lâu dài của detection content
 
-Do đó trong version hiện tại:
+## 13. Phạm vi hỗ trợ thực tế trong v1.0
 
-- detection rule chuẩn vẫn giữ detection intent và semantic field requirement
-- `x_splunk_es.search_query` hoặc phần query hardcode giữ vai trò execution artifact cho Splunk
-- các bước sau của pipeline có thể dùng artifact này làm input thực thi hoặc deploy
-- trong nhiều trường hợp, hardcoded SPL có thể được viết trực tiếp theo field của detection rule nguồn để giảm chi phí convert
+Trong giai đoạn `0.x` hoặc `1.0`, lớp `mappings/` nên hỗ trợ các khả năng sau:
 
-Nói cách khác:
+- ánh xạ `source rule field` sang `canonical field`
+- rename field và xử lý alias field
+- ánh xạ ingest target như `index`, `sourcetype`
+- validate tenant có đủ field cần thiết để render hoặc sử dụng rule hay không
 
-- hardcoded SPL là lớp thực thi tạm thời nhưng hợp lệ
-- canonical field mới là lớp giữ meaning lâu dài của detection
+Các khả năng sau chưa được xem là mục tiêu bắt buộc trong cùng giai đoạn:
 
-Đây là một trade-off có chủ đích:
+- enum normalization ở mức sâu
+- type casting tự động
+- combine hoặc split field phức tạp
+- derived field nhiều bước
+- transform logic tổng quát cho mọi loại field
 
-- ưu tiên để pipeline vận hành được trong v1.0
-- giảm công sức cho người convert rule từ nguồn ngoài
-- chấp nhận việc SPL chưa đi qua một converter tổng quát hoàn chỉnh
+## 14. Giới hạn hiện tại
 
-Trong mô hình này, người viết rule hoặc người convert rule có thể:
+Tại thời điểm hiện tại, các giới hạn sau phải được ghi nhận rõ:
 
-- lấy rule từ nguồn ngoài
-- viết hardcoded SPL dựa trên field của rule nguồn
-- bổ sung field mapping config để nối source rule field sang canonical
-- từ canonical tiếp tục nối sang field thực tế của tenant trên SIEM
-
-Như vậy:
-
-- tactical path để triển khai nhanh vẫn tồn tại
-- lớp chuẩn hóa semantic vẫn được giữ song song
-- việc có hardcoded SPL không phủ nhận giá trị của canonical mapping
-
-## Mô hình trách nhiệm phù hợp cho v1.0
-
-Để phù hợp với phạm vi của team content, `mappings/` ở version hiện tại nên tập trung vào 3 lớp:
-
-### 1. Detection field mapping / canonical field
-
-Team content sở hữu:
-
-- field của rule nguồn khi ingest từ external source
-- shared field dictionary theo domain như `firewall.fields.yml`
-- field requirement của rule
-- semantic meaning của từng field
-
-### 2. Tenant field alias
-
-Tenant layer sở hữu:
-
-- canonical field nào map sang field nào trên SIEM của tenant
-- dataset nào đi vào `index` và `sourcetype` nào
-
-### 3. SIEM execution artifact
-
-Lớp output thực thi hiện tại bao gồm:
-
-- SPL hardcode
-- metadata triển khai như schedule, earliest, latest, notable config
-
-Ba lớp này là đủ để build version đầu mà chưa cần giải xong converter tổng quát.
-
-## Support thực tế của v1.0
-
-Ở version `0.x` hoặc `1.0`, mức support hợp lý của `mappings/` là:
-
-- map `source rule field` sang `canonical field`
-- rename field
-- alias field
-- map ingest target như `index`, `sourcetype`
-- validate tenant có đủ field cần thiết cho rule hay không
-
-Chưa nên coi là mục tiêu bắt buộc của v1.0:
-
-- enum normalization sâu
-- cast kiểu dữ liệu tự động
-- combine hoặc split field
-- derived field phức tạp
-- transform logic nhiều bước
-
-Các phần này có thể được ghi nhận như hướng phát triển tương lai, nhưng không nên làm chậm việc đưa kiến trúc hiện tại vào sử dụng.
-
-## Sơ đồ quan hệ đề xuất cho version hiện tại
-
-```mermaid
-flowchart LR
-    A[External or base rule\nSource rule field] --> B[mappings/detections\nSource to canonical mapping]
-    B --> C[Canonical field requirement]
-
-    D[tenants/logsources\nDataset logic] --> E[tenants/bindings\nIndex, sourcetype]
-    E --> F[Tenant SIEM field]
-
-    C --> G[tenants/bindings/fields\nCanonical to tenant SIEM field]
-    F --> G
-    G --> H[Render review / validation]
-    A --> I[Hardcoded SPL / SIEM query artifact]
-    H --> I
-    I --> J[artifacts/<tenant>/tenant-rules]
-```
-
-## Giá trị của `mappings/` đối với automation
-
-Dù converter chưa hoàn chỉnh, `mappings/` vẫn mang lại giá trị lớn cho automation:
-
-- rule có field vocabulary nhất quán hơn
-- giảm phụ thuộc vào cá nhân người viết rule
-- tạo khả năng kiểm tra tenant nào có đủ field để dùng rule
-- hỗ trợ review giữa content team và deploy team bằng một contract rõ ràng
-- tạo dữ liệu nền để đề xuất chuẩn hóa SIEM field trong tương lai
-
-Điểm quan trọng là:
-
-- `mappings/` không cần giải trọn bài toán convert để có giá trị
-- chỉ cần nó trở thành contract rõ ràng giữa detection intent và SIEM field thực tế thì đã đủ hữu ích cho v1.0
-
-## Giới hạn hiện tại
-
-Ở trạng thái hiện tại, một số giới hạn cần được chấp nhận rõ:
-
-- mapping end-to-end từ raw log đến SIEM field chưa nằm trong phạm vi kiểm soát trực tiếp của team content
+- mapping end-to-end từ raw log đến field cuối cùng trên SIEM không nằm hoàn toàn trong phạm vi của lớp `mappings/`
 - hardcoded SPL vẫn là thành phần quan trọng của pipeline
-- converter tổng quát từ detection rule sang SIEM rule vẫn chưa ổn định
-- dữ liệu vendor/raw legacy không còn nằm trong lớp folder chuẩn của pipeline hiện tại
+- converter tổng quát vẫn chưa đạt độ ổn định cần thiết
+- một số tri thức legacy về vendor hoặc raw log không còn nằm trong lớp folder chuẩn chính của pipeline
 
-Việc chấp nhận các giới hạn này giúp tài liệu kiến trúc phản ánh đúng thực tế triển khai, thay vì mô tả một trạng thái lý tưởng nhưng chưa vận hành được.
+Việc ghi nhận rõ các giới hạn này là cần thiết để tài liệu phản ánh đúng hiện trạng vận hành.
 
-## Hướng phát triển sau v1.0
+## 15. Hướng phát triển tiếp theo
 
-Sau khi lớp canonical và tenant binding ổn định, có thể mở rộng `mappings/` theo các hướng sau:
+Sau khi canonical field và tenant bindings đạt mức ổn định cao hơn, lớp `mappings/` có thể được mở rộng theo các hướng sau:
 
-- mở rộng canonical field dictionary theo từng domain
+- mở rộng field dictionary theo từng domain
 - bổ sung field coverage report cho từng rule và tenant
-- thêm transform rule đơn giản như enum alias hoặc type cast
+- hỗ trợ transform đơn giản như enum alias hoặc type cast
 - chuẩn hóa dần naming của field trên tenant SIEM
-- đánh giá lại khả năng dùng converter hoặc build converter nội bộ
-- nếu cần, có thể bổ sung lại vendor/raw knowledge như một registry phụ trợ riêng
+- đánh giá lại khả năng sử dụng hoặc xây dựng converter tổng quát
 
-## Kết luận
+## 16. Kết luận
 
-Trong bối cảnh hiện tại của dự án:
+Trong kiến trúc hiện tại của `SIEM-Detection-as-Code`:
 
-- `mappings/` là lớp contract field do team content dẫn dắt
-- `source rule field` là lớp field đầu vào khi tiếp nhận rule từ nguồn ngoài hoặc content legacy
-- `mappings/detections/` nên là lớp mapping chính của version hiện tại
-- `mappings/detections/.../<domain>.fields.yml` nên được tổ chức theo domain của `rules/`, ví dụ `network/firewall/firewall.fields.yml`
-- `tenants/.../bindings/fields/` nên là source of truth cho `canonical field <=> tenant SIEM field`
-- `canonical` là bộ field chuẩn nội bộ để rule dựa vào
-- `tenant bindings` là cầu nối giữa canonical field và field thực tế trên SIEM
-- `hardcoded SPL` là execution artifact tạm thời nhưng hợp lệ của pipeline
-- các nhánh tách rời như `source-fields/`, `canonical-views/`, `siem-fields/`, hoặc `logsources/` không nên tiếp tục là folder kiến trúc chính của version hiện tại
-- việc cho phép hardcoded SPL bám trực tiếp vào field của rule nguồn là một trade-off có chủ đích trong `v1.0`
+- `mappings/` là lớp contract field ở phía detection content
+- `mappings/detections/` là lớp mapping chuẩn từ `source rule field` sang `canonical field`
+- `tenants/.../bindings/fields/` là lớp mapping từ `canonical field` sang `tenant SIEM field`
+- `canonical field` là lớp chuẩn nội bộ để detection content dựa vào
+- hardcoded SPL là execution artifact hợp lệ trong giai đoạn chuyển tiếp
 
-Nếu giữ đúng phạm vi này, `mappings/` sẽ vừa đủ thực dụng để dùng trong `v1.0`, vừa mở đường cho các lớp transform sâu hơn ở các giai đoạn sau.
+Tài liệu này là chuẩn tham chiếu cho mọi thay đổi liên quan đến vocabulary field, canonical model, cơ chế resolve mapping, và tenant field binding trong repository.
+
