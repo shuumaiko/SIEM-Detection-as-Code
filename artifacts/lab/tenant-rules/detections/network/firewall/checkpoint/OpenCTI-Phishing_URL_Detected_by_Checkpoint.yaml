@@ -1,0 +1,45 @@
+title: OpenCTI - Phishing URL Detected by Checkpoint
+id: d49i97h3-66i1-703d-e3f6-e1fgh59dehgd
+status: deprecated
+description: Detects network traffic where the destination URL matches known Phishing URLs as identified by OpenCTI and logged by Checkpoint firewalls.
+references:
+    - https://www.opencti.io/
+    - Internal: HaoDA4
+author: AnhPT127
+date: 2026-02-06
+modified: 2026-02-06
+tags:
+    - attack.t1566
+    - attack.phishing
+logsource:
+    category: firewall
+    product: checkpoint
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_url:
+        # Placeholder for Phishing URLs from OpenCTI
+        # lookup FPT-Phishing-URLs
+    condition: selection
+falsepositives:
+    - Unknown
+level: high
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: high, risk_score: 50 }
+    search_query: |
+        (index=$INDEX$ sourcetype=$SOURCETYPE$)
+        | search
+            [| inputlookup FPT-Phishing-URL | rename value as url | fields url]
+        | bucket _time span=1h
+        | convert timeformat="%m/%d/%Y %H:%M:%S" ctime(_time) AS Time | eval Alert_Severity="Medium" 
+        | stats values(url) as URL, values(action) as Action, values(src_user) as User values(dest_ip) as Dest_IP count by Alert_Severity Time src_ip
+        | rename src_ip as Source_IP
+        | fillnull value=N/A URL Action User Dest_IP

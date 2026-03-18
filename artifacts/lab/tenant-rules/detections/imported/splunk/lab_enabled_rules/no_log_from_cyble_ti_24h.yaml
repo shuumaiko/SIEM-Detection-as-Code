@@ -1,0 +1,43 @@
+﻿title: FPT - No log from Cyble TI (24h)
+id: b48645f8-549d-59d1-aac8-e12ff3123bfe
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - No log from Cyble TI (24h)'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: '| tstats count where index=* by _time source
+
+    | eventstats latest(_time) as latest_Time_source by source
+
+    | eventstats latest(_time) as latest_Time_all
+
+    | eval conditions=latest_Time_all - latest_Time_source
+
+    | eval Status=if(conditions>=86400,"Missing Data!","OK!")
+
+    | eval Alert_Severity="High"
+
+    | stats values(Status) as Status values(conditions) as conditions, values(latest_Time_source) as latest_Time_source, values(latest_Time_all) as Curent_Time by Alert_Severity source
+
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(latest_Time_source) as latest_Time_source,  ctime(Curent_Time) as Curent_Time
+
+    | convert timeformat="%Ss" ctime(conditions) as Lost_Time
+
+    | search Status="Missing Data!" (source="*Cyble*")'
+

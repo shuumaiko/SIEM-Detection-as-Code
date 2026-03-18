@@ -1,137 +1,229 @@
-# SIEM-DaC
+# SIEM-Detection-as-Code
 
-Kho lưu trữ triển khai **Detection as Code (DaC)** phục vụ xây dựng, quản lý và triển khai detection cho SOC đa SIEM.
+This repository manages `Detection as Code` for a multi-tenant SOC environment, with a structure that separates detection logic, field normalization, tenant-specific configuration, and SIEM-specific deployment artifacts.
 
-## 📌 Giới thiệu
+## Objectives
 
-SIEM-DaC là dự án áp dụng mô hình **Detection as Code** nhằm chuẩn hóa detection rule, log schema và quy trình triển khai detection trong SOC.
+`SIEM-Detection-as-Code` is designed to:
 
-Dự án tập trung vào việc tách bạch rõ ràng giữa:
-- 🧠 Logic phát hiện
-- 📐 Chuẩn dữ liệu và schema log
-- ⚙️ Triển khai kỹ thuật theo từng nền tảng SIEM
+- separate detection logic from vendor-specific log formats
+- separate detection logic from SIEM-specific implementation
+- manage detection rules as code
+- support validation, rendering, export, and deployment per tenant
+- improve reuse of detection content across multiple tenants
 
-Mục tiêu là giảm phụ thuộc vendor, tăng khả năng tái sử dụng và kiểm soát chất lượng detection.
+From an architectural point of view, this repository is not just a collection of YAML rules. It is a layered model for organizing detection content, where:
 
-Đối tượng sử dụng:
-- SOC Analyst
-- Detection Engineer
-- Threat Hunter
-- SIEM Engineer
-- DFIR / Purple Team
+- `rules/` stores core detection knowledge
+- `mappings/` stores the field normalization layer
+- `tenants/` stores tenant-specific real-world configuration
+- `artifacts/` stores rendered output per tenant
+- `project-root/` contains the application engine used to read, validate, render, and deploy
 
-## 🧩 Kiến trúc Detection as Code (DaC)
+## Current Status
 
-Dự án áp dụng mô hình Detection as Code nhằm tách biệt rõ ràng giữa logic phát hiện, chuẩn dữ liệu và triển khai kỹ thuật.
+The architecture documentation has been updated to the new model under `docs/architecture/`, but the implementation in `project-root/` is still in transition and does not yet fully reflect that architecture.
 
-Kiến trúc tổng thể được chia thành các lớp sau:
+This means:
 
-**Log source**  
-Dữ liệu log gốc từ các hệ thống như endpoint, network, application, cloud, security device.  
-Mỗi log source có format và field khác nhau tùy vendor.
+- the repository structure and documented data relationships are currently the main reference
+- some older code paths may not work correctly after the architecture changes
+- hardcoded SIEM queries, especially on the Splunk side, are still used as temporary execution artifacts
+- this README is intentionally architecture-first and content-first, rather than a full end-to-end runtime guide
 
-**Logsource mapping**  
-Chuẩn hóa log source về schema chung (OCSF / OCFS).  
-Lớp này xử lý sự khác biệt về tên field, kiểu dữ liệu và cấu trúc log giữa các vendor.
+For deeper details, see:
 
-**Rule view**  
-Lớp trung gian ánh xạ giữa field logic trong detection rule và field đã được chuẩn hóa.  
-Giúp detection rule không phụ thuộc trực tiếp vào log vendor hoặc SIEM.
+- `docs/architecture/project-architecture.md`
+- `docs/architecture/tenants-relationship.md`
+- `docs/architecture/mappings-relationship.md`
 
-**Detection rule (SIEM-agnostic)**  
-Logic phát hiện được định nghĩa độc lập với nền tảng SIEM.  
-Rule tập trung vào hành vi, ngữ cảnh và kỹ thuật tấn công.
+## Architectural View
 
-**SIEM-specific implementation**  
-Triển khai detection rule sang ngôn ngữ và cơ chế của từng SIEM (Splunk, Elastic, QRadar, ...).  
-Đây là lớp cuối, chỉ chịu trách nhiệm thực thi.
+The system can be understood through 3 main axes.
 
-Nguyên tắc thiết kế chính:
-- Detection rule không phụ thuộc vendor
-- Mapping và triển khai được tách rời
-- Thay đổi log source không làm thay đổi logic detection
-- Detection được quản lý và kiểm soát như code
+### 1. Detection Content Axis
 
-## 🎯 Mục tiêu
+This is the layer that manages detection knowledge:
 
-- Xây dựng detection rule độc lập SIEM
-- Chuẩn hóa log source và field mapping
-- Quản lý detection theo tư duy code (Git, review, test)
-- Hỗ trợ toàn bộ vòng đời detection trong SOC
+- `rules/`: base detection rules by category and product
+- `mappings/detections/`: mappings from source rule fields to canonical fields
+- `tenants/.../bindings/fields/`: mappings from canonical fields to tenant SIEM fields
 
-## 📁 Cấu trúc thư mục
+The goal of this axis is to keep detection logic stable enough to be reused, instead of coupling it directly to parser output or field naming from a specific tenant.
 
-**.github/**  
-Workflow và automation cho GitHub
+### 2. Tenant Configuration Axis
 
-**docs/**  
-Tài liệu kiến trúc, chuẩn schema, hướng dẫn sử dụng
+This axis describes the real operating environment of each tenant:
 
-**logsource-mapping-registry/**  
-Field mapping cho các logsource theo chuẩn OCSF / OCFS
+- `tenant.yaml`: tenant identity, `siem_id`, and operational metadata
+- `devices/`: devices or platforms that produce logs
+- `logsources/`: logical datasets for each device
+- `bindings/ingest/`: mappings from `dataset_id` to real ingestion targets such as `index` and `sourcetype`
+- `bindings/fields/`: mappings from canonical fields to actual SIEM fields
+- `filters/`: tenant-specific filters applied during rendering
+- `deployments/rule-deployments.yaml`: manifest for enabling or disabling rules by SIEM
 
-**rule-view/**  
-Lớp trung gian ánh xạ field giữa rule logic và log thực tế
+This axis answers operational questions such as:
 
-**rules/**  
-Detection rules độc lập SIEM (base rules)
+- which log sources a tenant has
+- which datasets are active
+- how those datasets are ingested into the SIEM
+- which rules are enabled for the tenant
+- which filters should be applied when rendering from base rules
 
-**rules-tenants/**  
-Rule triển khai thực tế theo từng tenant hoặc khách hàng
+### 3. Operations and Output Axis
 
-**tests/**  
-Test case, kết quả kiểm thử và script test rule
+This axis supports validation, build, export, and deployment:
 
-**tools/**  
-Công cụ hỗ trợ validate, build và deploy rules
+- `project-root/`: CLI, use cases, services, repositories, and adapters
+- `schema/`: contracts used to validate rules and tenant configuration
+- `tests/`: quality gates such as smoke tests, validators, and structure checks
+- `artifacts/`: rendered or exported output for each tenant
 
-## 🧠 Phương pháp phát triển Detection
+## Core Data Model
 
-Các detection rule được xây dựng theo các nguyên tắc:
-- Phát hiện theo hành vi, hạn chế IOC tĩnh
-- Ánh xạ theo MITRE ATT&CK
-- Không phụ thuộc trực tiếp vào field của SIEM
-- Có kiểm thử và điều chỉnh dựa trên dữ liệu thực tế
+The current architecture revolves around 4 main linking keys:
 
-Vòng đời detection:
-- Thiết kế
-- Viết rule
-- Review
-- Test
-- Deploy
-- Monitor và tuning
+| Key | Meaning |
+| --- | --- |
+| `tenant_id` | tenant identifier |
+| `device_id` | identifier of the device or platform producing logs |
+| `dataset_id` | identifier of a device's logical dataset |
+| `siem_id` | target SIEM identifier |
 
-## 📐 Chuẩn log và mapping
+Main relationships in the tenant layer:
 
-- Ưu tiên sử dụng chuẩn OCSF / OCFS
-- Log không theo chuẩn được xử lý bằng logsource mapping
-- Field chưa có trong chuẩn được mở rộng có kiểm soát
-- Mapping tách biệt khỏi logic detection
+- a `tenant` owns `devices`
+- each `device` has a `logsource`
+- a `logsource` declares one or more `dataset_id`
+- `bindings/ingest` links `dataset_id` to real ingestion targets on the SIEM
+- `bindings/fields` links canonical fields to the tenant's actual SIEM fields
+- `filters` refine base rules during rendering
+- `deployments` decide which rules continue through the pipeline
 
-## ⚙️ Nền tảng SIEM hỗ trợ
+## The Role of `mappings/`
 
-- Splunk
-- Elastic Security
-- IBM QRadar
-- Graylog
+In the current architecture, `mappings/` should not be interpreted as a layer that solves the entire path from raw logs to final SIEM fields. Instead, it acts as a field contract layer so the content team can normalize detection vocabulary and connect detection logic to the actual fields available for each tenant.
 
-## 🧪 Testing và Validation
+The practical field pipeline currently looks like this:
 
-- Kiểm thử logic detection bằng dữ liệu giả lập
-- Validate logsource mapping
-- Đánh giá false positive và false negative
-- Đảm bảo rule hoạt động nhất quán giữa các SIEM
+```text
+source rule field <=> canonical field <=> tenant SIEM field
+```
 
-## 📚 Tài liệu tham khảo
+Where:
 
-- MITRE ATT&CK
-- Splunk Security Content
-- Sigma Project
-- OCSF Schema
-- Detection Engineering Handbook
+- `source rule field` is a field from the original rule source or legacy content
+- `canonical field` is the project's internal standard vocabulary
+- `tenant SIEM field` is the actual field currently available in the tenant's SIEM
 
-## 🤝 Đóng góp
+This approach helps:
 
-Vui lòng đọc **CONTRIBUTING.md** trước khi gửi pull request.
+- ingest rules coming from different field vocabularies
+- reduce dependence on personal naming conventions
+- support tenant-based rendering even when the generic converter is still incomplete
+- preserve a stable semantic contract between the content team and the deployment team
 
-Hoan nghênh đóng góp rule, mapping và tài liệu cho dự án.
+## The Role of Hardcoded SIEM Queries
+
+In the current state of the project, hardcoded queries such as SPL are still considered valid execution artifacts in the pipeline.
+
+This is an intentional trade-off:
+
+- the generic converter from standard detection rules to SIEM-specific rules is not yet stable
+- the pipeline still needs output that can be reviewed, exported, or deployed
+- detection intent and canonical fields remain in the content layer, while hardcoded queries temporarily handle execution
+
+In short:
+
+- canonical fields preserve `meaning`
+- hardcoded queries preserve `execution`
+
+## High-Level Processing Flow
+
+At the architecture level, the project pipeline is currently understood as:
+
+1. Load tenant configuration from `tenants/<tenant>/`.
+2. Resolve `tenant_id`, `siem_id`, devices, and datasets.
+3. Load base rules from `rules/`.
+4. Load detection mappings from `mappings/detections/`.
+5. Resolve ingest bindings from `tenants/.../bindings/ingest/`.
+6. Resolve field bindings from `tenants/.../bindings/fields/`.
+7. Apply tenant filters from `tenants/.../filters/`.
+8. Read `deployments/rule-deployments.yaml` to select the enabled rule set for the tenant.
+9. Render output into `artifacts/<tenant>/tenant-rules/`.
+10. If needed, use adapters in `project-root/` to export or deploy to the target SIEM.
+
+## Repository Structure
+
+```text
+.
+|-- artifacts/
+|   `-- <tenant>/
+|       `-- tenant-rules/
+|           `-- detections/
+|-- docs/
+|   `-- architecture/
+|-- mappings/
+|   `-- detections/
+|-- project-root/
+|   |-- app/
+|   |-- domain/
+|   |-- infrastructure/
+|   |-- interfaces/
+|   `-- main.py
+|-- rules/
+|   `-- detections/
+|-- schema/
+|-- tenants/
+|   `-- <tenant>/
+|       |-- tenant.yaml
+|       |-- devices/
+|       |-- logsources/
+|       |-- bindings/
+|       |   |-- ingest/
+|       |   `-- fields/
+|       |-- filters/
+|       `-- deployments/
+`-- tests/
+```
+
+Short meaning:
+
+- `rules/` is the source of truth for core detection content
+- `mappings/` is the source of truth for shared content-layer field mapping
+- `tenants/` is the source of truth for tenant deployment configuration
+- `artifacts/` is rendered output, not the long-term hand-edited source
+
+## Primary References
+
+When working with the repository in its current state, the recommended reading order is:
+
+1. `docs/architecture/project-architecture.md`
+2. `docs/architecture/tenants-relationship.md`
+3. `docs/architecture/mappings-relationship.md`
+4. `rules/`, `mappings/`, `tenants/`, `artifacts/`
+5. `project-root/` as an implementation layer that is still being aligned to the new architecture
+
+## Contributor Notes
+
+- Treat `rules/`, `mappings/`, and `tenants/` as the main data layers of the repository.
+- Do not treat `artifacts/` as the long-term place for manual edits; it is tenant-rendered output.
+- When adding a new rule, try to identify clearly:
+  - the detection intent
+  - the source rule fields being used
+  - the canonical fields required
+  - the tenant bindings needed to render for the target tenant
+- When updating documentation or structure, keep it aligned with the architecture documents under `docs/architecture/`.
+
+## Summary
+
+`SIEM-Detection-as-Code` is currently organized around this model:
+
+- `rules/` stores detection knowledge
+- `mappings/` stores the field contract
+- `tenants/` stores the real deployment state of each tenant
+- `artifacts/` stores rendered output
+- `project-root/` is the engine that is gradually being aligned to this architecture
+
+At this stage, the architecture documentation is more stable than the runtime implementation. This README is therefore intended to reflect the current data model and the correct way to understand the repository under the new architectural version.

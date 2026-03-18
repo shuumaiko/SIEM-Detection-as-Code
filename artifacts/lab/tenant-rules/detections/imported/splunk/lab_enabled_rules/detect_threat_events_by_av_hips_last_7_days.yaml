@@ -1,0 +1,41 @@
+﻿title: FPT - Detect Threat Events By AV HIPS Last 7 Days
+id: 37992c72-a666-5fc2-bcf3-d1b0c3b1953a
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Detect Threat Events By AV HIPS Last 7 Days'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: low
+x_splunk_es:
+  targets: {}
+  search_query: 'index=* sourcetype=*eset* event_type=Threat_Event threat_type!="Potentially unwanted application" NOT *chrome.exe* NOT *msedge.exe* NOT *Ultraviewer* NOT *Skype.exe* NOT *brave.exe* NOT *coccoc* NOT *firefox.exe* NOT *UrbanVPN* NOT *Hola* NOT *opera* NOT *BigNoxVM* NOT "*popcorn time*" NOT "*FormatFactory*" NOT *pinaview*
+
+    |  bucket _time span=7d
+
+    | eval Alert_Severity="Low"
+
+    |  stats earliest("occured") as Start_Time latest("occured") as End_Time values(object_type) as object_type values(object_uri) as object_uri_(limit_show_10_lines), values(hash) as hash_(limit_show_10_lines), values(engine_version) as engine_version values(target_address) as target_address values(hostname) as hostname values(target_port) as target_port values(protocol) as protocol values(event) as event values(threat_name) as threat_name_(limit_show_10_lines) values(action_taken) as action_taken values(severity) as severity values(scanner_id) as scanner_id values(need_restart) as need_restart count by Alert_Severity ipv4 _time
+
+    | eval "object_uri_(limit_show_10_lines)"=mvindex(''object_uri_(limit_show_10_lines)'',0,9)
+
+    | eval "hash_(limit_show_10_lines)"=mvindex(''hash_(limit_show_10_lines)'',0,9)
+
+    | eval "threat_name_(limit_show_10_lines)"=mvindex(''threat_name_(limit_show_10_lines)'',0,9)
+
+    | sort - count
+
+    | where count > 100'
+

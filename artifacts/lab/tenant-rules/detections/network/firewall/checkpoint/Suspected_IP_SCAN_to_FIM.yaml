@@ -1,0 +1,45 @@
+title: Suspected IP SCAN to FIM
+id: a6baa0a9-f49c-48dd-8eb4-45165c93ab85
+status: test
+description: Detects suspected IP scanning activities directed towards FIM (File Integrity Monitoring) systems by monitoring multiple connection attempts from a single source IP address to multiple destination IP addresses on FIM-related ports.
+references:
+    - https://www.checkpoint.com/
+    - Internal: Hao
+author: AnhPT127
+date: 2026-02-10
+modified: 2026-02-10
+tags:
+    - attack.t1046
+    - attack.network_scanning
+logsource:
+    category: firewall
+    product: checkpoint
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_port:
+            - 22
+            - 80
+            - 69
+    condition: selection
+falsepositives:
+    - Legitimate network scanning activities
+level: medium
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: medium, risk_score: 30 }
+    search_query: |
+        index=* sourcetype=cp_log (dest="10.1.0.0/16" OR dest="10.4.0.0/16" OR dest="10.225.0.0/16" OR dest="10.226.0.0/16" OR dest="10.227.0.0/16" OR dest="10.210.0.0/16")
+        | bucket _time span=1h 
+        | stats values(dest) as dest_ip values(dest_port) as dest_port dc(dest) as num_dest dc(dest_port) as num_dest_port count by Alert_Severity _time src 
+        | rename src as src_ip
+        | eval dest=mvindex(dest,0,5)
+        | where num_dest >= 100 AND count >= 100
+        | sort - count

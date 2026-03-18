@@ -1,0 +1,66 @@
+ocsflogsource:
+  vendor: fortinet
+  product: fortigate
+  service: traffic
+  category: network_traffic
+
+description: >
+  FortiGate traffic logs capturing allowed/denied network connections,
+  including source/destination IP, port, protocol, action and policy.
+
+status: stable
+version: 1.0
+
+inputs:
+  date: [date, eventtime]
+  time: [time]
+  logid: [logid, signature]
+  action: [action, act, disposition]
+
+  srcip: [srcip, src, sourceAddress]
+  srcport: [srcport, spt, sourcePort]
+  dstip: [dstip, dst, destinationAddress]
+  dstport: [dstport, dpt, destinationPort]
+
+  sentbyte: [sentbyte, bytes_sent, bytesOut]
+  rcvdbyte: [rcvdbyte, bytes_received, bytesIn]
+
+# Example log:
+mapping:
+  # --- Event metadata ---
+  date: ocsf.event.date
+  time: ocsf.event.time
+  logid: ocsf.event.code
+  type: ocsf.event.category
+  subtype: ocsf.event.type
+  level: ocsf.event.severity
+  action: ocsf.event.action
+
+  # --- Network ---
+  srcip: ocsf.source.ip
+  srcport: ocsf.source.port
+  dstip: ocsf.destination.ip
+  dstport: ocsf.destination.port
+  proto: ocsf.network.protocol
+  service: ocsf.network.service
+
+  # --- Device / interface ---
+  devname: ocsf.device.name
+  devid: ocsf.device.id
+  srcintf: ocsf.source.interface
+  dstintf: ocsf.destination.interface
+
+  # --- Policy ---
+  policyid: ocsf.rule.id
+  policytype: ocsf.rule.type
+  policyname: ocsf.rule.name
+
+  # --- Session ---
+  sessionid: ocsf.network.session_id
+  duration: ocsf.network.session_duration
+
+  # --- Bytes / packets ---
+  sentbyte: ocsf.network.bytes_sent
+  rcvdbyte: ocsf.network.bytes_received
+  sentpkt: ocsf.network.packets_sent
+  rcvdpkt: ocsf.network.packets_received

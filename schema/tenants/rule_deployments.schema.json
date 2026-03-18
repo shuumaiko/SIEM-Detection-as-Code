@@ -1,0 +1,56 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/tenants/rule_deployments.schema.json",
+  "title": "Tenant Rule Deployments Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "rule_deployments_by_siem"
+  ],
+  "properties": {
+    "schema_version": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" }
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "rule_deployments_by_siem": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["rule_id", "enabled", "display_name"],
+          "properties": {
+            "rule_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "display_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "description": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

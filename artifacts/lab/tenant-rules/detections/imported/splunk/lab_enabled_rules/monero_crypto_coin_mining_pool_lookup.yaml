@@ -1,0 +1,26 @@
+﻿title: FPT - Monero Crypto Coin Mining Pool Lookup
+id: 77e4dd54-1344-56c3-8638-4b38cc36d0e1
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Monero Crypto Coin Mining Pool Lookup'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=\"10.0.0.0/8\" OR src_ip=\"172.16.0.0/12\" OR src_ip=\"192.168.0.0/16\") \nNOT (src_ip=1.1.1.1 OR src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51 OR src_ip=10.14.132.16) action=success\n| bucket _time span=1h\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\"\n| eval questionname=replace(questionname,\"(\\(\\d+)\\)\",\".\") \n| eval questionname=replace(questionname,\"^.\",\"\") \n| eval questionname=replace(questionname,\".$\",\"\")\n| search (questionname = \"*pool.minexmr.com*\" OR questionname = \"*fr.minexmr.com*\" OR questionname = \"*de.minexmr.com*\" OR questionname = \"*sg.minexmr.com*\" OR questionname = \"*ca.minexmr.com*\" OR questionname = \"*us-west.minexmr.com*\" OR questionname = \"*pool.supportxmr.com*\"\
+    \ OR questionname = \"*mine.c3pool.com*\" OR questionname = \"*xmr-eu1.nanopool.org*\" OR questionname = \"*xmr-eu2.nanopool.org*\" OR questionname = \"*xmr-us-east1.nanopool.org*\" OR questionname = \"*xmr-us-west1.nanopool.org*\" OR questionname = \"*xmr-asia1.nanopool.org*\" OR questionname = \"*xmr-jp1.nanopool.org*\" OR questionname = \"*xmr-au1.nanopool.org*\" OR questionname = \"*xmr.2miners.com*\" OR questionname = \"*xmr.hashcity.org*\" OR questionname = \"*xmr.f2pool.com*\" OR questionname = \"*xmrpool.eu*\" OR questionname = \"*pool.hashvault.pro*\" )\n| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip"
+

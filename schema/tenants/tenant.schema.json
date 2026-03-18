@@ -1,0 +1,51 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/tenants/tenant.schema.json",
+  "title": "Tenant Config Schema",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "name",
+    "environment",
+    "timezone",
+    "siem_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "number" }
+      ]
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "type": "string",
+      "enum": ["development", "staging", "production", "test", "uat"]
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "siem_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "default_index": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

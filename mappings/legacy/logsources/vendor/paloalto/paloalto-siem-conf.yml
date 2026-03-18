@@ -1,0 +1,3 @@
+x_splunk_es:
+	index: paloalto
+	sourcetype: pan:traffic

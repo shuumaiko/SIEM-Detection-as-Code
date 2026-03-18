@@ -1,0 +1,25 @@
+﻿title: FPT - IOC Cyble Detected - Malicious File Hash by ESET
+id: 11acf702-acf2-5a78-bd4f-5d13db5f8830
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - IOC Cyble Detected - Malicious File Hash by ESET'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: "index=epav sourcetype=\"eset:ra\" file_hash=* event_type!=FilteredWebsites_Event NOT (action_taken=*Cleaned* OR action_taken=*Deleted*)\n| bucket _time span=1h\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time \n| search \n    [| inputlookup ioc_cyble_file_hash.csv] ```Input CSV triggred from alert \"Input Lookup - IOC Cyble (File Hash)\"```\n| eval Alert_Severity=\"Medium\"\n| stats values(index) as Index values(action_taken) as Action, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4 file_hash"
+

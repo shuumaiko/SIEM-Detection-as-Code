@@ -1,0 +1,169 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/rules/correlation_rule.schema.json",
+  "title": "Detection Correlation Rule Schema",
+  "type": "object",
+  "required": [
+    "title",
+    "status",
+    "description",
+    "correlation",
+    "fields",
+    "falsepositives",
+    "level",
+    "x_splunk_es"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlation": {
+      "type": "object",
+      "required": [
+        "type",
+        "rules",
+        "group-by",
+        "timespan",
+        "condition"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "group-by": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "timespan": {
+          "type": "string",
+          "pattern": "^[0-9]+[smhd]$"
+        },
+        "condition": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "number" },
+              { "type": "string" },
+              { "type": "boolean" }
+            ]
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "falsepositives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "level": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "x_splunk_es": {
+      "type": "object",
+      "required": [
+        "targets",
+        "search_query"
+      ],
+      "properties": {
+        "targets": {
+          "type": "object",
+          "required": [
+            "index",
+            "sourcetype",
+            "schedule_cron",
+            "earliest",
+            "latest",
+            "notable"
+          ],
+          "properties": {
+            "index": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sourcetype": {
+              "type": "string",
+              "minLength": 1
+            },
+            "schedule_cron": {
+              "type": "string",
+              "minLength": 1
+            },
+            "earliest": {
+              "type": "string",
+              "minLength": 1
+            },
+            "latest": {
+              "type": "string",
+              "minLength": 1
+            },
+            "notable": {
+              "type": "object",
+              "required": [
+                "enabled",
+                "severity",
+                "risk_score"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "severity": {
+                  "type": "string",
+                  "enum": ["low", "medium", "high", "critical"]
+                },
+                "risk_score": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": true
+        },
+        "search_query": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

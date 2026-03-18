@@ -1,0 +1,28 @@
+﻿title: FPT - DNS Events Related To Mining Pools
+id: 3f97108e-1376-51ab-8002-b30d7e7a1e59
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - DNS Events Related To Mining Pools'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=\"10.0.0.0/8\" OR src_ip=\"172.16.0.0/12\" OR src_ip=\"192.168.0.0/16\") \nNOT (src_ip=1.1.1.1 OR src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51)\n| eval questionname=replace(questionname,\"(\\(\\d+)\\)\",\".\") \n| eval questionname=replace(questionname,\"^.\",\"\") \n| eval questionname=replace(questionname,\".$\",\"\")\n| search (questionname = \"*monerohash.com\" OR questionname = \"*do-dear.com\" OR questionname = \"*xmrminerpro.com\" OR questionname = \"*secumine.net\" OR questionname = \"*xmrpool.com\" OR questionname = \"*minexmr.org\" OR questionname = \"*hashanywhere.com\" OR questionname = \"*xmrget.com\" OR questionname = \"*mininglottery.eu\" OR questionname = \"*minergate.com\" OR questionname = \"*moriaxmr.com\" OR questionname\
+    \ = \"*multipooler.com\" OR questionname = \"*moneropools.com\" OR questionname = \"*xmrpool.eu\" OR questionname = \"*coolmining.club\" OR questionname = \"*supportxmr.com\" OR questionname = \"*minexmr.com\" OR questionname = \"*hashvault.pro\" OR questionname = \"*xmrpool.net\" OR questionname = \"*crypto-pool.fr\" OR questionname = \"*xmr.pt\" OR questionname = \"*miner.rocks\" OR questionname = \"*walpool.com\" OR questionname = \"*herominers.com\" OR questionname = \"*gntl.co.uk\" OR questionname = \"*semipool.com\" OR questionname = \"*coinfoundry.org\" OR questionname = \"*cryptoknight.cc\" OR questionname = \"*fairhash.org\" OR questionname = \"*baikalmine.com\" OR questionname = \"*tubepool.xyz\" OR questionname = \"*fairpool.xyz\" OR questionname = \"*asiapool.io\" OR questionname = \"*coinpoolit.webhop.me\" OR questionname = \"*nanopool.org\" OR questionname = \"*moneropool.com\" OR questionname = \"*miner.center\" OR questionname = \"*prohash.net\" OR questionname = \"*poolto.be\"\
+    \ OR questionname = \"*cryptoescrow.eu\" OR questionname = \"*monerominers.net\" OR questionname = \"*cryptonotepool.org\" OR questionname = \"*extrmepool.org\" OR questionname = \"*webcoin.me\" OR questionname = \"*kippo.eu\" OR questionname = \"*hashinvest.ws\" OR questionname = \"*monero.farm\" OR questionname = \"*linux-repository-updates.com\" OR questionname = \"*1gh.com\" OR questionname = \"*dwarfpool.com\" OR questionname = \"*hash-to-coins.com\" OR questionname = \"*pool-proxy.com\" OR questionname = \"*hashfor.cash\" OR questionname = \"*fairpool.cloud\" OR questionname = \"*litecoinpool.org\" OR questionname = \"*mineshaft.ml\" OR questionname = \"*abcxyz.stream\" OR questionname = \"*moneropool.ru\" OR questionname = \"*cryptonotepool.org.uk\" OR questionname = \"*extremepool.org\" OR questionname = \"*extremehash.com\" OR questionname = \"*hashinvest.net\" OR questionname = \"*unipool.pro\" OR questionname = \"*crypto-pools.org\" OR questionname = \"*monero.net\" OR questionname\
+    \ = \"*backup-pool.com\" OR questionname = \"*mooo.com\" OR questionname = \"*freeyy.me\" OR questionname = \"*cryptonight.net\" OR questionname = \"*shscrypto.net\")\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\"\n| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity src_ip"
+

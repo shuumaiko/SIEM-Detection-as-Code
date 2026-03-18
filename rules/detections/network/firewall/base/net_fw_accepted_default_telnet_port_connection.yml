@@ -1,0 +1,77 @@
+title: Accepted Default Telnet Port Connection (base)
+name: fw_connection_port_23
+id: 2a129a58-7725-48c9-8b3a-0a2264522a68
+status: test
+description: Connection to Telnet port (23) that is accepted by firewall
+references:
+    - ELK Security rules
+author: AnhPT127
+date: 2026-01-12
+modified: 2026-01-12
+tags:
+    - attack.lateral-movement
+    - attack.t1021
+    - attack.initial-access
+    - attack.t1190
+logsource:
+    category: firewall
+    product: any
+    service: traffic
+detection:
+    selection:
+        dst_port: 23
+    filter_blocked:
+        action:
+            - blocked
+            - dropped
+            - denied
+            - dropped
+            - deny
+    condition: selection and not filter_blocked
+level: info
+---
+title: Accepted Default Telnet Port Connection
+status: test
+description: Request volume from a single source IP exceeds threshold within 15 minutes
+correlation:
+    type: event_count
+    rules:
+        - fw_connection_port_23
+    group-by:
+        - src_ip
+    timespan: 15m
+    condition:
+        gt: 0
+fields:
+    - _time
+    - src_ip
+    - src_port
+    - src_zone
+    - dest_ip
+    - dest_port
+    - dest_zone
+    - action
+    - firewall_policy_name
+    - rule_action
+    - protocol
+    - event_count
+falsepositives:
+    - Unknown
+level: medium
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "*/15 * * * *"
+        earliest: "-15m"
+        latest: "now"
+        notable: { enabled: true, severity: medium, risk_score: 47 }
+    search_query: |
+        index=firewall sourcetype=traffic NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")) dest_port=23
+        | bucket _time span=15m
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time 
+        | eval Alert_Severity="Medium"  
+        | stats count as event_count by _time src_ip
+        | table Time,Alert_Severity,src_ip,src_port,src_zone,dest_ip,dest_port,dest_zone,action,firewall_policy_name,protocol,event_count
+        | sort - event_count

@@ -1,0 +1,25 @@
+﻿title: FPT - Short Lived Windows Accounts
+id: 849c3aef-a33e-58ed-9196-aba3f619b37e
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Short Lived Windows Accounts'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: low
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=*winevent* (EventID=4726 OR EventID=4720)\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time \n| eval Target_User_Name=mvindex(Target_User_Name,1) \n| transaction Target_User_Name maxspan=180m startswith=\"EventID=4726\" endswith=\"EventID=4720\" connected=false\n| eval Alert_Severity=\"Low\"\n| stats earliest(Time) as \"Earliest_Time\" latest(Time) as \"Latest_Time\" values(Computer) as Computer_Name values(action) as Action values(name) as name values(duration) as Duration values(EventID) as EventID values(TargetUserName) as Target_User_Name count by Alert_Severity Caller_User_Name\n| rename Caller_User_Name as Source_User, EventID as Event_ID name as Message"
+

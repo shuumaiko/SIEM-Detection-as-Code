@@ -1,0 +1,44 @@
+title: Posible SCAN HTTP Port (80) Per Host
+id: 7b80b25c-c107-4523-98e9-7f011e161e16
+status: test
+description: Detects multiple connection attempts to HTTP port (80) from a single source IP address, indicating a possible port scan activity.
+references:
+    - https://www.checkpoint.com/
+    - Internal: Hao
+author: AnhPT127
+date: 2026-02-10
+modified: 2026-02-10
+tags:
+    - attack.t1046
+    - attack.network_scanning
+logsource:
+    category: firewall
+    product: checkpoint
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_port: 80
+    condition: selection
+falsepositives:
+    - Legitimate network scanning activities
+level: medium
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: medium, risk_score: 30 }
+    search_query: |
+        index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=80 (dest_ip="10.0.0.0/8" OR dest_ip="172.16.0.0/12" OR dest_ip="192.168.0.0/16") 
+        NOT src IN (10.15.2.22, 10.15.6.11, 10.14.131.3, 10.14.128.10, 10.15.81.40, 10.15.81.39) 
+        NOT (action="Accept" AND dest_ip="10.33.3.113")
+        | bucket _time span=1h
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time | eval Alert_Severity="Medium"  
+        | stats values(sourcetype) as "Source Type" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+        | rename src as src_ip
+        | where count > 1000
+        | sort - count

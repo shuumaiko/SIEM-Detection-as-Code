@@ -1,0 +1,76 @@
+# <134>1 2026-01-09T01:14:14Z greenfeed-kl22ruyr CheckPoint 16724 - 
+# [action:"Encrypt"; conn_direction:"Outgoing"; flags:"6703364"; ifdir:"inbound"; ifname:"LAN3"; logid:"0"; 
+# loguid:"{0xeac68e74,0x5369b9c4,0xad858d3f,0x28afc776}"; origin:"100.100.29.28"; originsicname:"CN=VNFWCPDNF,
+# O=Management_Service..aaj5mz"; sequencenum:"32"; time:"1767921254"; version:"5"; 
+# __policy_id_tag:"product=VPN-1 & FireWall-1[db_tag={90D1D5AB-2F58-9847-8304-7519B4098359};
+# mgmt=Management_Service;date=1767768340;policy_name=FEED-Factory-Policy\]"; community:"Feed-Factory-VPN-MESH"; 
+# dst:"10.50.20.10"; fw_subproduct:"VPN-1"; inzone:"Internal"; layer_name:"FEED-Factory-Policy Network"; 
+# layer_uuid:"97c115de-145b-4f7f-9840-fe77084450c2"; match_id:"5"; parent_rule:"0"; rule_action:"Accept"; 
+# rule_name:"GF Business rule"; rule_uid:"216bca2e-3cce-4c3a-8cc2-018ea28d54d9"; methods::"ESP: AES-256 + SHA1"; 
+# nat_addtnl_rulenum:"0"; nat_rulenum:"28"; outzone:"External"; peer_gateway:"103.160.85.42"; product:"VPN-1 & FireWall-1"; 
+# proto:"6"; resource:"VNSVGFW-TLIXEPO.greenfeed.com.vn"; s_port:"58571"; scheme::"IKE"; security_inzone:"Internal_IT_Zone"; 
+# security_outzone:"ExternalZone"; service:"443"; service_id:"https"; src:"192.168.50.131"; vpn_feature_name:"VPN"]
+
+# Field đã chuẩn hóa
+logsource:
+  category: firewall
+  vendor: checkpoint
+  product: vpn-1_firewall-1
+  service: traffic
+  category: network_traffic
+  author: Anh Pham Tuan
+  date: 2026-01-09
+
+description: >
+  Check Point firewall and VPN traffic logs capturing allowed network
+  connections including source/destination, policy, zones and VPN context.
+
+status: stable
+version: 1.0
+
+# Để xem danh sách đầy đủ raw input fields, xem traffic-convert-field.yaml
+# Danh sách loại field (simplified view):
+field_categories:
+  event:
+    - action
+    - loguid
+    - time
+  network:
+    - src_ip
+    - dst_ip
+    - src_port
+    - dst_port
+    - protocol
+  policy:
+    - rule_name
+    - rule_uid
+    - layer_name
+  zones:
+    - src_zone
+    - dst_zone
+  vpn:
+    - vpn_peer
+    - vpn_feature
+
+# Sử dụng convert-field.yaml để mapping từ raw fields sang SIEM fields
+# Sau đó sử dụng mapping dưới đây để map từ SIEM fields sang OCSF
+# Flow: raw_field -> siem_field (via convert-field.yaml) -> ocsf_field (via mapping dưới)
+
+mapping:
+    # --- SIEM Field to OCSF Mapping ---
+    _time: ocsf.event.time
+    src_ip: ocsf.source.ip
+    s_port: ocsf.source.port
+    security_inzone: ocsf.source.zone
+    dest_ip: ocsf.destination.ip
+    service: ocsf.destination.port
+    security_outzone: ocsf.destination.zone
+    action: ocsf.event.action
+    rule_name: ocsf.firewall.policy.name
+    proto: ocsf.network.protocol
+    # --- Correlation ---
+    event_count: ocsf.event.count
+
+# Reference: Để lấy raw_field -> siem_field mapping, xem traffic-convert-field.yaml
+raw_field_mapping_reference: traffic-convert-field.yaml
+

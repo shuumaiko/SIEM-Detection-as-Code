@@ -1,0 +1,163 @@
+Base Architecture Note
+OLD Folder Structure:
+- docs/
+- logsource-mapping-registry/       => mapping siem fields <=> log fields
+    - vendor/
+        - product/
+            - *.yaml   # logsource mapping
+- rule-views/               => map rule fields <=> siem fields
+    - category/
+        - device/
+            - *.yaml    # rule view mapping
+- rules/                # detection rules
+    - detections/
+        - category/
+            - device/
+                - *.yaml    # detection rules
+            - *.yaml        # detection rules
+    - *** other rule types if needed
+- tenant-filters/
+    - tenant_name/
+        - detections/
+            - category/
+                - device/
+                    - *.yaml    # tenant filter for detection rules
+                - *.yaml        # tenant filter for detection rules
+- tenants/
+    - tenant_name/
+        - bindings/*.yaml           # bindings for each devices
+        - devices/*.yaml            # info of each devices
+        - logsource/*.yaml          # logsource info for each devices
+        - rule-deployments.yaml
+        - tenant.yaml
+- tenant-rules/                 # save tenant SIEM rules before done converter (to skip converter when deploy rules to tenant SIEM) for ver 0.1
+    - tenant_name/
+        - detections/
+            - category/
+                - device/
+                    - *.yaml    # rules for tenant after merging with tenant filter and rule view
+                - *.yaml        # rules for tenant after merging with tenant filter and rule view
+
+# New Structure:
+docs/
+
+rules/
+  detections/
+    <category>/
+      <product>/
+        *.yaml
+
+mappings/
+  logsources/
+    <vendor>/
+      <product>/
+        *.yaml
+  rule_views/
+    <category>/
+      <product>/
+        *.yaml
+
+tenants/
+  <tenant_name>/
+    tenant.yaml
+    devices/
+      *.yaml
+    logsources/
+      *.yaml
+    bindings/
+      *.yaml
+    filters/
+      detections/
+        <category>/
+          <product>/
+            *.yaml
+    deployments/
+      rule-deployments.yaml
+
+artifacts/
+  <tenant_name>/
+    tenant-rules/
+      detections/
+        <category>/
+          <product>/
+            *.yaml
+
+# map rule outpout to ocsf fields format ?
+--- ---
+
+
+Base Object:
+Rule:
+    Format: *.yaml
+    Key Fields:
+        - id    # Unique SSID for each rule
+
+Tenant:
+    # Tenant is the main object that holds all the configurations and states for a particular tenant.
+    | bindings - mapping of logsource to SIEM index, sourcetypes:
+        Key Fields:
+            - tenant_id
+            - device_id
+            - siem_id
+        Logic: logsource look bindings
+    | devices - device information for each tenant:
+        Key Fields:
+            - tenant_id
+            - device_id
+        Logic: Tenant look device
+    | logsource - log source information for each tenant:
+        Key Fields:
+            - device_id
+        Logic: device look logsource
+    | rules-dependent - dependent rules for each tenant:
+        Key Fields:
+            - tenant_id
+        Logic: Tenant look rules
+    | tenant_config - tenant configuration information:
+        Key Fields:
+            - tenant_id
+        Logic: Tenant look tenant_config
+
+Features:
+1> Automatic Rule Deployment
+    loadTenantConfig() => loadRulesForTenant() => mergeRulesToTenantSIEM()
+
+Functions Idea:
+1. Load Tenant configuration from Input - func loadTenantConfig():
+    [1] User ===sent tenant.conf===> Tenant saved
+2. Load Rules for Tenant - func loadRulesForTenant():
+    [1] Tenant sent tenant.conf to rules => rules_id list (saved in deployment_rules.yaml)
+    [2] load deployment_rules.yaml + rules + tenant_filter ===Converter Module=> rule logic
+    [3] rules logic ===mapping with rule_view===> rules logic (with standardized fields)
+    [4] rules logic + rule_id + tenant_id ===mapping with logsource registry===> rules logic (with actually SIEM fields)
+    [5] rules logic + siem config ===pre-deployment rule builds===> pre_deployment_rules
+3. Merge Rules to Tenant SIEM - func mergeRulesToTenantSIEM():
+    [1] pre_deployment_rules + tenant SIEM config ===mapping with SIEM API===> SIEM rules logic
+    [2] SIEM rules logic ===deploy to tenant SIEM===> Tenant SIEM has new rules
+
+
+Functions:
+1. Load Tenant configuration from Input:
+    [1] User ===sent tenant.conf===> func tenantManager(tenant.conf)
+    [2] func tenantManager(tenant.conf) ===> Tenant
+
+2. Load Rules for Tenant:
+    [1] func exportRules(tenant_id) 
+    ===read tenant_id in Tenant===> load tenant_config ===> siem_id
+    ===read tenant_id in devices ===> device_id, device_type
+    ===read device_id in logsource ===> dataset_id, status, category
+    ===read siem_id + dataset_id===> index, sourcetype
+    Output: tenant source for rules tenant_source.yaml:
+        - category
+        - dataset_id
+        - device_type
+        - device_id
+        - status
+        - siem_id
+        - index
+        - sourcetype
+    [2] func exportTenantRules(tenant_source.yaml):
+    ===load tenant.category to rules===> rules location: rules/detections/{category}/*.yaml
+    ===load tenant.device_type, tenant.device_id, tenant.category to rules (rule.category = tenant.device_type, rule.product = tenant.device_id)===> filter rules by devices
+
+    

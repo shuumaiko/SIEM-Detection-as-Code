@@ -1,0 +1,25 @@
+﻿title: FPT - IOC Cyble Detected - Domain Query
+id: 92a4f3a5-2b34-58be-9496-4d16914ff81c
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - IOC Cyble Detected - Domain Query'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: medium
+x_splunk_es:
+  targets: {}
+  search_query: "index=netdns sourcetype=MSAD:NT6:DNS ioc=* direction=Snd (src_ip=\"10.0.0.0/8\" OR src_ip=\"172.16.0.0/12\" OR src_ip=\"192.168.0.0/16\") \nNOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51) action=success\n| eval ioc=replace(ioc,\"(\\(\\d+)\\)\",\".\") \n| eval ioc=replace(ioc,\"^.\",\"\") \n| eval ioc=replace(ioc,\".$\",\"\")\n| search \n    [| inputlookup ioc_cyble_domain.csv] ```Input CSV triggred from alert \"Input Lookup - IOC Cyble (Domain)\"```\n| search NOT \n    [ | inputlookup ioc_blocked_domain.csv]\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) AS Time\n| eval Alert_Severity=\"Medium\"\n| stats values(ioc) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip"
+

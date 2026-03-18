@@ -1,0 +1,26 @@
+﻿title: FPT - Source Code Enumeration Detection by Keyword
+id: e380d696-8cb2-556d-819a-21d98ef242e5
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Source Code Enumeration Detection by Keyword'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=\"nginx:plus:access\" source=\"/var/log/audit/log/*access.log*\" \".git/\" NOT (client_ip=\"10.0.0.0/8\" OR client_ip=\"172.16.0.0/12\" OR client_ip=\"192.168.0.0/16\" OR src_ip=\"10.0.0.0/8\" OR src_ip=\"172.16.0.0/12\" OR src_ip=\"192.168.0.0/16\") \n|  bucket _time span=1h\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\" \n|  stats values(client_ip) as client_ip, values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(src_ip) as src_ip , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time http_x_forwarded_for\n|  fillnull value=N/A client_ip dest_ip dest_port http_referrer\
+    \ http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent"
+

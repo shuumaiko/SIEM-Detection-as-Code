@@ -1,0 +1,26 @@
+﻿title: FPT - DNS TOR Proxies
+id: cfead3ff-bb06-5e81-8696-87ffd909cb58
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - DNS TOR Proxies'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=\"10.0.0.0/8\" OR src_ip=\"172.16.0.0/12\" OR src_ip=\"192.168.0.0/16\") \nNOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51)\n| eval questionname=replace(questionname,\"(\\(\\d+)\\)\",\".\") \n| eval questionname=replace(questionname,\"^.\",\"\") \n| eval questionname=replace(questionname,\".$\",\"\")\n| search (questionname = \"tor2web.org\" OR questionname = \"tor2web.com\" OR questionname = \"torlink.co\" OR questionname = \"onion.to\" OR questionname = \"onion.ink\" OR questionname = \"onion.cab\" OR questionname = \"onion.nu\" OR questionname = \"onion.link\" OR questionname = \"onion.it\" OR questionname = \"onion.city\" OR questionname = \"onion.direct\" OR questionname = \"onion.top\" OR questionname = \"onion.casa\" OR questionname = \"onion.plus\" OR questionname = \"onion.rip\" OR questionname\
+    \ = \"onion.dog\" OR questionname = \"tor2web.fi\" OR questionname = \"tor2web.blutmagie.de\" OR questionname = \"onion.sh\" OR questionname = \"onion.lu\" OR questionname = \"onion.pet\" OR questionname = \"t2w.pw\" OR questionname = \"tor2web.ae.org\" OR questionname = \"tor2web.io\" OR questionname = \"tor2web.xyz\" OR questionname = \"onion.lt\" OR questionname = \"s1.tor-gateways.de\" OR questionname = \"s2.tor-gateways.de\" OR questionname = \"s3.tor-gateways.de\" OR questionname = \"s4.tor-gateways.de\" OR questionname = \"s5.tor-gateways.de\" OR questionname = \"hiddenservice.net\")\n| convert timeformat=\"%m/%d/%Y %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\" \n| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip"
+

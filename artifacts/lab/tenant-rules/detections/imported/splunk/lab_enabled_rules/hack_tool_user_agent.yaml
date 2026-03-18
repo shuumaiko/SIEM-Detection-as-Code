@@ -1,0 +1,28 @@
+﻿title: FPT - Hack Tool User Agent
+id: 9b37f94b-6a55-50bb-badd-0d2bb71fbe0f
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - Hack Tool User Agent'
+author: soc_monitor
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: high
+x_splunk_es:
+  targets: {}
+  search_query: "index=* sourcetype=\"nginx:plus:access\" source=\"/var/log/audit/log/*access.log*\" (http_user_agent=\"*(hydra)*\" OR http_user_agent=\"* arachni/*\" OR http_user_agent=\"* BFAC *\" OR http_user_agent=\"* brutus *\" OR http_user_agent=\"* cgichk *\" OR http_user_agent=\"*core-project/1.0*\" OR http_user_agent=\"* crimscanner/*\" OR http_user_agent=\"*datacha0s*\" OR http_user_agent=\"*dirbuster*\" OR http_user_agent=\"*domino hunter*\" OR http_user_agent=\"*dotdotpwn*\" OR http_user_agent=\"*FHScan Core*\" OR http_user_agent=\"*floodgate*\" OR http_user_agent=\"*get-minimal*\" OR http_user_agent=\"*gootkit auto-rooter scanner*\" OR http_user_agent=\"*grendel-scan*\" OR http_user_agent=\"* inspath *\" OR http_user_agent=\"*internet ninja*\" OR http_user_agent=\"*jaascois*\" OR http_user_agent=\"* zmeu *\" OR http_user_agent=\"*masscan*\" OR http_user_agent=\"* metis *\" OR http_user_agent=\"*morfeus fucking scanner*\" OR http_user_agent=\"*n-stealth*\" OR http_user_agent=\"\
+    *nsauditor*\" OR http_user_agent=\"*pmafind*\" OR http_user_agent=\"*security scan*\" OR http_user_agent=\"*springenwerk*\" OR http_user_agent=\"*teh forest lobster*\" OR http_user_agent=\"*toata dragostea*\" OR http_user_agent=\"* vega/*\" OR http_user_agent=\"*voideye*\" OR http_user_agent=\"*webshag*\" OR http_user_agent=\"*webvulnscan*\" OR http_user_agent=\"* whcc/*\" OR http_user_agent=\"* Havij*\" OR http_user_agent=\"*absinthe*\" OR http_user_agent=\"*bsqlbf*\" OR http_user_agent=\"*mysqloit*\" OR http_user_agent=\"*pangolin*\" OR http_user_agent=\"*sql power injector*\" OR http_user_agent=\"*sqlmap*\" OR http_user_agent=\"*sqlninja*\" OR http_user_agent=\"*uil2pn*\" OR http_user_agent=\"*ruler*\" OR http_user_agent=\"*Mozilla/5.0 (Windows; U; Windows NT 5.1; pt-PT; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)*\") OR (Agent=\"*(hydra)*\" OR Agent=\"* arachni/*\" OR Agent=\"* BFAC *\" OR Agent=\"* brutus *\" OR Agent=\"* cgichk *\" OR Agent=\"*core-project/1.0*\"\
+    \ OR Agent=\"* crimscanner/*\" OR Agent=\"*datacha0s*\" OR Agent=\"*dirbuster*\" OR Agent=\"*domino hunter*\" OR Agent=\"*dotdotpwn*\" OR Agent=\"*FHScan Core*\" OR Agent=\"*floodgate*\" OR Agent=\"*get-minimal*\" OR Agent=\"*gootkit auto-rooter scanner*\" OR Agent=\"*grendel-scan*\" OR Agent=\"* inspath *\" OR Agent=\"*internet ninja*\" OR Agent=\"*jaascois*\" OR Agent=\"* zmeu *\" OR Agent=\"*masscan*\" OR Agent=\"* metis *\" OR Agent=\"*morfeus fucking scanner*\" OR Agent=\"*n-stealth*\" OR Agent=\"*nsauditor*\" OR Agent=\"*pmafind*\" OR Agent=\"*security scan*\" OR Agent=\"*springenwerk*\" OR Agent=\"*teh forest lobster*\" OR Agent=\"*toata dragostea*\" OR Agent=\"* vega/*\" OR Agent=\"*voideye*\" OR Agent=\"*webshag*\" OR Agent=\"*webvulnscan*\" OR Agent=\"* whcc/*\" OR Agent=\"* Havij*\" OR Agent=\"*absinthe*\" OR Agent=\"*bsqlbf*\" OR Agent=\"*mysqloit*\" OR Agent=\"*pangolin*\" OR Agent=\"*sql power injector*\" OR Agent=\"*sqlmap*\" OR Agent=\"*sqlninja*\" OR Agent=\"*uil2pn*\"\
+    \ OR Agent=\"*ruler*\" OR Agent=\"*Mozilla/5.0 (Windows; U; Windows NT 5.1; pt-PT; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)*\")\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"High\"  \n|  stats values(src_ip) as src_ip values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time client_ip\n|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent"
+

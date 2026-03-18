@@ -1,0 +1,41 @@
+title: Posible SCAN Telnet Port (23) To Multiple Host
+id: 96c43ddd-3789-4916-96ec-b620bfdb4e6e
+status: test
+description: Detects multiple connection attempts to Telnet port (23) from a single source IP address to multiple destination IP addresses, indicating a possible port scan activity.
+references:
+    - https://www.checkpoint.com/
+    - Internal: Hao
+author: AnhPT127
+date: 2026-02-10
+modified: 2026-02-10
+tags:
+    - attack.t1046
+    - attack.network_scanning
+logsource:
+    category: firewall
+    product: checkpoint
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_port: 23
+    condition: selection
+falsepositives:
+    - Legitimate network scanning activities
+level: medium
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: medium, risk_score: 30 }
+    search_query: |
+        	index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=23 (dest_ip="10.0.0.0/8" OR dest_ip="172.16.0.0/12" OR dest_ip="192.168.0.0/16") NOT (src_ip="10.0.0.0/8" OR src_ip="172.16.0.0/12" OR src_ip="192.168.0.0/16" OR src_ip="10.14.0.0/8" OR src_ip="10.15.0.0/8" OR src_ip="10.35.31.200" OR src_ip="10.14.51.52" OR src_ip="10.14.124.19" OR src_ip="10.15.6.11" OR src_ip="10.15.146.39")
+            | bucket _time span=1h
+            | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time | eval Alert_Severity="Medium"  
+            | stats values(sourcetype) as "Source Type" values(action) as action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src
+            | rename src as src_ip
+            | where Total_dest >= 5 AND count > 100

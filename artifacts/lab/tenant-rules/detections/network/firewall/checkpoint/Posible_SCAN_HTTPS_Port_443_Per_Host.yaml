@@ -1,0 +1,42 @@
+title: Posible SCAN HTTPS Port (443) Per Host
+id: a1b2c3d4-e5f6-7890-ab12-cd34ef56gh78
+status: deprecated
+description: Detects potential HTTPS port scanning activity on port 443 from a single host within a short time frame.
+references:
+    - https://www.sans.org/white-papers/401/
+    - Internal: HaoDA4
+author: AnhPT127
+date: 2026-02-06
+modified: 2026-02-06
+tags:
+    - attack.t1046
+    - attack.network_scanning
+logsource:
+    category: firewall
+    product: generic
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        dest_port: 443
+    condition: selection
+falsepositives:
+    - Legitimate network scanning activity by security teams
+level: medium
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: medium, risk_score: 30 }
+    search_query: |
+        (index=$INDEX$ sourcetype=$SOURCETYPE$) (tag=network OR tag=communicate) dest_port=443 (dest_ip="10.0.0.0/8" OR dest_ip="172.16.0.0/12" OR dest_ip="192.168.0.0/16") NOT (src="10.0.0.0/8" OR src="172.16.0.0/12" OR src="192.168.0.0/16" OR src="10.14.128.10")
+        | bucket _time span=1h
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time | eval Alert_Severity="Medium"  
+        | stats values(sourcetype) as "Source Type" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+        | rename src as src_ip
+        | where count > 1000
+        | sort - count

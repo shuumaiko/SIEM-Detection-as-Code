@@ -1,0 +1,26 @@
+﻿title: FPT - ESET - Malicious Website Accesses by AZINSU Servers
+id: 18fc99ca-719a-5196-87a8-79d145e19880
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - ESET - Malicious Website Accesses by AZINSU Servers'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=epav sourcetype=\"eset:ra\" event_type=FilteredWebsites_Event NOT *chrome.exe* NOT *msedge.exe* NOT *Ultraviewer* NOT *Skype.exe* NOT *brave.exe* NOT *coccoc* NOT *firefox.exe* NOT *UrbanVPN* NOT *Hola* NOT *opera* NOT *BigNoxVM* NOT \"*popcorn time*\" NOT \"*FormatFactory*\" NOT *pinaview* rule_id!=\"Blocked by PUA blacklist\" rule_id!=\"Website certificate revoked\"\n(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)\n| bucket _time span=15m\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time \n| eval Alert_Severity=\"Critical\"\n| stats values(index) as Index, values(event) as event, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(object_uri) as object_uri, values(file_hash) as file_hash, values(rule_id) as rule_id, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name,\
+    \ values(user) as user count by Alert_Severity Time ipv4\n| fillnull value=N/A AV_Action_Taken"
+

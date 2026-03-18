@@ -1,70 +1,98 @@
-## Hướng dẫn contribute cho dự án
+## Contributing
 
-- Bước 1: Fork repo của dự án về Github cá nhân.
-- Bước 2: Thực hiện các thay đổi trên dự án đã fork của GitHub cá nhân.
-- Bước 3: Commit và push code lên dự án đã fork của GitHub cá nhân.
-- Bước 4: Tạo Pull Request tới repo gốc của dự án, sau đó chờ được merge.
+Repository này hiện được phát triển theo hướng cá nhân. Vì vậy, tài liệu này mô tả nguyên tắc đóng góp ở mức tối giản và phù hợp với mô hình một maintainer chính.
 
-## Rule template
+## Nguyên tắc chung
 
-- Sử dụng template sau cho việc phát triển các detection rules. Cấu trúc này dựa trên sigma rules và có tùy biến lại để phù hợp với nhu cầu sử dụng.
+- Mọi thay đổi nên bám theo kiến trúc hiện tại của repository.
+- `rules/`, `mappings/`, `tenants/`, và `artifacts/` cần được xem là các lớp dữ liệu có quan hệ chặt chẽ với nhau.
+- Không chỉnh tay output trong `artifacts/` nếu thay đổi đó thực chất thuộc về `rules/`, `mappings/`, hoặc `tenants/`.
+- Khi thay đổi tài liệu, ưu tiên giữ văn phong rõ ràng, chuẩn hóa, và nhất quán giữa bản tiếng Việt và tiếng Anh.
+
+## Quy trình đề xuất thay đổi
+
+1. Fork repository hoặc tạo branch riêng để làm việc.
+2. Thực hiện thay đổi ở phạm vi nhỏ và có chủ đích.
+3. Kiểm tra lại các file liên quan để tránh lệch giữa rule, mapping, tenant config, và documentation.
+4. Gửi Pull Request hoặc patch kèm mô tả rõ mục tiêu thay đổi.
+
+## Phạm vi thay đổi thường gặp
+
+### Detection content
+
+- thêm hoặc cập nhật rule trong `rules/`
+- cập nhật metadata, references, tags, hoặc detection intent
+
+### Mapping
+
+- cập nhật `mappings/detections/`
+- cập nhật `tenants/.../bindings/fields/`
+- cập nhật `tenants/.../bindings/ingest/`
+
+### Tenant configuration
+
+- thêm tenant mới
+- cập nhật `tenant.yaml`, `devices/`, `logsources/`, `filters/`, hoặc `deployments/`
+
+### Documentation
+
+- cập nhật `README`
+- cập nhật tài liệu trong `docs/architecture/` và `docs/en/architecture/`
+- đồng bộ lại nội dung giữa bản tiếng Việt và bản tiếng Anh khi cần
+
+## Rule Template
+
+Template dưới đây dùng làm khung tham chiếu cho detection rule. Cấu trúc này kế thừa từ Sigma và đã được điều chỉnh để phù hợp với repository hiện tại.
 
 ```yaml
-id: <UUID v4 sinh ngẫu nhiên, ví dụ: 722d5f75-2b02-426a-8f24-e2a6fe47388b>
-title: <Tên Rule, ví dụ: 7Zip Compressing Dump File>
+id: <UUID v4, ví dụ: 722d5f75-2b02-426a-8f24-e2a6fe47388b>
+title: <Tên rule, ví dụ: 7Zip Compressing Dump File>
 status: <enable|disable>
-# Đối với các rule nằm trong trong thư mục 'converted-rules' cần phải bổ sung thêm field 'tenant' để biết đã triển khai cho khách hàng nào
-# Các rule nằm trong thư mục riêng của mỗi tenant thì không cần field này
 tenant:
   - tenant_a
   - tenant_b
-  - tenant_c
-description: <Mô tả về rules, ví dụ: Detects execution of 7z in order to compress a file with a ".dmp"/".dump" extension.>
+description: <Mô tả rule>
 references:
-  - <Link tham chiếu 1, ví dụ: https://example1.com/post1>
-  - <Link tham chiếu 2, ví dụ: https://example2.com/post2>
-author: <Tác giả 1, ví dụ: Nasreddine Bencherchali (Nextron Systems)>, <Tác giả 2, ví dụ: FIS Purple Team>
-date: <Thời gian tạo rule lần đầu, ví dụ: 2022-09-27>
-modified: <Thời gian cập nhật rule, ví dụ: 2023-09-27>
+  - <Link tham chiếu 1>
+  - <Link tham chiếu 2>
+author: <Tên tác giả hoặc nguồn tham chiếu>
+date: <Ngày tạo lần đầu, ví dụ: 2022-09-27>
+modified: <Ngày cập nhật gần nhất, ví dụ: 2023-09-27>
 tags:
-  - <mitre tactic 1, ví dụ: attack.collection>
-  - <mitre technique 1, ví dụ: attack.t1560.001>
-  - <mitre tactic 2, ví dụ: attack.execution>
-  - <mitre technique 2, ví dụ: attack.t1106>
+  - <MITRE tactic>
+  - <MITRE technique>
 logsource:
-    # Tham khảo: https://sigmahq.io/docs/basics/log-sources.html
-    product: <ví dụ: windows>
-    service: <ví dụ: powershell>
-    category: <ví dụ: process_creation>
+  product: <ví dụ: windows>
+  service: <ví dụ: powershell>
+  category: <ví dụ: process_creation>
 detection:
-  # Logic phát hiện của sigma -> Giữ nguyên để sau còn đối chiếu
-  # Khi phát triển rules EDR/SIEM mới mà sigma chưa có thì có thể bỏ qua phần này
-  selection_img:
-    - Description|contains: '7-Zip'
-    - Image|endswith:
-        - '\7z.exe'
-        - '\7zr.exe'
-        - '\7za.exe'
-    - OriginalFileName:
-        - '7z.exe'
-        - '7za.exe'
-  selection_extension:
-    CommandLine|contains:
-      - '.dmp'
-      - '.dump'
-      - '.hdmp'
-  condition: all of selection_*
-
-# Logic phát hiện của một giải pháp EDR hoặc SIEM cụ thể
-logic: <ví dụ: (cmdline:Compress-Archive AND cmdline:-Path AND cmdline:-DestinationPath AND cmdline:$env AND cmdline:TEMP)>
+  selection:
+    FieldName|contains: value
+  condition: selection
+logic: <Logic triển khai cụ thể cho EDR hoặc SIEM nếu có>
 falsepositives:
-  - Legitimate use of 7z with a command line in which ".dmp" or ".dump" appears accidentally
-  - Legitimate use of 7z to compress WER ".dmp" files for troubleshooting
+  - <False positive 1>
 level: medium
-version: <phiên bản rules, bắt đầu từ 1.0, ví dụ: 1.1>
-
+version: <phiên bản rule, ví dụ: 1.0>
 ```
 
-## Tham khảo
+Lưu ý:
 
-- Sigma docs: <https://sigmahq.io/docs/guide/getting-started.html>
+- Nếu rule là base rule chuẩn, chỉ khai báo những trường thực sự cần thiết cho detection content.
+- Nếu rule có logic triển khai riêng cho SIEM, phần execution artifact cần được giữ tách bạch với detection intent.
+- Nếu rule được render theo tenant, thay đổi nên được thực hiện từ lớp dữ liệu gốc thay vì chỉnh trực tiếp output.
+
+## Tài liệu tham chiếu
+
+- Sigma: <https://sigmahq.io/docs/guide/getting-started.html>
+- Kiến trúc project: [docs/architecture/project-architecture.md](/d:/My%20Project/SIEM-Detection/docs/architecture/project-architecture.md)
+- Kiến trúc tenant: [docs/architecture/tenants-relationship.md](/d:/My%20Project/SIEM-Detection/docs/architecture/tenants-relationship.md)
+- Kiến trúc mapping: [docs/architecture/mappings-relationship.md](/d:/My%20Project/SIEM-Detection/docs/architecture/mappings-relationship.md)
+
+## Maintainer
+
+Repository hiện được duy trì theo mô hình cá nhân.
+
+Maintainer mặc định:
+
+- Phạm Tuấn Anh

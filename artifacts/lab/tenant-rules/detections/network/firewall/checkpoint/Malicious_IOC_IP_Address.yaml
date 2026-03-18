@@ -1,0 +1,48 @@
+title: Malicious IOC IP Address
+id: fe1b1f0b-2f76-4e9d-a0e8-e5bac0e56961
+status: test
+description: Detects network traffic where the source or destination IP address matches known malicious Indicators of Compromise (IOC) IP addresses.
+references:
+    - https://opencti.io/
+    - Internal: Hao
+author: AnhPT127
+date: 2026-02-06
+modified: 2026-02-06
+tags:   
+    - attack.t1071
+    - attack.command_and_control
+logsource:
+    category: firewall
+    product: generic
+    service: traffic
+detection:
+# xử lý sau
+    selection:
+        src_ip:
+        # Placeholder for IOC IP addresses
+        # lookup Malicious-IOC-IP
+        dst_ip:
+        # Placeholder for IOC IP addresses
+        # lookup Malicious-IOC-IP
+    filter_private_ip:
+        src_ip|cidr:
+            - 10.0.0.0/8
+    condition: selection and filter_private_ip
+falsepositives:
+    - Unknown
+level: high
+
+x_splunk_es:
+    targets:
+        index: firewall
+        sourcetype: traffic
+        schedule_cron: "0 * * * *"
+        earliest: "-1h"
+        latest: "now"
+        notable: { enabled: true, severity: high, risk_score: 50 }
+    search_query: |
+        (index=$INDEX$ sourcetype=$SOURCETYPE$) src_ip=`malicious_ioc_address`
+        | bucket _time span=1h
+        | convert timeformat="%Y-%m-%d %H:%M:%S" ctime(_time) as Time 
+        | eval Alert_Severity="High"
+        | stats count by Alert_Severity Time action src_ip dest_ip

@@ -1,0 +1,25 @@
+﻿title: FPT - ESXi Unusual SSH disable behavior
+id: 78634a98-a390-5658-9eab-aa9565b12f92
+status: test
+description: 'Imported from lab-enabled-rules.csv for tenant lab: FPT - ESXi Unusual SSH disable behavior'
+author: admin
+date: '2026-03-11'
+modified: '2026-03-11'
+tags:
+- imported.csv
+- tenant.lab
+- splunk
+logsource:
+  category: custom
+  product: splunk_import
+  service: search
+detection:
+  selection: {}
+  condition: selection
+falsepositives:
+- Unknown
+level: critical
+x_splunk_es:
+  targets: {}
+  search_query: "index=ESXi sourcetype=* \"SSH\" \"disabled\"\n| convert timeformat=\"%Y/%m/%d %H:%M:%S\" ctime(_time) as Time | eval Alert_Severity=\"Critical\" \n| stats count by Alert_Severity Time host _raw\n| rename _raw as Details"
+
