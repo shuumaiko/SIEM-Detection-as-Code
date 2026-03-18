@@ -2,6 +2,27 @@
 
 This repository manages `Detection as Code` for a multi-tenant SOC environment, with a structure that separates detection logic, field normalization, tenant-specific configuration, and SIEM-specific deployment artifacts.
 
+## What This Repository Is
+
+`SIEM-Detection-as-Code` should be read as an architecture and repository model for building `Detection as Code` in multi-tenant environments.
+
+The main idea is that a detection program should not be forced into a single flat layer of rules. In real SOC operations, the same detection intent often needs to be reused across:
+
+- multiple tenants
+- multiple device and logsource combinations
+- multiple SIEM field naming schemes
+- multiple deployment targets or execution formats
+
+This repository therefore treats detection engineering as a layered system:
+
+- `rules/` expresses detection intent
+- `mappings/` expresses canonical field contracts
+- `tenants/` expresses tenant-specific deployment context
+- `artifacts/` expresses rendered tenant output
+- `project-root/` provides the engine that reads, validates, renders, and exports that model
+
+In other words, this is not only a rule collection. It is a reference architecture for separating reusable detection knowledge from tenant-specific operational detail.
+
 ## Objectives
 
 `SIEM-Detection-as-Code` is designed to:
@@ -19,6 +40,23 @@ From an architectural point of view, this repository is not just a collection of
 - `tenants/` stores tenant-specific real-world configuration
 - `artifacts/` stores rendered output per tenant
 - `project-root/` contains the application engine used to read, validate, render, and deploy
+
+## Why Multi-Tenant Detection-as-Code
+
+In a single-tenant setup, it is still possible to manage detections as a relatively direct mapping from rule logic to SIEM query. In a multi-tenant environment, that approach becomes harder to scale because:
+
+- one detection may need different field bindings per tenant
+- one tenant may have different devices, datasets, or parser behavior than another
+- the same logical rule may need different enablement, filters, or deployment decisions per tenant
+- the execution format may differ from the content model used to preserve detection meaning
+
+This repository is designed around that separation problem.
+
+The architecture aims to answer a practical question:
+
+How can one detection definition remain reusable, while still being rendered into tenant-specific output that reflects real differences in ingestion, fields, filtering, and SIEM deployment?
+
+The repository structure is the answer proposed by this project.
 
 ## Current Status
 
