@@ -1,0 +1,33 @@
+schema_version: 1.0
+siem: splunk
+
+defaults:
+  enabled: true
+  schedule:
+    cron: "*/30 * * * *"
+    earliest: "-30m"
+    latest: "now"
+  notable:
+    enabled: true
+
+level_defaults:
+  informational:
+    notable:
+      severity: informational
+      risk_score: 5
+  low:
+    notable:
+      severity: low
+      risk_score: 10
+  medium:
+    notable:
+      severity: medium
+      risk_score: 30
+  high:
+    notable:
+      severity: high
+      risk_score: 60
+  critical:
+    notable:
+      severity: critical
+      risk_score: 90

@@ -1,0 +1,19 @@
+schema_version: 1.0
+siem: splunk
+
+rules_by_id:
+    fa0c05b6-8ad3-468d-8231-c1cbccb64fba:
+        rule_name: av_hacktool
+        display_name: "AV Hacktool Detection"
+        schedule:
+            cron: "*/15 * * * *"
+            earliest: "-15m"
+            latest: "now"
+        notable:
+            risk_score: 80
+
+    2a129a58-7725-48c9-8b3a-0a2264522a68:
+        rule_name: fw_connection_port_23
+        display_name: "Accepted Default Telnet Port Connection"
+        notable:
+            severity: medium

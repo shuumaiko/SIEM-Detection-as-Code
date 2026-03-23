@@ -24,6 +24,7 @@ Tài liệu này sử dụng tenant `lab` như một ví dụ tham chiếu cho t
 - ánh xạ dataset vào mô hình ingest thực tế trên SIEM
 - ánh xạ canonical field sang field thực tế trên SIEM
 - áp filter đặc thù theo tenant trong quá trình render
+- áp override execution hoặc tenant-specific tuning trong quá trình vận hành
 - xác định tập rule được bật hoặc tắt theo tenant và SIEM
 - sinh output vào `artifacts/<tenant>/tenant-rules/`
 
@@ -42,6 +43,15 @@ tenants/
         *.yaml
       fields/
         *.yml
+    overrides/
+      execution/
+        <siem>/
+          ...
+      filter/
+        detections/
+          ...
+        analysts/
+          ...
     filters/
       detections/
         <category>/
@@ -58,6 +68,8 @@ Trong tenant `lab`, các nhóm file hiện có bao gồm:
 - `logsources/*.yaml`
 - `bindings/ingest/*.yaml`
 - `bindings/fields/*.yml`
+- `overrides/execution/**`
+- `overrides/filter/**`
 - `deployments/rule-deployments.yaml`
 
 Hiện trạng dữ liệu của `lab` tại thời điểm ghi tài liệu:
@@ -81,15 +93,17 @@ flowchart TD
     A --> E[bindings/fields/*.yml\nCanonical field to tenant SIEM field]
 
     A --> F[filters/detections/**\nTenant rule filters]
-    A --> G[deployments/rule-deployments.yaml\nRule deployment manifest]
+    A --> G[overrides/**\nTenant-specific overrides]
+    A --> H[deployments/rule-deployments.yaml\nRule deployment manifest]
 
-    H[Base rules] --> I[Rule rendering]
-    D --> H
-    E --> I
-    F --> I
-    G --> I
+    I[Base rules] --> J[Rule rendering]
+    D --> J
+    E --> J
+    F --> J
+    G --> J
+    H --> J
 
-    I --> J[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
+    J --> K[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
 ```
 
 ## 5. Thành phần dữ liệu
@@ -119,6 +133,7 @@ Quan hệ:
 - `tenant.yaml` 1-n `devices`
 - `tenant.yaml` 1-n `bindings`
 - `tenant.yaml` 1-n `filters`
+- `tenant.yaml` 1-n `overrides`
 - `tenant.yaml` 1-1 `deployments/rule-deployments.yaml`
 
 ### 5.2. `devices/*.yaml`
@@ -252,7 +267,25 @@ Quan hệ:
 - `filters` thường được tra cứu theo `category`, `product`, hoặc tập nguồn log tương ứng
 - output sau khi áp filter được ghi vào `artifacts/<tenant>/tenant-rules/`
 
-### 5.7. `deployments/rule-deployments.yaml`
+### 5.7. `overrides/`
+
+`overrides/` là lớp tenant-specific tuning được áp trong quá trình render.
+
+Vai trò:
+
+- điều chỉnh execution metadata cho riêng tenant như schedule, severity, risk score
+- bổ sung tenant-specific filter logic mà không phải fork semantic rule gốc
+- hỗ trợ tuning trong quá trình vận hành SOC theo tenant
+
+Nguyên tắc:
+
+- tenant override chỉ nên chứa phần delta so với rule gốc hoặc execution config gốc
+- tenant override là lớp cuối cùng trong quá trình tuning
+- tenant override không thay thế vai trò của `deployments/rule-deployments.yaml`
+
+Chi tiết vai trò của override file được mô tả thêm trong [execution-relationship.md](./execution-relationship.md) và [rule-rendering-flows.md](./rule-rendering-flows.md).
+
+### 5.8. `deployments/rule-deployments.yaml`
 
 File này lưu quyết định bật hoặc tắt rule theo từng SIEM trong khóa `rule_deployments_by_siem`.
 
@@ -279,10 +312,10 @@ Toàn bộ tenant model hiện tại xoay quanh 4 khóa chính:
 
 | Khóa | Xuất hiện ở đâu | Ý nghĩa |
 | --- | --- | --- |
-| `tenant_id` | `tenant.yaml`, `devices`, `bindings`, `deployments` | định danh tenant |
+| `tenant_id` | `tenant.yaml`, `devices`, `bindings`, `deployments`, `overrides` | định danh tenant |
 | `device_id` | `devices`, `logsources`, `bindings` | định danh nguồn log hoặc platform |
 | `dataset_id` | `logsources`, `bindings` | định danh dataset logic của device |
-| `siem_id` | `tenant.yaml`, `bindings`, `deployments` | định danh SIEM đích |
+| `siem_id` | `tenant.yaml`, `bindings`, `deployments`, `overrides/execution` | định danh SIEM đích |
 
 ## 7. Trình tự xử lý chuẩn
 
@@ -294,8 +327,8 @@ Trình tự xử lý chuẩn của tenant layer được mô tả như sau:
 4. Resolve `bindings/ingest/*.yaml` để ánh xạ `dataset_id` sang `index` và `sourcetype` trên target SIEM.
 5. Resolve `bindings/fields/*.yml` để ánh xạ canonical field sang field thực tế của tenant.
 6. Đọc `deployments/rule-deployments.yaml` để lấy trạng thái bật hoặc tắt rule theo `siem_id`.
-7. Nạp `filters/` để áp tenant-specific filter trong quá trình render.
-8. Kết hợp base rules, ingest bindings, field bindings, tenant filters, và deployment decision.
+7. Nạp `filters/` và `overrides/` để áp tenant-specific filter hoặc tenant-specific tuning trong quá trình render.
+8. Kết hợp base rules, ingest bindings, field bindings, tenant filters, tenant overrides, và deployment decision.
 9. Sinh output vào `artifacts/<tenant>/tenant-rules/`.
 
 ## 8. Ví dụ luồng dữ liệu tham chiếu
@@ -307,19 +340,21 @@ Ví dụ với `eset-ra`:
 3. `bindings/ingest/binding_eset_ra.yaml` ánh xạ `eset-ra-alerts` sang `index: epav` và `sourcetype: eset:ra` trên `splunk`.
 4. `bindings/fields/*.yml`, nếu có, ánh xạ canonical field của rule sang field thực tế của tenant.
 5. `filters/detections/...`, nếu có, bổ sung điều kiện hoặc ngoại lệ riêng cho tenant trong lúc render.
-6. `deployments/rule-deployments.yaml` quyết định rule nào được bật cho `splunk`.
-7. Kết quả render được ghi vào `artifacts/lab/tenant-rules/...`.
+6. `overrides/execution/...`, nếu có, điều chỉnh metadata thực thi riêng cho tenant.
+7. `deployments/rule-deployments.yaml` quyết định rule nào được bật cho `splunk`.
+8. Kết quả render được ghi vào `artifacts/lab/tenant-rules/...`.
 
 ## 9. Phân biệt `tenants/` và `artifacts/`
 
 - `tenants/` là lớp cấu hình đầu vào theo tenant
 - `filters/` trong `tenants/` là input dùng trong quá trình render
+- `overrides/` trong `tenants/` là input tuning dùng trong quá trình render
 - `artifacts/<tenant>/tenant-rules/` là lớp output đã được render cho tenant
 
 Diễn giải ở mức kiến trúc:
 
 - `tenants/` chứa cấu hình và chính sách render
-- `artifacts/` chứa kết quả sau khi áp mapping, filter, và deployment decision
+- `artifacts/` chứa kết quả sau khi áp mapping, filter, execution, và deployment decision
 
 ## 10. Kết luận
 
@@ -330,8 +365,8 @@ Trong kiến trúc hiện tại:
 - `ingest binding` nối `logsource dataset` với ingest model thực tế trên SIEM
 - `field binding` nối canonical field với field thực tế của tenant
 - `filters` tinh chỉnh base rule trong lúc render
+- `overrides` tinh chỉnh execution hoặc logic theo tenant trong lúc render
 - `deployment` quyết định rule nào được đi tiếp
 - output cuối cùng được materialize trong `artifacts/<tenant>/tenant-rules`
 
 Tài liệu này là chuẩn tham chiếu cho mọi thay đổi liên quan đến cấu trúc tenant, tenant binding, và cơ chế render theo tenant trong repository.
-

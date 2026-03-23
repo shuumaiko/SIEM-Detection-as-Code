@@ -1,0 +1,20 @@
+tenant_id: lab
+siem: splunk
+rule_id: fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+rule_name: av_hacktool
+author: AnhPT127
+date: 2026-03-23
+modified: 2026-03-23
+description: Tenant-specific execution override for Splunk scheduling and notable tuning.
+
+enabled: true
+
+schedule:
+  cron: "*/30 * * * *"
+  earliest: "-30m"
+  latest: "now"
+
+notable:
+  enabled: true
+  severity: medium
+  risk_score: 20
