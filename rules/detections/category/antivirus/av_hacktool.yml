@@ -1,0 +1,88 @@
+title: Antivirus Hacktool Detection
+name: av_hacktool
+rule_type: detection
+id: fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+status: stable
+description: |
+    Detects a highly relevant Antivirus alert that reports a hack tool or other attack tool.
+    This event must not be ignored just because the AV has blocked the malware but investigate, how it came there in the first place.
+references:
+    - source_ref: sigma:fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+author: Florian Roth (Nextron Systems), Arnim Rupp
+date: 2021-08-16
+modified: 2024-11-02
+tags:
+    - attack.execution
+    - attack.t1204
+logsource:
+    category: antivirus
+    product: any
+    service: any
+detection:
+    selection:
+        - Signature|startswith:
+              - 'ATK/'  # Sophos
+              - 'Exploit.Script.CVE'
+              - 'HKTL'
+              - 'HTOOL'
+              - 'PWS.'
+              - 'PWSX'
+              - 'SecurityTool'
+              # - 'FRP.'
+        - Signature|contains:
+              - 'Adfind'
+              - 'Brutel'
+              - 'BruteR'
+              - 'Cobalt'
+              - 'COBEACON'
+              - 'Cometer'
+              - 'DumpCreds'
+              - 'FastReverseProxy'
+              - 'Hacktool'
+              - 'Havoc'
+              - 'Impacket'
+              - 'Keylogger'
+              - 'Koadic'
+              - 'Mimikatz'
+              - 'Nighthawk'
+              - 'PentestPowerShell'
+              - 'Potato'
+              - 'PowerSploit'
+              - 'PowerSSH'
+              - 'PshlSpy'
+              - 'PSWTool'
+              - 'PWCrack'
+              - 'PWDump'
+              - 'Rozena'
+              - 'Rusthound'
+              - 'Sbelt'
+              - 'Seatbelt'
+              - 'SecurityTool'
+              - 'SharpDump'
+              - 'SharpHound'
+              - 'Shellcode'
+              - 'Sliver'
+              - 'Snaffler'
+              - 'SOAPHound'
+              - 'Splinter'
+              - 'Swrort'
+              - 'TurtleLoader'
+    condition: selection
+falsepositives:
+    - Unlikely
+fields:
+    - _time
+    - host
+    - Signature
+    - file_name
+    - file_hash
+    - action_taken
+level: high
+
+x_query:
+    splunk: |
+        ((signature="HTOOL*" OR signature="HKTL*" OR signature="SecurityTool*" OR signature="Adfind*" OR signature="ATK/*" OR signature="Exploit.Script.CVE*" OR signature="PWS.*" OR signature="PWSX*") OR (signature="*Hacktool*" OR signature="*ATK/*" OR signature="*Potato*" OR signature="*Rozena*" OR signature="*Sbelt*" OR signature="*Seatbelt*" OR signature="*SecurityTool*" OR signature="*SharpDump*" OR signature="*Sliver*" OR signature="*Splinter*" OR signature="*Swrort*" OR signature="*Impacket*" OR signature="*Koadic*" OR signature="*Lazagne*" OR signature="*Metasploit*" OR signature="*Meterpreter*" OR signature="*MeteTool*" OR signature="*Mimikatz*" OR signature="*Mpreter*" OR signature="*Nighthawk*" OR signature="*PentestPowerShell*" OR signature="*PowerSploit*" OR signature="*PowerSSH*" OR signature="*PshlSpy*" OR signature="*PSWTool*" OR signature="*PWCrack *" OR signature="*Brutel *" OR signature="*BruteR *" ORRsignature="*Cobalt *" ORRsignature="*COBEACON *" ORRsignature="*Cometer *" ORRsignature="*DumpCreds *" ORRsignature="*FastReverseProxy *" ORRsignature="*PWDump *"))
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time 
+        | eval Alert_Severity="Critical" 
+        | stats values(file_name) as File_name values(file_hash) as File_hash values(sourcetype) as "Source Type" values(action_taken) as Action_Taken values(signature) as Signature count by Alert_Severity Time host hostname
+        | rename Time as "Detected Time"

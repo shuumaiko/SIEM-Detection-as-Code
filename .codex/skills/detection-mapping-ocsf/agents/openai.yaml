@@ -1,0 +1,4 @@
+interface:
+  display_name: "Detection Mapping OCSF"
+  short_description: "Write OCSF-based canonical mapping files"
+  default_prompt: "Use $detection-mapping-ocsf to create or update a detection field mapping from user-defined required rule fields."

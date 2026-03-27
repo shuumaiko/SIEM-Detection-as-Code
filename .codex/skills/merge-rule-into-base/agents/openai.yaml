@@ -1,0 +1,4 @@
+interface:
+  display_name: "Merge Rule Into Base"
+  short_description: "Merge imported rules into the repository's canonical rule set"
+  default_prompt: "Merge imported rules into the base repository structure using docs and schemas, preserving detection/correlation semantics and logging all changes."

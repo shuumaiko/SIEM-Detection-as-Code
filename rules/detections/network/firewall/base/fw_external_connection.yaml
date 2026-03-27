@@ -1,7 +1,7 @@
 title: Firewall traffic from public IP (base)
 name: fw_external_connection
 id: e00cc3a0-d141-4495-b67c-390162eed27a
-rule_type: detection_base
+rule_type: base
 status: test
 description: Connection from public IP
 references:

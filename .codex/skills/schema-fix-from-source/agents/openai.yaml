@@ -1,0 +1,4 @@
+interface:
+  display_name: "Schema Fix From Source"
+  short_description: "Repair or redesign repo schemas from actual source files."
+  default_prompt: "Inspect real repository files first, then update or redesign schema files without changing project-root runtime code."

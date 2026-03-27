@@ -1,17 +1,13 @@
-﻿{
+{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schema/rules/rule_file.schema.json",
-  "title": "Detection Rule File Schema (Multi-document)",
-  "type": "array",
-  "minItems": 2,
-  "maxItems": 2,
-  "prefixItems": [
+  "title": "Rule File Schema",
+  "oneOf": [
     {
       "$ref": "base_rule.schema.json"
     },
     {
       "$ref": "correlation_rule.schema.json"
     }
-  ],
-  "items": false
+  ]
 }
