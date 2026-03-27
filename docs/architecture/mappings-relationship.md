@@ -165,6 +165,8 @@ Cách tiếp cận này giúp:
 - giảm chi phí canonical hóa toàn bộ logsource upfront
 - ưu tiên giá trị detection trước khi mở rộng data model
 
+Trong luồng hardcoded query hiện tại, mapping vẫn giữ vai trò bắt buộc để resolve field logic theo tenant, kiểm tra field coverage, và bổ sung ingest target như `index`, `sourcetype`. Chi tiết luồng này được mô tả riêng tại [rule-rendering-flows.md](./rule-rendering-flows.md).
+
 ## 9. Quy tắc vận hành canonical field
 
 Để tránh phát sinh canonical field trùng nghĩa hoặc thiếu kiểm soát, quy trình vận hành tối thiểu nên gồm:
@@ -233,6 +235,8 @@ Vì vậy:
 - hardcoded SPL giữ vai trò execution artifact tạm thời
 - canonical field tiếp tục giữ vai trò contract lâu dài của detection content
 
+Chi tiết vai trò của hardcoded query và quan hệ với execution layer được mô tả thêm trong [execution-relationship.md](./execution-relationship.md) và [rule-rendering-flows.md](./rule-rendering-flows.md).
+
 ## 13. Phạm vi hỗ trợ thực tế trong v1.0
 
 Trong giai đoạn `0.x` hoặc `1.0`, lớp `mappings/` nên hỗ trợ các khả năng sau:
@@ -282,4 +286,3 @@ Trong kiến trúc hiện tại của `SIEM-Detection-as-Code`:
 - hardcoded SPL là execution artifact hợp lệ trong giai đoạn chuyển tiếp
 
 Tài liệu này là chuẩn tham chiếu cho mọi thay đổi liên quan đến vocabulary field, canonical model, cơ chế resolve mapping, và tenant field binding trong repository.
-

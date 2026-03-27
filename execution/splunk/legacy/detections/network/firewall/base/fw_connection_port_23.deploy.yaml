@@ -1,0 +1,48 @@
+title: Accepted Default Telnet Port Connection
+id: cec968ad-22e6-46d4-b83a-de6e5cc79ce5
+status: test
+description: Request volume from a single source IP exceeds threshold within 15 minutes
+references:
+    - source_ref: elk:34fde489-94b0-4500-a76f-b8a157cf9269
+author: Elastic
+date: 2026-01-12
+modified: 2026-03-19
+tags:
+    - attack.lateral-movement
+    - attack.t1021
+    - attack.initial-access
+    - attack.t1190
+correlation:
+    type: event_count
+    rules:
+        - fw_connection_port_23
+    group-by:
+        - src_ip
+    timespan: 15m
+    condition:
+        gt: 0
+fields:
+    - _time
+    - src_ip
+    - src_port
+    - src_zone
+    - dest_ip
+    - dest_port
+    - dest_zone
+    - action
+    - firewall_policy_name
+    - rule_action
+    - protocol
+    - event_count
+falsepositives:
+    - Unknown
+level: medium
+
+x_query:
+    splunk: |
+        index=$index$ sourcetype=$sourcetype$ AND (dst_port=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")))        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time 
+        | eval Alert_Severity="Medium"  
+        | bin _time span=15m
+        | stats count as event_count by _time src_ip
+        | search event_count > 0 
+        | table _time,src_ip,src_port,src_zone,dest_ip,dest_port,dest_zone,action,firewall_policy_name,rule_action,protocol,event_count
