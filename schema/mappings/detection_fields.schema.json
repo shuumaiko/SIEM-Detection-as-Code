@@ -3,6 +3,18 @@
   "$id": "schema/mappings/detection_fields.schema.json",
   "title": "Detection Field Mapping Schema",
   "type": "object",
+  "$defs": {
+    "repo_canonical_field_ref": {
+      "type": "string",
+      "description": "Repository-specific canonical field reference. Use this form when the field meaning is internal to the repository or does not map cleanly to a standard OCSF field path.",
+      "pattern": "^canonical\\.[A-Za-z0-9_.-]+$"
+    },
+    "ocsf_field_ref": {
+      "type": "string",
+      "description": "OCSF-style field reference without the `canonical.` prefix. Use this only when the field path directly matches OCSF semantics, for example `time`, `src_endpoint.ip`, `http_request.user_agent`, `file.path`, or `malware.name`. This schema validates OCSF references by naming convention and common OCSF root segments; it does not embed the full generated OCSF field registry.",
+      "pattern": "^(?:time|start_time|end_time|count|duration|message|severity|severity_id|status|status_code|status_detail|status_id|activity_id|activity_name|category_name|category_uid|class_name|class_uid|type_name|type_uid|timezone_offset|src_endpoint|dst_endpoint|actor|analytic|api|app|application|attack|attacks|cloud|compliance|confidence|confidence_id|confidence_score|container|database|device|dns_query|email|enrichments|evidence|evidences|file|finding|finding_info|firewall_rule|group|http_request|http_response|image|impact|impact_id|impact_score|location|malware|malware_scan_info|metadata|module|network_connection_info|network_endpoint|observables|process|product|query_evidence|query_info|query_time|raw_data|raw_data_hash|raw_data_size|remediation|resource|resources|response_time|risk_details|risk_level|risk_level_id|risk_score|session|src_url|state|state_id|traffic|url|user|vulnerabilities|vulnerability|web_resource|web_resources)(?:\\.[a-z][a-z0-9_]*)*$"
+    }
+  },
   "required": [
     "schema_version",
     "mapping_type",
@@ -69,12 +81,20 @@
         ],
         "properties": {
           "target_field": {
+            "description": "Legacy or direct target field path. Prefer `canonical_field` for new canonical mapping work unless a file family already uses `target_field` style.",
             "type": "string",
             "pattern": "^[A-Za-z0-9_.-]+$"
           },
           "canonical_field": {
-            "type": "string",
-            "pattern": "^canonical\\.[A-Za-z0-9_.-]+$"
+            "description": "Canonical field contract used by the repository. Accepts either a repository-specific `canonical.*` field name or an exact OCSF-style field path when the path maps directly to OCSF semantics.",
+            "oneOf": [
+              {
+                "$ref": "#/$defs/repo_canonical_field_ref"
+              },
+              {
+                "$ref": "#/$defs/ocsf_field_ref"
+              }
+            ]
           },
           "source_fields": {
             "type": "array",

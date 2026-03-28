@@ -127,10 +127,28 @@ class FileTenantRepository(TenantRepository):
                         siem_id=data.get("siem_id", ""),
                     )
                     result[device_id] = binding
+                default_mapping = data.get("default_field_mapping") or {}
                 field_mapping = data.get("field_mapping") or {}
                 dataset_id = data.get("dataset_id") or "_default"
-                if isinstance(field_mapping, dict):
+
+                # Support both the old flat `field_mapping` structure and the new
+                # `default_field_mapping` + `datasets.<id>.field_mapping` structure.
+                if isinstance(default_mapping, dict):
+                    binding.field_mappings["_default"] = default_mapping
+                if isinstance(field_mapping, dict) and field_mapping:
                     binding.field_mappings[dataset_id] = field_mapping
+
+                datasets = data.get("datasets") or {}
+                if isinstance(datasets, dict):
+                    for dataset_key, dataset_cfg in datasets.items():
+                        if not isinstance(dataset_cfg, dict):
+                            continue
+                        dataset_mapping = dataset_cfg.get("field_mapping") or {}
+                        if not isinstance(dataset_mapping, dict):
+                            continue
+                        merged_mapping = dict(binding.field_mappings.get("_default") or {})
+                        merged_mapping.update(dataset_mapping)
+                        binding.field_mappings[dataset_key] = merged_mapping
         return result
 
     def _load_rule_deployments(self, tenant_root: Path, siem_id: str | None) -> list[RuleDeployment]:

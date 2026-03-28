@@ -57,11 +57,25 @@
     }
   },
   "$defs": {
+    "field_name_ref": {
+      "type": "string",
+      "description": "Field contract name coming from the canonical mapping layer. Accepts repository-specific `canonical.*` field names and direct OCSF-style field references when the mapping layer chose an exact OCSF path.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^canonical\\.[A-Za-z0-9_.-]+$"
+        },
+        {
+          "type": "string",
+          "pattern": "^(?:time|start_time|end_time|count|duration|message|severity|severity_id|status|status_code|status_detail|status_id|activity_id|activity_name|category_name|category_uid|class_name|class_uid|type_name|type_uid|timezone_offset|src_endpoint|dst_endpoint|actor|analytic|api|app|application|attack|attacks|cloud|compliance|confidence|confidence_id|confidence_score|container|database|device|dns_query|email|enrichments|evidence|evidences|file|finding|finding_info|firewall_rule|group|http_request|http_response|image|impact|impact_id|impact_score|location|malware|malware_scan_info|metadata|module|network_connection_info|network_endpoint|observables|process|product|query_evidence|query_info|query_time|raw_data|raw_data_hash|raw_data_size|remediation|resource|resources|response_time|risk_details|risk_level|risk_level_id|risk_score|session|src_url|state|state_id|traffic|url|user|vulnerabilities|vulnerability|web_resource|web_resources)(?:\\.[a-z][a-z0-9_]*)*$"
+        }
+      ]
+    },
     "field_mapping": {
       "type": "object",
       "minProperties": 1,
       "propertyNames": {
-        "pattern": "^canonical\\.[A-Za-z0-9_.-]+$"
+        "$ref": "#/$defs/field_name_ref"
       },
       "additionalProperties": {
         "type": "string",

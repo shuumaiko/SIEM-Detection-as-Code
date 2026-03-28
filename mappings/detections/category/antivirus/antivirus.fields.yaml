@@ -7,13 +7,22 @@ logsource:
   service: any
 
 description: >
-  Shared source-rule-field to canonical-field mapping for antivirus detection
-  content.
-  Defined using OCSF Detection Finding semantics with Malware, File, Device,
-  User, and Process objects.
+  Shared source-rule-field mapping for antivirus detection content.
+  OCSF version referenced: `1.9.0-dev` from `.tmp/ocsf-schema/version.json`.
+  OCSF references used: `events/base_event.json` for `time`;
+  `events/findings/detection_finding.json` for detection-finding context and
+  malware-bearing finding semantics; `objects/malware.json` for
+  `malware.name`; `objects/file.json` for `file.name`, `file.path`, and
+  `file.hashes`; `objects/device.json` for `device.hostname` and `device.ip`;
+  `objects/user.json` for `user.name`; and `objects/process.json` plus
+  `objects/process_entity.json` for `process.name`.
+  Repo references used: `mappings/detections/network/firewall/firewall.fields.yaml`
+  and `docs/architecture/mappings-relationship.md` to preserve the established
+  internal field `canonical.event.action`; `action_taken` does not map cleanly
+  to a single direct OCSF field path in the current antivirus rule set.
 
 fields:
-  - canonical_field: canonical.event.time
+  - canonical_field: time
     source_fields:
       - _time
       - Time
@@ -23,38 +32,38 @@ fields:
       - action_taken
       - AV_Action_Taken
 
-  - canonical_field: canonical.malware.name
+  - canonical_field: malware.name
     source_fields:
       - Signature
       - signature
       - threat_name
 
-  - canonical_field: canonical.file.name
+  - canonical_field: file.name
     source_fields:
       - file_name
 
-  - canonical_field: canonical.file.path
+  - canonical_field: file.path
     source_fields:
       - file_path
 
-  - canonical_field: canonical.file.hash
+  - canonical_field: file.hashes
     source_fields:
       - file_hash
 
-  - canonical_field: canonical.device.hostname
+  - canonical_field: device.hostname
     source_fields:
       - host
       - hostname
 
-  - canonical_field: canonical.device.ip
+  - canonical_field: device.ip
     source_fields:
       - ipv4
 
-  - canonical_field: canonical.user.name
+  - canonical_field: user.name
     source_fields:
       - user
 
-  - canonical_field: canonical.process.name
+  - canonical_field: process.name
     source_fields:
       - processname
       - Process_Name

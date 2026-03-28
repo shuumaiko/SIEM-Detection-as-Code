@@ -16,3 +16,13 @@ class RuleRepository(ABC):
     def list_for_tenant(self, tenant: Tenant, include_all: bool = False) -> list[Rule]:
         """Return effective rules for one tenant."""
         raise NotImplementedError
+
+    @abstractmethod
+    def list_render_candidates(self, tenant: Tenant) -> list[Rule]:
+        """Return source rules that can be rendered for one tenant."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def save_rendered_for_tenant(self, tenant_id: str, rendered_rules: list[dict]) -> None:
+        """Persist rendered tenant rules into the artifact store."""
+        raise NotImplementedError

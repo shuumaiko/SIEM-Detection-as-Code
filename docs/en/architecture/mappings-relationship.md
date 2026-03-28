@@ -141,6 +141,16 @@ Desired properties of a canonical field:
 
 A `canonical field` may use OCSF as semantic reference, but it is not required to be a full OCSF implementation at the current stage.
 
+In the current mapping schema, canonical fields may appear in two forms:
+
+- an OCSF-native field reference without the `canonical.` prefix when the field maps directly to OCSF semantics, for example `time`, `src_endpoint.ip`, `http_request.user_agent`, `file.path`, or `malware.name`
+- a repository-specific canonical field with the `canonical.` prefix when the project needs an internal name that does not directly match OCSF or intentionally keeps a local extension, for example `canonical.http_request.x_header`
+
+In short:
+
+- use the unprefixed form only for direct and clear OCSF field references
+- keep the `canonical.` prefix for repository-specific contracts or when no suitable OCSF field exists
+
 ## 8. Scope of Canonicalization
 
 Not every field of a log source needs to be canonicalized at the outset.
@@ -208,6 +218,11 @@ The field layers in the current architecture are separated as follows:
 - `canonical field`: the project's internal normalized field
 - `OCSF`: the semantic reference used to design canonical fields
 - `tenant SIEM field`: the actual physical field available in the tenant's SIEM
+
+The `canonical field` layer can therefore contain:
+
+- direct OCSF field references
+- repository-specific canonical extensions with the `canonical.` prefix
 
 The target pipeline at the current stage is:
 

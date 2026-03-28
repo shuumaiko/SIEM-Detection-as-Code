@@ -3,9 +3,10 @@ from domain.models.tenant import Tenant
 
 
 class ExportService:
-    """Serialize tenant prebuilt rules for downstream deployment."""
+    """Serialize source rules into the flat payload used by the render pipeline."""
 
     def export_rules(self, tenant: Tenant, rules: list[Rule]) -> list[dict]:
+        """Return rule payloads that are ready for target resolution and rendering."""
         return [
             {
                 "tenant_id": tenant.tenant_id,

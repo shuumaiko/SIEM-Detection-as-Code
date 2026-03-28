@@ -141,6 +141,16 @@ Trong ngữ cảnh của project này, `canonical field` là bộ field chuẩn 
 
 `canonical field` có thể tham chiếu semantic từ OCSF, nhưng không bắt buộc phải là bản triển khai đầy đủ của OCSF trong giai đoạn hiện tại.
 
+Trong schema mapping hiện tại, canonical field có thể xuất hiện dưới 2 dạng:
+
+- OCSF-native field reference, không cần prefix `canonical.`, khi field bám đúng semantic OCSF. Ví dụ: `time`, `src_endpoint.ip`, `http_request.user_agent`, `file.path`, `malware.name`
+- repository-specific canonical field, phải dùng prefix `canonical.`, khi project cần giữ tên nội bộ không trùng trực tiếp với OCSF hoặc đang dùng extension riêng. Ví dụ: `canonical.http_request.x_header`
+
+Nói ngắn gọn:
+
+- nếu field tham chiếu trực tiếp và rõ ràng tới OCSF, có thể dùng dạng không prefix
+- nếu field là contract nội bộ hoặc chưa có biểu diễn OCSF phù hợp, phải giữ prefix `canonical.`
+
 ## 8. Phạm vi canonical hóa dữ liệu
 
 Không phải mọi field của logsource đều cần được canonical hóa ngay từ đầu.
@@ -210,6 +220,11 @@ Các lớp field trong kiến trúc hiện tại được phân tách như sau:
 - `canonical field`: field chuẩn nội bộ của project
 - `OCSF`: semantic reference để thiết kế canonical field
 - `tenant SIEM field`: field vật lý thực tế đang tồn tại trên SIEM của tenant
+
+Trong đó, lớp `canonical field` có thể chứa:
+
+- direct OCSF field reference
+- repository-specific canonical extension có prefix `canonical.`
 
 Pipeline mục tiêu ở giai đoạn hiện tại là:
 

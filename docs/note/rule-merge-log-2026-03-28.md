@@ -156,4 +156,4 @@
 ## Mapping Changes
 
 - Created `mappings/detections/category/antivirus/antivirus.fields.yaml` as the shared antivirus detection field dictionary.
-- Mapped the detection and output fields used by the 5 merged rules to `canonical.*` fields informed by OCSF Detection Finding, Malware, File, Device, User, and Process semantics.
+- Mapped the detection and output fields used by the 5 merged rules to direct OCSF field paths where possible and kept `canonical.*` only for repository-specific semantics informed by OCSF Detection Finding, Malware, File, Device, User, and Process objects.

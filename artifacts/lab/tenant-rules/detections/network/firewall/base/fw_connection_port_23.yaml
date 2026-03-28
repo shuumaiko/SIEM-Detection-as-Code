@@ -1,0 +1,64 @@
+title: Accepted Default Telnet Port Connection
+id: 2a129a58-7725-48c9-8b3a-0a2264522a68
+rule_type: detection
+status: test
+description: This rule detects network events that may indicate the use of Telnet traffic. Telnet is commonly used by system administrators to remotely control older or embedded systems using the command line shell. It should almost never be directly exposed to the Internet, as it is frequently targeted and exploited by threat actors as an initial access or backdoor vector. As a plain-text protocol, it may also expose usernames and passwords to anyone capable of observing the traffic.
+references:
+- source_ref: elk:34fde489-94b0-4500-a76f-b8a157cf9269
+author: AnhPT127
+date: 2026-01-12
+modified: 2026-01-12
+tags:
+- attack.lateral-movement
+- attack.t1021
+- attack.initial-access
+- attack.t1190
+logsource:
+  category: firewall
+  product: any
+  service: traffic
+detection:
+  selection:
+    dst_port: 23
+  filter_blocked:
+    action:
+    - blocked
+    - dropped
+    - denied
+    - dropped
+    - deny
+  condition: selection and not filter_blocked
+fields:
+- _time
+- src_ip
+- src_port
+- src_zone
+- dest_ip
+- dest_port
+- dest_zone
+- action
+- firewall_policy_name
+- rule_action
+- protocol
+- event_count
+level: medium
+x_query:
+  splunk: index=$index$ sourcetype=$sourcetype$ AND (dst_port=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")))
+x_splunk_es:
+  targets:
+    ingest_targets:
+    - device_id: checkpoint-fw
+      dataset_id: traffic
+      index: checkpoint
+      sourcetype: cp_log
+    index: checkpoint
+    sourcetype: cp_log
+    schedule_cron: '*/30 * * * *'
+    earliest: -30m
+    latest: now
+    notable:
+      enabled: true
+      severity: medium
+      risk_score: 30
+    enabled: true
+  search_query: ((index=checkpoint sourcetype=cp_log)) AND (dst_port=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")))

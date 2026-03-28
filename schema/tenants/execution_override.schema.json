@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/tenants/execution_override.schema.json",
+  "title": "Tenant Execution Override Schema",
+  "type": "object",
+  "required": [
+    "tenant_id",
+    "siem",
+    "rule_id",
+    "rule_name",
+    "author",
+    "date",
+    "description"
+  ],
+  "anyOf": [
+    {
+      "required": ["enabled"]
+    },
+    {
+      "required": ["schedule"]
+    },
+    {
+      "required": ["notable"]
+    }
+  ],
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "siem": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "rule_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "modified": {
+      "type": "string",
+      "format": "date"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "schedule": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "cron": {
+          "type": "string",
+          "minLength": 1
+        },
+        "earliest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "latest": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "notable": {
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "severity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk_score": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
