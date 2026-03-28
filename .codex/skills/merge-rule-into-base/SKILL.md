@@ -1,6 +1,6 @@
 ---
 name: merge-rule-into-base
-description: Merge imported SIEM rules into the repository's canonical `rules/` layer using the repo docs and JSON schemas. Use when Codex needs to inspect an imported rule, classify it as detection or analyst content, decide whether to create a new canonical rule or merge into an existing base rule, preserve detection or correlation semantics, normalize metadata to schema, and record all changed rules in a merge log without relying on validation functions under `./project-root`.
+description: Merge imported SIEM rules into the repository's canonical `rules/` layer using the repo docs and JSON schemas. Use when Codex needs to inspect an imported rule from sources such as `.tmp/rules`, classify it as detection or analyst content, decide whether to create a new canonical rule or merge into an existing base rule, preserve detection or correlation semantics, normalize metadata to schema, and record all changed rules in a merge log without relying on validation functions under `./project-root`.
 ---
 
 # Merge Rule Into Base
@@ -13,6 +13,7 @@ Read only the minimum context required for the current merge.
 
 - Read `docs/architecture/rules-relationship.md` to understand `detection`, `detection_base` or `base`, and `analyst`.
 - Read `schema/rules/rule_file.schema.json`, `schema/rules/base_rule.schema.json`, and `schema/rules/correlation_rule.schema.json` before deciding the target file shape.
+- Check `.tmp/rules/` first when the imported content is a Sigma clone or a staged upstream rule set.
 - Read the closest existing canonical rule candidates under `rules/detections/` or `rules/analysts/`.
 - Read nearby rules in the same taxonomy to mirror naming, folder placement, metadata style, and field ordering.
 - Do not use validation functions under `./project-root` unless the user explicitly changes that instruction.
@@ -22,6 +23,7 @@ Read only the minimum context required for the current merge.
 Follow this order.
 
 1. Inspect the imported rule and extract the semantic core: title, source references, logsource or correlation behavior, detection fields, tags, level, and any Sigma-style condition or aggregation logic.
+   - When the import was cloned from Sigma, check the staged source under `.tmp/rules/` before editing canonical files.
 2. Classify the imported rule by target semantic type:
    - `detection` when the logic is a standalone event rule with `logsource` and `detection`.
    - `detection_base` or `base` when the logic is a reusable building block that an analyst rule can call.
