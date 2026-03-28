@@ -17,7 +17,7 @@ references:
     - https://www.virustotal.com/gui/file/6f0f20da34396166df352bf301b3c59ef42b0bc67f52af3d541b0161c47ede05
 author: Florian Roth (Nextron Systems), Arnim Rupp
 date: 2022-05-12
-modified: 2024-11-02
+modified: 2026-03-28
 tags:
     - attack.t1486
     - attack.impact
@@ -61,6 +61,7 @@ detection:
 falsepositives:
     - Unlikely
 fields:
+    - signature
     - file_name
     - file_path
     - file_hash
@@ -73,6 +74,6 @@ level: critical
 x_query:
     splunk: |
         signature IN ("*BlackWorm*", "*Chaos*", "*Cobra*", "*ContiCrypt*", "*Crypter*", "*CRYPTES*", "*Cryptor*", "*CylanCrypt*", "*DelShad*", "*Destructor*", "*Filecoder*", "*GandCrab*", "*GrandCrab*", "*Haperlock*", "*Hiddentear*", "*HydraCrypt*", "*Krypt*", "*Lockbit*", "*Locker*", "*Mallox*", "*Phobos*", "*Ransom*", "*Ryuk*", "*Ryzerlo*", "*Stopcrypt*", "*Tescrypt*", "*TeslaCrypt*", "*WannaCry*", "*Xorist*")
-        | convert timeformat="%Y-%m-%d %H:%M:00" ctime(_time) as Time 
-        | eval Alert_Severity="Critical" 
-        | stats values(file_name) as File_Name values(file_path) as File_Path values(file_hash) as File_Hash values(hostname) as Host_Name values(ipv4) as ipv4 values(user) as User values(action_taken) as Action_taken count by Alert_Severity Time signature
+        | convert timeformat="%Y-%m-%d %H:%M:00" ctime(_time) as Time
+        | eval Alert_Severity="Critical"
+        | stats values(file_name) as file_name values(file_path) as file_path values(file_hash) as file_hash values(hostname) as hostname values(ipv4) as ipv4 values(user) as user values(action_taken) as action_taken count by Alert_Severity Time signature

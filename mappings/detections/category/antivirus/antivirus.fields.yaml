@@ -1,0 +1,60 @@
+schema_version: 1.0
+mapping_type: detection_fields
+
+logsource:
+  category: antivirus
+  product: any
+  service: any
+
+description: >
+  Shared source-rule-field to canonical-field mapping for antivirus detection
+  content.
+  Defined using OCSF Detection Finding semantics with Malware, File, Device,
+  User, and Process objects.
+
+fields:
+  - canonical_field: canonical.event.time
+    source_fields:
+      - _time
+      - Time
+
+  - canonical_field: canonical.event.action
+    source_fields:
+      - action_taken
+      - AV_Action_Taken
+
+  - canonical_field: canonical.malware.name
+    source_fields:
+      - Signature
+      - signature
+      - threat_name
+
+  - canonical_field: canonical.file.name
+    source_fields:
+      - file_name
+
+  - canonical_field: canonical.file.path
+    source_fields:
+      - file_path
+
+  - canonical_field: canonical.file.hash
+    source_fields:
+      - file_hash
+
+  - canonical_field: canonical.device.hostname
+    source_fields:
+      - host
+      - hostname
+
+  - canonical_field: canonical.device.ip
+    source_fields:
+      - ipv4
+
+  - canonical_field: canonical.user.name
+    source_fields:
+      - user
+
+  - canonical_field: canonical.process.name
+    source_fields:
+      - processname
+      - Process_Name

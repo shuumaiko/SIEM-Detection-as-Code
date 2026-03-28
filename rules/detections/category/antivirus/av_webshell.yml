@@ -1,4 +1,6 @@
 title: Antivirus Web Shell Detection
+name: av_webshell
+rule_type: detection
 id: fdf135a2-9241-4f96-a114-bb404948f736
 status: test
 description: |
@@ -6,6 +8,7 @@ description: |
     It's highly recommended to tune this rule to the specific strings used by your anti virus solution by downloading a big WebShell repository from e.g. github and checking the matches.
     This event must not be ignored just because the AV has blocked the malware but investigate, how it came there in the first place.
 references:
+    - source_ref: sigma:fdf135a2-9241-4f96-a114-bb404948f736
     - https://www.nextron-systems.com/?s=antivirus
     - https://github.com/tennc/webshell
     - https://www.virustotal.com/gui/file/bd1d52289203866645e556e2766a21d2275877fbafa056a76fe0cf884b7f8819/detection
@@ -18,12 +21,14 @@ references:
     - https://www.virustotal.com/gui/file/13ae8bfbc02254b389ab052aba5e1ba169b16a399d9bc4cb7414c4a73cd7dc78/detection
 author: Florian Roth (Nextron Systems), Arnim Rupp
 date: 2018-09-09
-modified: 2024-11-02
+modified: 2026-03-28
 tags:
     - attack.persistence
     - attack.t1505.003
 logsource:
     category: antivirus
+    product: any
+    service: any
 detection:
     selection:
         - Signature|startswith:
@@ -83,4 +88,23 @@ detection:
     condition: selection
 falsepositives:
     - Unlikely
+fields:
+    - threat_name
+    - file_name
+    - file_path
+    - file_hash
+    - hostname
+    - ipv4
+    - user
+    - processname
+    - action_taken
 level: high
+
+x_query:
+    splunk: |
+        (threat_name IN ("ASP.*", "IIS/BackDoor*", "JAVA/Backdoor*", "JSP.*", "Perl.*", "PHP.*", "Troj/ASP*", "Troj/JSP*", "Troj/PHP*", "VBS/Uxor*") OR threat_name IN ("*ASP_*", "*ASP:*", "*ASP.Agent*", "*ASP/*", "*Aspdoor*", "*ASPXSpy*", "*Backdoor.ASP*", "*Backdoor.Java*", "*Backdoor.JSP*", "*Backdoor.PHP*", "*Backdoor.VBS*", "*Backdoor/ASP*", "*Backdoor/Java*", "*Backdoor/JSP*", "*Backdoor/PHP*", "*Backdoor/VBS*", "*C99shell*", "*Chopper*", "*filebrowser*", "*JSP_*", "*JSP:*", "*JSP.Agent*", "*JSP/*", "*Perl:*", "*Perl/*", "*PHP_*", "*PHP:*", "*PHP.Agent*", "*PHP/*", "*PHPShell*", "*PShlSpy*", "*SinoChoper*", "*Trojan.ASP*", "*Trojan.JSP*", "*Trojan.PHP*", "*Trojan.VBS*", "*VBS.Agent*", "*VBS/Agent*", "*Webshell*"))
+        | bucket _time span=15m
+        | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
+        | eval Alert_Severity="High"
+        | stats values(action_taken) as action_taken values(file_name) as file_name values(file_path) as file_path values(file_hash) as file_hash values(hostname) as hostname values(processname) as processname values(threat_name) as threat_name values(user) as user count by Alert_Severity Time ipv4
+        | fillnull value=N/A action_taken file_name file_path file_hash processname user
