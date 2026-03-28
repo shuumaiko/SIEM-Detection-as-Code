@@ -1,0 +1,813 @@
+author,search,title
+admin,"index=* (sourcetype=*mcafee* OR sourcetype=*eset*) ((signature=""HTOOL*"" OR signature=""HKTL*"" OR signature=""SecurityTool*"" OR signature=""Adfind*"" OR signature=""ATK/*"" OR signature=""Exploit.Script.CVE*"" OR signature=""PWS.*"" OR signature=""PWSX*"") OR (signature=""*Hacktool*"" OR signature=""*ATK/*"" OR signature=""*Potato*"" OR signature=""*Rozena*"" OR signature=""*Sbelt*"" OR signature=""*Seatbelt*"" OR signature=""*SecurityTool*"" OR signature=""*SharpDump*"" OR signature=""*Sliver*"" OR signature=""*Splinter*"" OR signature=""*Swrort*"" OR signature=""*Impacket*"" OR signature=""*Koadic*"" OR signature=""*Lazagne*"" OR signature=""*Metasploit*"" OR signature=""*Meterpreter*"" OR signature=""*MeteTool*"" OR signature=""*Mimikatz*"" OR signature=""*Mpreter*"" OR signature=""*Nighthawk*"" OR signature=""*PentestPowerShell*"" OR signature=""*PowerSploit*"" OR signature=""*PowerSSH*"" OR signature=""*PshlSpy*"" OR signature=""*PSWTool*"" OR signature=""*PWCrack*"" OR signature=""*Brutel*"" OR signature=""*BruteR*"" OR signature=""*Cobalt*"" OR signature=""*COBEACON*"" OR signature=""*Cometer*"" OR signature=""*DumpCreds*"" OR signature=""*FastReverseProxy*"" OR signature=""*PWDump*""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats values(file_name) as File_name values(file_hash) as File_hash values(sourcetype) as ""Source Type"" values(action_taken) as Action_Taken values(signature) as Signature count by Alert_Severity Time host hostname
+| rename Time as ""Detected Time""",FPT - Antivirus Hacktool Detected by AV
+admin,"index=* (sourcetype=*mcafee* OR sourcetype=*eset*) signature IN (""*BlackWorm*"", ""*Chaos*"", ""*Cobra*"", ""*ContiCrypt*"", ""*Crypter*"", ""*CRYPTES*"", ""*Cryptor*"", ""*CylanCrypt*"", ""*DelShad*"", ""*Destructor*"", ""*Filecoder*"", ""*GandCrab*"", ""*GrandCrab*"", ""*Haperlock*"", ""*Hiddentear*"", ""*HydraCrypt*"", ""*Krypt*"", ""*Lockbit*"", ""*Locker*"", ""*Mallox*"", ""*Phobos*"", ""*Ransom*"", ""*Ryuk*"", ""*Ryzerlo*"", ""*Stopcrypt*"", ""*Tescrypt*"", ""*TeslaCrypt*"", ""*WannaCry*"", ""*Xorist*"")
+| convert timeformat=""%Y-%m-%d %H:%M:00"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats values(file_name) as File_Name values(file_path) as File_Path values(file_hash) as File_Hash values(hostname) as Host_Name values(ipv4) as ipv4 values(user) as User values(action_taken) as Action_taken count by Alert_Severity Time signature",FPT - Antivirus Ransomware Detected by AV
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" `APT_User_Agent`
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Medium""
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - APT User Agent
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*momyshark\?key=*"" OR URL=""*momyshark\?key=*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - BabyShark Agent Pattern
+admin,"index=* sourcetype=""*WinEventLog*"" (EventID=4624 OR EventID=4625) user!="""" src!=- src_ip!=- user!=*$
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Medium""
+| eval src_dst=""Source IP:"" + src_ip + "" Dest:""+ dest
+| stats count(eval(action=""success"")) as successes count(eval(action=""failure"")) as failures values(Source_Workstation) as Source_Workstation values(src_dst) as ""Source IP and Dest"" by Alert_Severity Time user 
+| where failures>=100 AND successes>0
+| sort - failures",FPT - Basic Brute Force Detection
+admin,"index=* sourcetype=cyberark (act=""Undefined User Logon"" OR act=""User Authentication"")
+| rename act as ""Event Name"", shost as ""Source IP"", cs5 as ""Destination IP"", suser as ""Username""
+| eval Alert_Severity=""High""  
+| stats values(Event Name) as Signature earliest(_time) as First, latest(_time) as Last count by Alert_Severity ""Source IP"", ""Destination IP"", ""Username""
+| eval First=strftime(First,""%+"") 
+| eval Last=strftime(Last,""%+"")
+| where count >= 3",FPT - Brute Force Attack On PAM
+admin,"index=* sourcetype=linux_* tag=authentication ""*fail*""
+| bucket _time span=15m
+| eval Alert_Severity=""High""  
+| stats values(ip) as IP values(sourcetype) as ""Source Type"" values(hostname) as Host_Name count by Alert_Severity _time username
+| where count > 10
+| rename username as ""User Name""
+| fillnull value=N/A Host_Name",FPT - BruteForce Attack on Linux
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (URL=""*/asp.asp\?ui=*"" OR uri_path=""*/asp.asp\?ui=*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Chafer Malware URL Pattern
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (((http_user_agent=""Mozilla/4.0 (compatible; MSIE 6.0;Windows NT 5.1)"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E )"" OR http_user_agent=""Mozilla/5.0 (Windows; U; MSIE 7.0; Windows NT 5.2) Java/1.5.0_08"") OR http_user_agent=""*; MANM; MANM)"") OR ((Agent=""Mozilla/4.0 (compatible; MSIE 6.0;Windows NT 5.1)"" OR Agent=""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/4.0; SLCC2; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E )"" OR Agent=""Mozilla/5.0 (Windows; U; MSIE 7.0; Windows NT 5.2) Java/1.5.0_08"") OR Agent=""*; MANM; MANM)""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CobaltStrike Malformed UAs in Malleable Profiles
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (URL=""*/oscp/*"" OR uri_path=""*/oscp/*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CobaltStrike Malleable (OCSP) Profile
+admin,"index=* sourcetype=cp_log rule_name=BLOCK_WEB_VIRUS_2
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+| stats earliest(Time) as Earliest_Time latest(Time) as Latest_Time values(action) as Action values(dest_ip) as Dest_IP values(dest_port) as Dest_Port values(rule_name) as Firewall_Rule_Name count by Alert_Severity src_ip
+| rename src_ip as Source_IP",FPT - Connection to C2 detected by Checkpoint (Rule: BLOCK WEB VIRUS 2)
+admin,"index=* sourcetype=linux_audit ((type=""SYSCALL"" AND exe=""*/useradd"") OR type=""ADD_USER"")
+| convert timeformat=""%H:%M:%S %Y/%m/%d"" ctime(_time) as Time 
+| eval Alert_Severity=""Medium""
+| stats count by Alert_Severity Time src_user_name command action terminal addr",FPT - Creation Of An User Account
+admin,"index=* (sourcetype=*mcafee* OR sourcetype=*eset*) (severity=Critical OR severity=Fatal) file_name=* file_hash=*
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats values(date) as ""Infected Time"" values(ipv4) as Host_ip values(file_name) as File_name values(file_hash) as File_hash values(sourcetype) as ""Source Type"" values(action_error) as Action_error values(signature) as Signature count by Alert_Severity Time hostname
+| rename Time as ""Detected Time""",FPT - Critical/Fatal Severity Malware Detected by AV
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (""=<script>"" OR ""=%3Cscript%3E"" OR ""=%253Cscript%253E"" OR ""<iframe "" OR ""%3Ciframe "" OR ""<svg "" OR ""%3Csvg "" OR ""document.cookie"" OR ""document.domain"" OR "" onerror="" OR "" onresize="" OR "" onload=\"""" OR ""onmouseover="" OR ""${alert"" OR ""javascript:alert"" OR ""javascript%3Aalert"") NOT (Status_Code=""404"") NOT (src_ip=""10.14.131.3"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip_Limit_5_Lines , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent_Limit_5_Lines , values(vendor_product) as vendor_product , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path_(Limit_10_Lines) , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time http_x_forwarded_for
+|  eval http_user_agent_Limit_5_Lines=mvindex(http_user_agent_Limit_5_Lines,0,4)
+|  eval src_ip_Limit_5_Lines=mvindex(src_ip_Limit_5_Lines,0,4)
+|  eval uri_path_Limit_10_Lines=mvindex(uri_path_Limit_10_Lines,0,9)
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Cross Site Scripting (XSS) Detected
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((uri_path=""*/servicedesk/customer/../../secure/*"" OR URL=""*/servicedesk/customer/../../secure/*"") (uri_path=""*/servicedesk/customer/..;/..;/secure/*"" OR URL=""*/servicedesk/customer/..;/..;/secure/*"") OR (uri_path=""*/servicedesk/customer/../../sr/jira.issueviews:searchrequest-html-all-fields/temp/SearchRequest.html?jqlQuery=text+%7E+%22%22*"" OR URL=""*/servicedesk/customer/../../sr/jira.issueviews:searchrequest-html-all-fields/temp/SearchRequest.html?jqlQuery=text+%7E+%22%22*"") OR (uri_path=""*/servicedesk/customer/../../sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=text+%7E+%22%22*"" OR URL=""*/servicedesk/customer/../../sr/jira.issueviews:searchrequest-xml/temp/SearchRequest.xml?jqlQuery=text+%7E+%22%22*""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2019-14994 Jira Service Desk Path Traversal
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/packages/../web.xml*"" OR URL=""*/packages/../web.xml*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2019-3394 Confluence Local File Disclosure Vulnerability
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((uri_path=""*/rest/tinymce/1/macro/preview*"" OR URL=""*/rest/tinymce/1/macro/preview*"") OR (uri_path=""*/pages/resumedraft.action?draftId=12345&draftShareId=056b55bc-fc4a-487b-b1e1-8f673f280c23&*"" OR URL=""*/pages/resumedraft.action?draftId=12345&draftShareId=056b55bc-fc4a-487b-b1e1-8f673f280c23&*""))
+NOT ((client_ip=""10.0.0.0/8"" OR client_ip=""172.16.0.0/12"" OR client_ip=""192.168.0.0/16"") OR (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2019-3396 Exploitation Attemps
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (((uri_path=""*/../../*"" OR URL=""*/../../*"") (uri_path=""*/opt/atlassian/confluence/*"" OR URL=""*/opt/atlassian/confluence/*"")) OR (uri_path=""*pages/downloadallattachments.action?*"" OR URL=""*pages/downloadallattachments.action?*""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2019-3398 Atlassian Confluence Exploitation
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/browse.*"" OR URL=""*/browse.*"") server=*jira* NOT (src_ip=""10.14.131.3"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2020-14178 Enumerate project keys via an Information Disclosure vulnerability
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/pages/createpage-entervariables.action?*"" OR URL=""*/pages/createpage-entervariables.action?*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2021-26084 RCE Confluence Server
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/secure/WBSGanttManageScheduleJobAction.jspa*"" OR URL=""*/secure/WBSGanttManageScheduleJobAction.jspa*"") Method=GET
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2022-0540 Atlassian Jira Seraph Authentication Bypass Verify Exploitable
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/%24%7B%28%23a%3D%40org.apache.commons.io.IOUtils%40toString%28%40java.lang.Runtime%40getRuntime%28%29.exec%28%22id%22%29.getInputStream%28%29%2C%22utf-8%22%29%29.%28%40com.opensymphony.webwork.ServletActionContext%40getResponse%28%29.setHeader%28%22X-Qualys-Response%22%2C%23a%29%29%7D/*"" OR URL=""*/%24%7B%28%23a%3D%40org.apache.commons.io.IOUtils%40toString%28%40java.lang.Runtime%40getRuntime%28%29.exec%28%22id%22%29.getInputStream%28%29%2C%22utf-8%22%29%29.%28%40com.opensymphony.webwork.ServletActionContext%40getResponse%28%29.setHeader%28%22X-Qualys-Response%22%2C%23a%29%29%7D/*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2022-26134 Atlassian Confluence OGNL Injection RCE Vulnerability
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/dologin.action*"" OR URL=""*/dologin.action*"") http_referrer=""*os_username=disabledsystemuser&os_password=disabled1system1user6708&login=Log+in&os_destination=%2Fvulnerable.action*""
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2022-26138 Exploitation
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((uri_path=""*/rest/api/latest/projects/*"" OR URL=""*/rest/api/latest/projects/*"") (uri_path=""*/repos/*"" OR URL=""*/repos/*"") (uri_path=""*/archive?*"" OR URL=""*/archive?*""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2022-36804 Bitbucket Command Injection Vulnerability
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/server-info.action?bootstrapStatusProvider.applicationConfig.setupComplete=false*"" OR URL=""*/server-info.action?bootstrapStatusProvider.applicationConfig.setupComplete=false*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2023-22515 Atlassian Confluence Broken Access Control Vulnerability
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/json/setup-restore.action?synchronous=true*"" OR URL=""*/json/setup-restore.action?synchronous=true*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2023-22518 Atlassian Confluence Server
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((uri_path=""*/template/aui/text-inline.vm*"" OR URL=""*/template/aui/text-inline.vm*"") Method=POST) NOT (client_ip=""10.14.131.3"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2023-22527 RCE using SSTI in Confluence
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_path=""*/admin/plugins/newcode/addlanguage.action*"" OR URL=""*/admin/plugins/newcode/addlanguage.action*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - CVE-2024-21683 RCE in Confluence Data Center and Server
+admin,"index=cyble_alerts source=""Alerts://Cyble_alerts""
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time
+| stats values(severity) as Alert_Severity, values(status) as Status, values(keyword_name) as Keyword_Name, values(service_name) as Service_Name, values(ip{}) as IP_Address count by Time title
+| rename title as Cyble_Alert_Title",FPT - Cyble Security Alerts
+admin,"index=* sourcetype=*eset* event_type=FilteredWebsites_Event NOT *chrome.exe* NOT *msedge.exe* NOT *Ultraviewer* NOT *Skype.exe* NOT *brave.exe* NOT *coccoc* NOT *firefox.exe* NOT *UrbanVPN* NOT *Hola* NOT *opera* NOT *BigNoxVM* NOT ""*popcorn time*"" NOT ""*FormatFactory*"" NOT *pinaview* rule_id!=""Blocked by PUA blacklist"" rule_id!=""Website certificate revoked""
+|  bucket _time span=7d
+|  convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time
+| eval Alert_Severity=""High""
+|  stats earliest(""occured"") as Start_Time latest(""occured"") as End_Time values(processname) as Process_Name, values(object_uri) as object_uri, values(target_address) as target_address, values(hostname) as hostname, values(event) as event, values(rule_id) as rule_id, values(action_taken) as action_taken count by Alert_Severity Time ipv4
+|  sort - count
+|  where count > 10",FPT - Detect Malicious Websites By AV HIPS Last 7 Days
+admin,"index=* sourcetype=*eset* event_type=FirewallAggregated_Event threat_name!=""*RDP*""
+|  bucket _time span=1d
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time
+| eval Alert_Severity=""High""
+|  stats earliest(""occured"") as Start_Time latest(""occured"") as End_Time values(target_address) as target_address, values(hostname) as hostname, values(target_port) as target_port, values(protocol) as protocol, values(event) as event, values(threat_name) as threat_name, values(action) as action count by Alert_Severity Time source_address
+|  eval target_port=mvindex(target_port,0,9)
+|  eval target_address=mvindex(target_address,0,9)
+|  rename hostname as ""target_hostname""
+|  sort - count
+|  where count > 150",FPT - Detect Network Attacks By AV HIPS Last 7 Days
+admin,"index=* sourcetype=*eset* event_type=FirewallAggregated_Event threat_name=""*RDP*""
+|  bucket _time span=1d
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time
+| eval Alert_Severity=""High""
+|  stats earliest(""occured"") as Start_Time latest(""occured"") as End_Time values(target_address) as target_address, values(hostname) as hostname, values(target_port) as target_port, values(protocol) as protocol, values(event) as event, values(threat_name) as threat_name, values(action) as action count by Alert_Severity Time source_address
+|  rename hostname as ""target_hostname""
+|  sort - count
+|  where count > 100",FPT - Detect RDP BruteForce By AV HIPS Last 7 Days
+admin,"index=* (sourcetype=cp_log OR sourcetype=forti*) dst_domain_name=*
+| search [| inputlookup maltrail_malware_domain.csv]
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+| stats values(dest_ip) as Dest_IP values(dst_domain_name) as Dst_Domain_Name values(action) as Action values(sourcetype) as ""Source Type"" count by Alert_Severity Time src_ip",FPT - Detect Request Malicious Domain
+admin,"index=* sourcetype=*eset* event_type=Threat_Event threat_type!=""Potentially unwanted application"" NOT *chrome.exe* NOT *msedge.exe* NOT *Ultraviewer* NOT *Skype.exe* NOT *brave.exe* NOT *coccoc* NOT *firefox.exe* NOT *UrbanVPN* NOT *Hola* NOT *opera* NOT *BigNoxVM* NOT ""*popcorn time*"" NOT ""*FormatFactory*"" NOT *pinaview*
+|  bucket _time span=7d
+| eval Alert_Severity=""Low""
+|  stats earliest(""occured"") as Start_Time latest(""occured"") as End_Time values(object_type) as object_type values(object_uri) as object_uri_(limit_show_10_lines), values(hash) as hash_(limit_show_10_lines), values(engine_version) as engine_version values(target_address) as target_address values(hostname) as hostname values(target_port) as target_port values(protocol) as protocol values(event) as event values(threat_name) as threat_name_(limit_show_10_lines) values(action_taken) as action_taken values(severity) as severity values(scanner_id) as scanner_id values(need_restart) as need_restart count by Alert_Severity ipv4 _time
+| eval ""object_uri_(limit_show_10_lines)""=mvindex('object_uri_(limit_show_10_lines)',0,9)
+| eval ""hash_(limit_show_10_lines)""=mvindex('hash_(limit_show_10_lines)',0,9)
+| eval ""threat_name_(limit_show_10_lines)""=mvindex('threat_name_(limit_show_10_lines)',0,9)
+| sort - count
+| where count > 100",FPT - Detect Threat Events By AV HIPS Last 7 Days
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=1.1.1.1 OR src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51)
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""*monerohash.com"" OR questionname = ""*do-dear.com"" OR questionname = ""*xmrminerpro.com"" OR questionname = ""*secumine.net"" OR questionname = ""*xmrpool.com"" OR questionname = ""*minexmr.org"" OR questionname = ""*hashanywhere.com"" OR questionname = ""*xmrget.com"" OR questionname = ""*mininglottery.eu"" OR questionname = ""*minergate.com"" OR questionname = ""*moriaxmr.com"" OR questionname = ""*multipooler.com"" OR questionname = ""*moneropools.com"" OR questionname = ""*xmrpool.eu"" OR questionname = ""*coolmining.club"" OR questionname = ""*supportxmr.com"" OR questionname = ""*minexmr.com"" OR questionname = ""*hashvault.pro"" OR questionname = ""*xmrpool.net"" OR questionname = ""*crypto-pool.fr"" OR questionname = ""*xmr.pt"" OR questionname = ""*miner.rocks"" OR questionname = ""*walpool.com"" OR questionname = ""*herominers.com"" OR questionname = ""*gntl.co.uk"" OR questionname = ""*semipool.com"" OR questionname = ""*coinfoundry.org"" OR questionname = ""*cryptoknight.cc"" OR questionname = ""*fairhash.org"" OR questionname = ""*baikalmine.com"" OR questionname = ""*tubepool.xyz"" OR questionname = ""*fairpool.xyz"" OR questionname = ""*asiapool.io"" OR questionname = ""*coinpoolit.webhop.me"" OR questionname = ""*nanopool.org"" OR questionname = ""*moneropool.com"" OR questionname = ""*miner.center"" OR questionname = ""*prohash.net"" OR questionname = ""*poolto.be"" OR questionname = ""*cryptoescrow.eu"" OR questionname = ""*monerominers.net"" OR questionname = ""*cryptonotepool.org"" OR questionname = ""*extrmepool.org"" OR questionname = ""*webcoin.me"" OR questionname = ""*kippo.eu"" OR questionname = ""*hashinvest.ws"" OR questionname = ""*monero.farm"" OR questionname = ""*linux-repository-updates.com"" OR questionname = ""*1gh.com"" OR questionname = ""*dwarfpool.com"" OR questionname = ""*hash-to-coins.com"" OR questionname = ""*pool-proxy.com"" OR questionname = ""*hashfor.cash"" OR questionname = ""*fairpool.cloud"" OR questionname = ""*litecoinpool.org"" OR questionname = ""*mineshaft.ml"" OR questionname = ""*abcxyz.stream"" OR questionname = ""*moneropool.ru"" OR questionname = ""*cryptonotepool.org.uk"" OR questionname = ""*extremepool.org"" OR questionname = ""*extremehash.com"" OR questionname = ""*hashinvest.net"" OR questionname = ""*unipool.pro"" OR questionname = ""*crypto-pools.org"" OR questionname = ""*monero.net"" OR questionname = ""*backup-pool.com"" OR questionname = ""*mooo.com"" OR questionname = ""*freeyy.me"" OR questionname = ""*cryptonight.net"" OR questionname = ""*shscrypto.net"")
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical""
+| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity src_ip",FPT - DNS Events Related To Mining Pools
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51 OR src_ip=10.15.16.70 OR src_ip=1.1.1.1 OR src=10.225.6.52 OR src=10.14.132.16 OR src=10.15.6.11 OR questionname=""polling.oastify.com"")
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""*.interact.sh"" OR questionname = ""*.oast.pro"" OR questionname = ""*.oast.live"" OR questionname = ""*.oast.site"" OR questionname = ""*.oast.online"" OR questionname = ""*.oast.fun"" OR questionname = ""*.oast.me"" OR questionname = ""*.burpcollaborator.net"" OR questionname = ""*.oastify.com"" OR questionname = ""*.canarytokens.com"" OR questionname = ""*.requestbin.net"" OR questionname = ""*.dnslog.cn"")
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) AS Time
+| eval Alert_Severity=""Medium""
+| stats values(questionname) as Domain_Name values(action) as Action earliest(Time) as Start_Time latest(Time) as End_Time count by Alert_Severity src_ip",FPT - DNS Query to External Service Interaction Domains
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51 OR src_ip=1.1.1.1)
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""*.onion"")
+NOT questionname = ""google.com.onion""
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip",FPT - DNS Query Tor .Onion Address
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51)
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""tor2web.org"" OR questionname = ""tor2web.com"" OR questionname = ""torlink.co"" OR questionname = ""onion.to"" OR questionname = ""onion.ink"" OR questionname = ""onion.cab"" OR questionname = ""onion.nu"" OR questionname = ""onion.link"" OR questionname = ""onion.it"" OR questionname = ""onion.city"" OR questionname = ""onion.direct"" OR questionname = ""onion.top"" OR questionname = ""onion.casa"" OR questionname = ""onion.plus"" OR questionname = ""onion.rip"" OR questionname = ""onion.dog"" OR questionname = ""tor2web.fi"" OR questionname = ""tor2web.blutmagie.de"" OR questionname = ""onion.sh"" OR questionname = ""onion.lu"" OR questionname = ""onion.pet"" OR questionname = ""t2w.pw"" OR questionname = ""tor2web.ae.org"" OR questionname = ""tor2web.io"" OR questionname = ""tor2web.xyz"" OR questionname = ""onion.lt"" OR questionname = ""s1.tor-gateways.de"" OR questionname = ""s2.tor-gateways.de"" OR questionname = ""s3.tor-gateways.de"" OR questionname = ""s4.tor-gateways.de"" OR questionname = ""s5.tor-gateways.de"" OR questionname = ""hiddenservice.net"")
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip",FPT - DNS TOR Proxies
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (http_user_agent="""" OR Agent="""")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time
+| eval Alert_Severity=""Medium""
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Empty User Agent
+admin,"index=epav sourcetype=""eset:ra"" threat_name IN (""*Backdoor.Cobalt*"", ""*Brutel*"", ""*BruteR*"", ""*CobaltStr*"", ""*CobaltStrike*"", ""*COBEACON*"", ""*Cometer*"", ""*Exploit.Script.CVE*"", ""*IISExchgSpawnCMD*"", ""*Metasploit*"", ""*Meterpreter*"", ""*MeteTool*"", ""*Mpreter*"", ""*MsfShell*"", ""*PowerSploit*"", ""*Razy*"", ""*Rozena*"", ""*Sbelt*"", ""*Seatbelt*"", ""*Sliver*"", ""*Swrort*"")
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Antivirus Exploitation Framework Detection
+admin,"index=epav sourcetype=""eset:ra"" threat_name IN (""ATK/*"", ""Exploit.Script.CVE*"", ""HKTL*"", ""HTOOL*"", ""PWS.*"", ""PWSX*"", ""SecurityTool*"") OR Signature IN (""*Adfind*"", ""*Brutel*"", ""*BruteR*"", ""*Cobalt*"", ""*COBEACON*"", ""*Cometer*"", ""*DumpCreds*"", ""*FastReverseProxy*"", ""*Hacktool*"", ""*Havoc*"", ""*Impacket*"", ""*Keylogger*"", ""*Koadic*"", ""*Mimikatz*"", ""*Nighthawk*"", ""*PentestPowerShell*"", ""*Potato*"", ""*PowerSploit*"", ""*PowerSSH*"", ""*PshlSpy*"", ""*PSWTool*"", ""*PWCrack*"", ""*PWDump*"", ""*Rozena*"", ""*Rusthound*"", ""*Sbelt*"", ""*Seatbelt*"", ""*SecurityTool*"", ""*SharpDump*"", ""*SharpHound*"", ""*Shellcode*"", ""*Sliver*"", ""*Snaffler*"", ""*SOAPHound*"", ""*Splinter*"", ""*Swrort*"", ""*TurtleLoader*"")
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Antivirus Hacktool Detected on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" threat_name=""PWS*"" OR threat_name IN  (""*Certify*"", ""*DCSync*"", ""*DumpCreds*"", ""*DumpLsass*"", ""*DumpPert*"", ""*HTool/WCE*"", ""*Kekeo*"", ""*Lazagne*"", ""*LsassDump*"", ""*Mimikatz*"", ""*MultiDump*"", ""*Nanodump*"", ""*NativeDump*"", ""*Outflank*"", ""*PShlSpy*"", ""*PSWTool*"", ""*PWCrack*"", ""*PWDump*"", ""*PWS.*"", ""*PWSX*"", ""*pypykatz*"", ""*Rubeus*"", ""*SafetyKatz*"", ""*SecurityTool*"", ""*SharpChrome*"", ""*SharpDPAPI*"", ""*SharpDump*"", ""*SharpKatz*"", ""*SharpS.*"", ""*ShpKatz*"", ""*TrickDump*"")
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Antivirus Password Dumper Detection
+admin,"index=epav sourcetype=""eset:ra"" file_path IN (""*:\\PerfLogs\\*"", ""*:\\Temp\\*"", ""*:\\Users\\Default\\*"", ""*:\\Users\\Public\\*"", ""*:\\Windows\\*"", ""*/www/*"", ""*\\inetpub\\*"", ""*\\tsclient\\*"", ""*apache*"", ""*nginx*"", ""*tomcat*"", ""*weblogic*"") OR file_path IN (""*.asax"", ""*.ashx"", ""*.asmx"", ""*.asp"", ""*.aspx"", ""*.bat"", ""*.cfm"", ""*.cgi"", ""*.chm"", ""*.cmd"", ""*.dat"", ""*.ear"", ""*.gif"", ""*.hta"", ""*.jpeg"", ""*.jpg"", ""*.jsp"", ""*.jspx"", ""*.lnk"", ""*.msc"", ""*.php"", ""*.pl"", ""*.png"", ""*.ps1"", ""*.psm1"", ""*.py"", ""*.pyc"", ""*.rb"", ""*.scf"", ""*.sct"", ""*.sh"", ""*.svg"", ""*.txt"", ""*.vbe"", ""*.vbs"", ""*.war"", ""*.wll"", ""*.wsf"", ""*.wsh"", ""*.xll"", ""*.xml"")
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name_Limit_10_Lines, values(file_path) as file_path_Limit_10_Lines, values(file_hash) as file_hash_Limit_10_Lines, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name_Limit_10_Lines, values(user) as user count by Alert_Severity Time ipv4
+| eval file_name_Limit_10_Lines=mvindex(file_name_Limit_10_Lines,0,9)
+| eval file_path_Limit_10_Lines=mvindex(file_path_Limit_10_Lines,0,9)
+| eval file_hash_Limit_10_Lines=mvindex(file_hash_Limit_10_Lines,0,9)
+| eval threat_name_Limit_10_Lines=mvindex(threat_name_Limit_10_Lines,0,9)
+| fillnull value=N/A AV_Action_Taken Process_Name user",FPT - ESET - Antivirus Relevant File Paths Alerts
+admin,"index=epav sourcetype=""eset:ra"" file_path IN (""*:\\PerfLogs\\*"", ""*:\\Temp\\*"", ""*:\\Users\\Default\\*"", ""*:\\Users\\Public\\*"", ""*:\\Windows\\*"", ""*/www/*"", ""*\\inetpub\\*"", ""*\\tsclient\\*"", ""*apache*"", ""*nginx*"", ""*tomcat*"", ""*weblogic*"") OR file_path IN (""*.asax"", ""*.ashx"", ""*.asmx"", ""*.asp"", ""*.aspx"", ""*.bat"", ""*.cfm"", ""*.cgi"", ""*.chm"", ""*.cmd"", ""*.dat"", ""*.ear"", ""*.gif"", ""*.hta"", ""*.jpeg"", ""*.jpg"", ""*.jsp"", ""*.jspx"", ""*.lnk"", ""*.msc"", ""*.php"", ""*.pl"", ""*.png"", ""*.ps1"", ""*.psm1"", ""*.py"", ""*.pyc"", ""*.rb"", ""*.scf"", ""*.sct"", ""*.sh"", ""*.svg"", ""*.txt"", ""*.vbe"", ""*.vbs"", ""*.war"", ""*.wll"", ""*.wsf"", ""*.wsh"", ""*.xll"", ""*.xml"")
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Antivirus Relevant File Paths Alerts on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" threat_name IN (""ASP.*"", ""IIS/BackDoor*"", ""JAVA/Backdoor*"", ""JSP.*"", ""Perl.*"", ""PHP.*"", ""Troj/ASP*"", ""Troj/JSP*"", ""Troj/PHP*"", ""VBS/Uxor*"") OR threat_name IN (""*ASP_*"", ""*ASP:*"", ""*ASP.Agent*"", ""*ASP/*"", ""*Aspdoor*"", ""*ASPXSpy*"", ""*Backdoor.ASP*"", ""*Backdoor.Java*"", ""*Backdoor.JSP*"", ""*Backdoor.PHP*"", ""*Backdoor.VBS*"", ""*Backdoor/ASP*"", ""*Backdoor/Java*"", ""*Backdoor/JSP*"", ""*Backdoor/PHP*"", ""*Backdoor/VBS*"", ""*C99shell*"", ""*Chopper*"", ""*filebrowser*"", ""*JSP_*"", ""*JSP:*"", ""*JSP.Agent*"", ""*JSP/*"", ""*Perl:*"", ""*Perl/*"", ""*PHP_*"", ""*PHP:*"", ""*PHP.Agent*"", ""*PHP/*"", ""*PHPShell*"", ""*PShlSpy*"", ""*SinoChoper*"", ""*Trojan.ASP*"", ""*Trojan.JSP*"", ""*Trojan.PHP*"", ""*Trojan.VBS*"", ""*VBS.Agent*"", ""*VBS/Agent*"", ""*Webshell*"")
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Antivirus Web Shell Detected on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" threat_name IN (""ASP.*"", ""IIS/BackDoor*"", ""JAVA/Backdoor*"", ""JSP.*"", ""Perl.*"", ""PHP.*"", ""Troj/ASP*"", ""Troj/JSP*"", ""Troj/PHP*"", ""VBS/Uxor*"") OR threat_name IN (""*ASP_*"", ""*ASP:*"", ""*ASP.Agent*"", ""*ASP/*"", ""*Aspdoor*"", ""*ASPXSpy*"", ""*Backdoor.ASP*"", ""*Backdoor.Java*"", ""*Backdoor.JSP*"", ""*Backdoor.PHP*"", ""*Backdoor.VBS*"", ""*Backdoor/ASP*"", ""*Backdoor/Java*"", ""*Backdoor/JSP*"", ""*Backdoor/PHP*"", ""*Backdoor/VBS*"", ""*C99shell*"", ""*Chopper*"", ""*filebrowser*"", ""*JSP_*"", ""*JSP:*"", ""*JSP.Agent*"", ""*JSP/*"", ""*Perl:*"", ""*Perl/*"", ""*PHP_*"", ""*PHP:*"", ""*PHP.Agent*"", ""*PHP/*"", ""*PHPShell*"", ""*PShlSpy*"", ""*SinoChoper*"", ""*Trojan.ASP*"", ""*Trojan.JSP*"", ""*Trojan.PHP*"", ""*Trojan.VBS*"", ""*VBS.Agent*"", ""*VBS/Agent*"", ""*Webshell*"")
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Antivirus Web Shell Detection
+admin,"index=epav sourcetype=""eset:ra"" (severity=Fatal OR severity=Critical) 
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Critical Severity Threat on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" event_type=FilteredWebsites_Event
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Critical""
+| stats values(index) as Index, values(event) as event, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(object_uri) as object_uri, values(file_hash) as file_hash, values(rule_id) as rule_id, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(user) as user count by Alert_Severity Time ipv4
+| where count >= 100
+| fillnull value=N/A AV_Action_Taken",FPT - ESET - Detect Network Attacks on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" threat_name IN (""*Backdoor.Cobalt*"", ""*Brutel*"", ""*BruteR*"", ""*CobaltStr*"", ""*CobaltStrike*"", ""*COBEACON*"", ""*Cometer*"", ""*Exploit.Script.CVE*"", ""*IISExchgSpawnCMD*"", ""*Metasploit*"", ""*Meterpreter*"", ""*MeteTool*"", ""*Mpreter*"", ""*MsfShell*"", ""*PowerSploit*"", ""*Razy*"", ""*Rozena*"", ""*Sbelt*"", ""*Seatbelt*"", ""*Sliver*"", ""*Swrort*"")
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Exploitation Framework Detected on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" event_type=FilteredWebsites_Event NOT *chrome.exe* NOT *msedge.exe* NOT *Ultraviewer* NOT *Skype.exe* NOT *brave.exe* NOT *coccoc* NOT *firefox.exe* NOT *UrbanVPN* NOT *Hola* NOT *opera* NOT *BigNoxVM* NOT ""*popcorn time*"" NOT ""*FormatFactory*"" NOT *pinaview* rule_id!=""Blocked by PUA blacklist"" rule_id!=""Website certificate revoked""
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Critical""
+| stats values(index) as Index, values(event) as event, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(object_uri) as object_uri, values(file_hash) as file_hash, values(rule_id) as rule_id, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken",FPT - ESET - Malicious Website Accesses by AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" threat_name=""PWS*"" OR threat_name IN  (""*Certify*"", ""*DCSync*"", ""*DumpCreds*"", ""*DumpLsass*"", ""*DumpPert*"", ""*HTool/WCE*"", ""*Kekeo*"", ""*Lazagne*"", ""*LsassDump*"", ""*Mimikatz*"", ""*MultiDump*"", ""*Nanodump*"", ""*NativeDump*"", ""*Outflank*"", ""*PShlSpy*"", ""*PSWTool*"", ""*PWCrack*"", ""*PWDump*"", ""*PWS.*"", ""*PWSX*"", ""*pypykatz*"", ""*Rubeus*"", ""*SafetyKatz*"", ""*SecurityTool*"", ""*SharpChrome*"", ""*SharpDPAPI*"", ""*SharpDump*"", ""*SharpKatz*"", ""*SharpS.*"", ""*ShpKatz*"", ""*TrickDump*"")
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Password Dumper Detected on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" threat_name IN  (""*BlackWorm*"", ""*Chaos*"", ""*Cobra*"", ""*ContiCrypt*"", ""*Crypter*"", ""*CRYPTES*"", ""*Cryptor*"", ""*CylanCrypt*"", ""*DelShad*"", ""*Destructor*"", ""*Filecoder*"", ""*GandCrab*"", ""*GrandCrab*"", ""*Haperlock*"", ""*Hiddentear*"", ""*HydraCrypt*"", ""*Krypt*"", ""*Lockbit*"", ""*Locker*"", ""*Mallox*"", ""*Phobos*"", ""*Ransom*"", ""*Ryuk*"", ""*Ryzerlo*"", ""*Stopcrypt*"", ""*Tescrypt*"", ""*TeslaCrypt*"", ""*WannaCry*"", ""*Xorist*"")
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Ransomware Detected on AZINSU Servers
+admin,"index=epav sourcetype=""eset:ra"" action_taken!=""Blocked URL"" action_taken!=""*Cleaned*"" action_taken!=""*Deleted*"" event_type!=FilteredWebsites_Event
+(ipv4=10.86.224.24 OR ipv4=10.14.190.28 OR ipv4=10.14.141.117 OR ipv4=10.14.141.121 OR ipv4=10.86.224.21 OR ipv4=10.86.224.22 OR ipv4=10.86.222.52)
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats values(index) as Index,values(action) as Action, values(action_taken) as AV_Action_Taken, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(file_hash) as file_hash, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4
+| fillnull value=N/A AV_Action_Taken file_name file_path file_hash Process_Name user",FPT - ESET - Uncleaned Malware on AZINSU Servers
+admin,"index=esxi sourcetype=* login eventtype=failed_login
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats values(src_ip) as src_ip count by Alert_Severity Time User host
+| where count>=50",FPT - ESXi Brute-force Detection
+admin,"index=esxi sourcetype=* eventtype=failed_login
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats values(User) as User dc(User) as Discount_User count by Alert_Severity Time host src_ip
+| where Discount_User>=10 and count>=50",FPT - ESXi SSH Password-Spraying Detection
+admin,"index=esxi sourcetype=* Successful login 
+NOT src_ip IN (10.14.124.28, 10.14.60.228, 10.33.33.33, 10.15.225.120, 10.14.124.53)
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats values(src_ip) as src_ip count by Alert_Severity Time User host",FPT - ESXi Suspicious Host Login
+admin,"index=ESXi sourcetype=* ""SSH"" ""disabled""
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats count by Alert_Severity Time host _raw
+| rename _raw as Details",FPT - ESXi Unusual SSH disable behavior
+admin,"index=ESXi sourcetype=* ""SSH"" ""enabled""
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical"" 
+| stats count by Alert_Severity Time user host details",FPT - ESXi Unusual SSH enable behavior
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((http_user_agent=""Internet Explorer *"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; InfoPath.2)"" OR http_user_agent=""Mozilla/4.0 (compatible; Metasploit RSPEC)"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 6.1; Windows NT)"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Trident/4.0; SIMBAR={7DB0F6DE-8DE7-4841-9084-28FA914B0F2E}; SLCC1; .N"" OR http_user_agent=""Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/4.0.221.6 Safari/525.13"" OR http_user_agent=""Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0; MAAU)"" OR http_user_agent=""Mozilla/5.0"" OR http_user_agent=""Mozilla/4.0 (compatible; SPIPE/1.0"" OR http_user_agent=""Mozilla/5.0 (Windows NT 6.3; rv:39.0) Gecko/20100101 Firefox/35.0"" OR http_user_agent=""Sametime Community Agent"" OR http_user_agent=""X-FORWARDED-FOR"" OR http_user_agent=""DotDotPwn v2.1"" OR http_user_agent=""SIPDROID"" OR http_user_agent=""Mozilla/5.0 (Windows NT 10.0; Win32; x32; rv:60.0)"" OR http_user_agent=""Mozilla/6.0 (X11; Linux x86_64; rv:24.0) Gecko/20140205     Firefox/27.0 Iceweasel/25.3.0"" OR http_user_agent=""*wordpress hash grabber*"" OR http_user_agent=""*exploit*"") OR (Agent=""Internet Explorer *"" OR Agent=""Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; InfoPath.2)"" OR Agent=""Mozilla/4.0 (compatible; Metasploit RSPEC)"" OR Agent=""Mozilla/4.0 (compatible; MSIE 6.1; Windows NT)"" OR Agent=""Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"" OR Agent=""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)"" OR Agent=""Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)"" OR Agent=""Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; Trident/4.0; SIMBAR={7DB0F6DE-8DE7-4841-9084-28FA914B0F2E}; SLCC1; .N"" OR Agent=""Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/4.0.221.6 Safari/525.13"" OR Agent=""Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; WOW64; Trident/5.0; MAAU)"" OR Agent=""Mozilla/4.0 (compatible; SPIPE/1.0"" OR Agent=""Mozilla/5.0 (Windows NT 6.3; rv:39.0) Gecko/20100101 Firefox/35.0"" OR Agent=""Sametime Community Agent"" OR Agent=""X-FORWARDED-FOR"" OR Agent=""DotDotPwn v2.1"" OR Agent=""SIPDROID"" OR Agent=""Mozilla/5.0 (Windows NT 10.0; Win32; x32; rv:60.0)"" OR Agent=""Mozilla/6.0 (X11; Linux x86_64; rv:24.0) Gecko/20140205     Firefox/27.0 Iceweasel/25.3.0"" OR Agent=""*wordpress hash grabber*"" OR Agent=""*exploit*""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Medium""
+|  stats latest(Time) as Time, values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent, values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity http_x_forwarded_for
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Exploit Framework User Agent
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (http_user_agent=""*(hydra)*"" OR http_user_agent=""* arachni/*"" OR http_user_agent=""* BFAC *"" OR http_user_agent=""* brutus *"" OR http_user_agent=""* cgichk *"" OR http_user_agent=""*core-project/1.0*"" OR http_user_agent=""* crimscanner/*"" OR http_user_agent=""*datacha0s*"" OR http_user_agent=""*dirbuster*"" OR http_user_agent=""*domino hunter*"" OR http_user_agent=""*dotdotpwn*"" OR http_user_agent=""*FHScan Core*"" OR http_user_agent=""*floodgate*"" OR http_user_agent=""*get-minimal*"" OR http_user_agent=""*gootkit auto-rooter scanner*"" OR http_user_agent=""*grendel-scan*"" OR http_user_agent=""* inspath *"" OR http_user_agent=""*internet ninja*"" OR http_user_agent=""*jaascois*"" OR http_user_agent=""* zmeu *"" OR http_user_agent=""*masscan*"" OR http_user_agent=""* metis *"" OR http_user_agent=""*morfeus fucking scanner*"" OR http_user_agent=""*n-stealth*"" OR http_user_agent=""*nsauditor*"" OR http_user_agent=""*pmafind*"" OR http_user_agent=""*security scan*"" OR http_user_agent=""*springenwerk*"" OR http_user_agent=""*teh forest lobster*"" OR http_user_agent=""*toata dragostea*"" OR http_user_agent=""* vega/*"" OR http_user_agent=""*voideye*"" OR http_user_agent=""*webshag*"" OR http_user_agent=""*webvulnscan*"" OR http_user_agent=""* whcc/*"" OR http_user_agent=""* Havij*"" OR http_user_agent=""*absinthe*"" OR http_user_agent=""*bsqlbf*"" OR http_user_agent=""*mysqloit*"" OR http_user_agent=""*pangolin*"" OR http_user_agent=""*sql power injector*"" OR http_user_agent=""*sqlmap*"" OR http_user_agent=""*sqlninja*"" OR http_user_agent=""*uil2pn*"" OR http_user_agent=""*ruler*"" OR http_user_agent=""*Mozilla/5.0 (Windows; U; Windows NT 5.1; pt-PT; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)*"") OR (Agent=""*(hydra)*"" OR Agent=""* arachni/*"" OR Agent=""* BFAC *"" OR Agent=""* brutus *"" OR Agent=""* cgichk *"" OR Agent=""*core-project/1.0*"" OR Agent=""* crimscanner/*"" OR Agent=""*datacha0s*"" OR Agent=""*dirbuster*"" OR Agent=""*domino hunter*"" OR Agent=""*dotdotpwn*"" OR Agent=""*FHScan Core*"" OR Agent=""*floodgate*"" OR Agent=""*get-minimal*"" OR Agent=""*gootkit auto-rooter scanner*"" OR Agent=""*grendel-scan*"" OR Agent=""* inspath *"" OR Agent=""*internet ninja*"" OR Agent=""*jaascois*"" OR Agent=""* zmeu *"" OR Agent=""*masscan*"" OR Agent=""* metis *"" OR Agent=""*morfeus fucking scanner*"" OR Agent=""*n-stealth*"" OR Agent=""*nsauditor*"" OR Agent=""*pmafind*"" OR Agent=""*security scan*"" OR Agent=""*springenwerk*"" OR Agent=""*teh forest lobster*"" OR Agent=""*toata dragostea*"" OR Agent=""* vega/*"" OR Agent=""*voideye*"" OR Agent=""*webshag*"" OR Agent=""*webvulnscan*"" OR Agent=""* whcc/*"" OR Agent=""* Havij*"" OR Agent=""*absinthe*"" OR Agent=""*bsqlbf*"" OR Agent=""*mysqloit*"" OR Agent=""*pangolin*"" OR Agent=""*sql power injector*"" OR Agent=""*sqlmap*"" OR Agent=""*sqlninja*"" OR Agent=""*uil2pn*"" OR Agent=""*ruler*"" OR Agent=""*Mozilla/5.0 (Windows; U; Windows NT 5.1; pt-PT; rv:1.9.1.2) Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(src_ip) as src_ip values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time client_ip
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Hack Tool User Agent
+admin,"index=* (sourcetype=cp_log OR sourcetype=fortinet) (src=""*:*"" OR dst=""*:*"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_ipv6_dst.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Source IPv6)""```
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action) as Action values(src) as src_ip values(dstport) as ""Dest Port"" count by Alert_Severity Time dst
+| where count >= 100",FPT - IOC Cyble Detected - Dest IPv6
+admin,"index=netdns sourcetype=MSAD:NT6:DNS ioc=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51) action=success
+| eval ioc=replace(ioc,""(\(\d+)\)"",""."") 
+| eval ioc=replace(ioc,""^."","""") 
+| eval ioc=replace(ioc,"".$"","""")
+| search 
+    [| inputlookup ioc_cyble_domain.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Domain)""```
+| search NOT 
+    [ | inputlookup ioc_blocked_domain.csv]
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) AS Time
+| eval Alert_Severity=""Medium""
+| stats values(ioc) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip",FPT - IOC Cyble Detected - Domain Query
+admin,"index=checkpoint sourcetype=cp_log
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_ipv4_src.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Source IPv4)""```
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action) as Action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as ""Dest Port"" count by Alert_Severity Time src
+| where count >= 100",FPT - IOC Cyble Detected - Inbound IPv4 by Checkpoint
+admin,"index=main sourcetype=fortinet
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_ipv4_src.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Source IPv4)""```
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action) as Action values(dst) as dest_ip dc(dst) as Total_dest values(dstport) as ""Dest Port"" count by Alert_Severity Time src
+| where count >= 100",FPT - IOC Cyble Detected - Inbound IPv4 by Fortinet
+admin,"index=epav sourcetype=""eset:ra"" file_hash=* event_type!=FilteredWebsites_Event NOT (action_taken=*Cleaned* OR action_taken=*Deleted*)
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_file_hash.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (File Hash)""```
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action_taken) as Action, values(group_name) as group_name, values(dest) as dest, values(file_name) as file_name, values(file_path) as file_path, values(hostname) as hostname, values(os_name) as os_name, values(processname) as Process_Name, values(threat_name) as threat_name, values(user) as user count by Alert_Severity Time ipv4 file_hash",FPT - IOC Cyble Detected - Malicious File Hash by ESET
+admin,"index=checkpoint sourcetype=cp_log action=Accept
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_ipv4_dst.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Dest IPv4)""```
+| where 
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action) as Action values(src) as src_ip values(dest_port) as ""Dest Port"" count by Alert_Severity Time dst
+| where count >= 20 AND NOT (dst=""11.22.33.45"" OR dst=""104.21.0.0/16"" OR dst=""104.26.12.205"")",FPT - IOC Cyble Detected - Outbound IPv4 by Checkpoint
+admin,"index=main sourcetype=fortinet action=accept
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_ipv4_dst.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Dest IPv4)""```
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action) as Action values(src) as src_ip values(dstport) as ""Dest Port"" count by Alert_Severity Time dst
+| where count >= 20",FPT - IOC Cyble Detected - Outbound IPv4 by Fortinet
+admin,"index=* (sourcetype=cp_log OR sourcetype=fortinet) (src=""*:*"" OR dst=""*:*"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| search 
+    [| inputlookup ioc_cyble_ipv6_src.csv] ```Input CSV triggred from alert ""Input Lookup - IOC Cyble (Source IPv6)""```
+| eval Alert_Severity=""Medium""
+| stats values(index) as Index values(action) as Action values(dst) as dest_ip dc(dst) as Total_dest values(dstport) as ""Dest Port"" count by Alert_Severity Time src
+| where count >= 100",FPT - IOC Cyble Detected - Source IPv6
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ""*/list/suc\?name=*""
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time
+| eval Alert_Severity=""Medium""
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(vendor_product) as vendor_product , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time http_x_forwarded_for
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - iOS Implant URL Pattern
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (""%24%7B%28%23a%3D%40"" OR ""${(#a=@"" OR ""%24%7B%40java"" OR ""${@java"" OR ""u0022java"" OR ""%2F%24%7B%23"" OR ""/${#"" OR ""new+java."" OR ""getRuntime().exec("" OR ""getRuntime%28%29.exec%28"") NOT Status_Code=4*  NOT src_ip=""10.14.128.10""
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Java Payload Strings Detected
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (""/Basic/Command/Base64/"" OR ""/Basic/ReverseShell/"" OR ""/Basic/TomcatMemshell"" OR ""/Basic/JettyMemshell"" OR ""/Basic/WeblogicMemshell"" OR ""/Basic/JBossMemshell"" OR ""/Basic/WebsphereMemshell"" OR ""/Basic/SpringMemshell"" OR ""/Deserialization/URLDNS/"" OR ""/Deserialization/CommonsCollections1/Dnslog/"" OR ""/Deserialization/CommonsCollections2/Command/Base64/"" OR ""/Deserialization/CommonsBeanutils1/ReverseShell/"" OR ""/Deserialization/Jre8u20/TomcatMemshell"" OR ""/TomcatBypass/Dnslog/"" OR ""/TomcatBypass/Command/"" OR ""/TomcatBypass/ReverseShell/"" OR ""/TomcatBypass/TomcatMemshell"" OR ""/TomcatBypass/SpringMemshell"" OR ""/GroovyBypass/Command/"" OR ""/WebsphereBypass/Upload/"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - JNDIExploit Pattern
+admin,"index=* sourcetype=linux_syslog ((path=""*/sqlmap"" OR path=""*/teamserver"" OR path=""*/aircrack-ng"" OR path=""*/john"" OR path=""*/setoolkit"" OR path=""*/wpscan"" OR path=""*/hydra"" OR path=""*/nikto"" OR path=""*/ebpfkit"" OR path=""*/bpfdos"" OR path=""*/exechijack"" OR path=""*/pidhide"" OR path=""*/writeblocker"") OR path=""*/linpeas*"")
+|stats values(user) as User values(path) as Path count by Alert_Severity _time ip",FPT - Linux HackTool Execution
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((""*${jndi:ldap:/*"" OR ""*${jndi:rmi:/*"" OR ""*${jndi:ldaps:/*"" OR ""*${jndi:dns:/*"" OR ""*/$%7bjndi:*"" OR ""*%24%7bjndi:*"" OR ""*$%7Bjndi:*"" OR ""*%2524%257Bjndi*"" OR ""*%2F%252524%25257Bjndi%3A*"" OR ""*${jndi:${lower:*"" OR ""*${::-j}${*"" OR ""*${jndi:nis*"" OR ""*${jndi:nds*"" OR ""*${jndi:corba*"" OR ""*${jndi:iiop*"" OR ""*Reference Class Name: foo*"" OR ""*${${env:BARFOO:-j}*"" OR ""*${::-l}${::-d}${::-a}${::-p}*"" OR ""*${base64:JHtqbmRp*"" OR ""*${${env:ENV_NAME:-j}ndi${env:ENV_NAME:-:}$*"" OR ""*${${lower:j}ndi:*"" OR ""*${${upper:j}ndi:*"" OR ""*${${::-j}${::-n}${::-d}${::-i}:*"") NOT (""*w.nessus.org/nessus*"" OR ""*/nessus}*""))
+NOT Status_Code=4*
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Log4j RCE CVE-2021-44228 Detected
+admin,"((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) src_ip=`malicious_ioc_address`
+| bucket _time span=1h
+| convert timeformat=""%Y-%m-%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""High""
+| stats count by Alert_Severity Time action src_ip dest_ip",FPT - Malicious IOC IP Address
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=1.1.1.1 OR src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51) action=success
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| bucket _time span=30m
+| search 
+    [| inputlookup maltrail_domain.csv]
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) AS Time
+| eval Alert_Severity=""Medium""
+| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip",FPT - Maltrail Domain Query Detection
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" `Malware_User_Agent`
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Medium""
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , count(src_ip) as ""Source Count"", values(dest_ip) as dest_ip , values(dest_port) as dest_port , latest(Time) as ""First Seen"", values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Malware User Agent
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* direction=Snd (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+NOT (src_ip=1.1.1.1 OR src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51 OR src_ip=10.14.132.16) action=success
+| bucket _time span=1h
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical""
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""*pool.minexmr.com*"" OR questionname = ""*fr.minexmr.com*"" OR questionname = ""*de.minexmr.com*"" OR questionname = ""*sg.minexmr.com*"" OR questionname = ""*ca.minexmr.com*"" OR questionname = ""*us-west.minexmr.com*"" OR questionname = ""*pool.supportxmr.com*"" OR questionname = ""*mine.c3pool.com*"" OR questionname = ""*xmr-eu1.nanopool.org*"" OR questionname = ""*xmr-eu2.nanopool.org*"" OR questionname = ""*xmr-us-east1.nanopool.org*"" OR questionname = ""*xmr-us-west1.nanopool.org*"" OR questionname = ""*xmr-asia1.nanopool.org*"" OR questionname = ""*xmr-jp1.nanopool.org*"" OR questionname = ""*xmr-au1.nanopool.org*"" OR questionname = ""*xmr.2miners.com*"" OR questionname = ""*xmr.hashcity.org*"" OR questionname = ""*xmr.f2pool.com*"" OR questionname = ""*xmrpool.eu*"" OR questionname = ""*pool.hashvault.pro*"" )
+| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip",FPT - Monero Crypto Coin Mining Pool Lookup
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (Status_Code=4* OR Status_Code=5*) NOT (client_ip=""10.14.131.3"" OR client_ip=""10.14.128.10"")
+| bucket _time span=45m 
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Low""
+|  stats values(src_ip) as src_ip, values(vendor_product) as vendor_product , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL_(Limit_10_Lines) , values(user) as user, values(Agent) as Agent_(Limit_10_Lines) dc(Status_Code) as number_of_statuscode count by Alert_Severity Time client_ip
+| eval URL_(Limit_10_Lines)=mvindex('URL_(Limit_10_Lines)',0,9)
+| eval Agent_(Limit_10_Lines)=mvindex('Agent_(Limit_10_Lines)',0,9)
+| where number_of_statuscode >= 5
+| sort - count
+| fillnull value=N/A client_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Multiple 4xx/5xx Status Code Response by a Client
+admin,"index=* sourcetype=linux_syslog ""Failed password""
+| bucket _time span=1h
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) AS Time
+| eval Alert_Severity=""Medium""
+| stats values(srcip) as srcip count by Alert_Severity Time user host
+| where count>=5",FPT - Multiple Failed Password on Linux
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.65 OR src_ip=10.15.16.69 OR src_ip=10.15.16.70 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51 OR src_ip=1.1.1.1 OR src_ip=10.14.132.16 OR src_ip=10.15.6.11 OR src_ip=10.225.6.52 OR src_ip=4.2.2.2)
+| convert timeformat=""%m/%d/%Y %H:00:00"" ctime(_time) AS Time
+| eval Alert_Severity=""Medium""
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""alimabi.cn"" OR questionname = ""ap.luckpool.net"" OR questionname = ""bcn.pool.minergate.com"" OR questionname = ""bcn.vip.pool.minergate.com"" OR questionname = ""bohemianpool.com"" OR questionname = ""ca-aipg.miningocean.org"" OR questionname = ""ca-dynex.miningocean.org"" OR questionname = ""ca-neurai.miningocean.org"" OR questionname = ""ca-qrl.miningocean.org"" OR questionname = ""ca-upx.miningocean.org"" OR questionname = ""ca-zephyr.miningocean.org"" OR questionname = ""ca.minexmr.com"" OR questionname = ""ca.monero.herominers.com"" OR questionname = ""cbd.monerpool.org"" OR questionname = ""cbdv2.monerpool.org"" OR questionname = ""cryptmonero.com"" OR questionname = ""crypto-pool.fr"" OR questionname = ""crypto-pool.info"" OR questionname = ""cryptonight-hub.miningpoolhub.com"" OR questionname = ""d1pool.ddns.net"" OR questionname = ""d5pool.us"" OR questionname = ""daili01.monerpool.org"" OR questionname = ""de-aipg.miningocean.org"" OR questionname = ""de-dynex.miningocean.org"" OR questionname = ""de-zephyr.miningocean.org"" OR questionname = ""de.minexmr.com"" OR questionname = ""dl.nbminer.com"" OR questionname = ""donate.graef.in"" OR questionname = ""donate.ssl.xmrig.com"" OR questionname = ""donate.v2.xmrig.com"" OR questionname = ""donate.xmrig.com"" OR questionname = ""donate2.graef.in"" OR questionname = ""drill.moneroworld.com"" OR questionname = ""dwarfpool.com"" OR questionname = ""emercoin.com"" OR questionname = ""emercoin.net"" OR questionname = ""emergate.net"" OR questionname = ""ethereumpool.co"" OR questionname = ""eu.luckpool.net"" OR questionname = ""eu.minerpool.pw"" OR questionname = ""fcn-xmr.pool.minergate.com"" OR questionname = ""fee.xmrig.com"" OR questionname = ""fr-aipg.miningocean.org"" OR questionname = ""fr-dynex.miningocean.org"" OR questionname = ""fr-neurai.miningocean.org"" OR questionname = ""fr-qrl.miningocean.org"" OR questionname = ""fr-upx.miningocean.org"" OR questionname = ""fr-zephyr.miningocean.org"" OR questionname = ""fr.minexmr.com"" OR questionname = ""hellominer.com"" OR questionname = ""herominers.com"" OR questionname = ""hk-aipg.miningocean.org"" OR questionname = ""hk-dynex.miningocean.org"" OR questionname = ""hk-neurai.miningocean.org"" OR questionname = ""hk-qrl.miningocean.org"" OR questionname = ""hk-upx.miningocean.org"" OR questionname = ""hk-zephyr.miningocean.org"" OR questionname = ""huadong1-aeon.ppxxmr.com"" OR questionname = ""iwanttoearn.money"" OR questionname = ""jw-js1.ppxxmr.com"" OR questionname = ""koto-pool.work"" OR questionname = ""lhr.nbminer.com"" OR questionname = ""lhr3.nbminer.com"" OR questionname = ""linux.monerpool.org"" OR questionname = ""lokiturtle.herominers.com"" OR questionname = ""luckpool.net"" OR questionname = ""masari.miner.rocks"" OR questionname = ""mine.c3pool.com"" OR questionname = ""mine.moneropool.com"" OR questionname = ""mine.ppxxmr.com"" OR questionname = ""mine.zpool.ca"" OR questionname = ""mine1.ppxxmr.com"" OR questionname = ""minemonero.gq"" OR questionname = ""miner.ppxxmr.com"" OR questionname = ""miner.rocks"" OR questionname = ""minercircle.com"" OR questionname = ""minergate.com"" OR questionname = ""minerpool.pw"" OR questionname = ""minerrocks.com"" OR questionname = ""miners.pro"" OR questionname = ""minerxmr.ru"" OR questionname = ""minexmr.cn"" OR questionname = ""minexmr.com"" OR questionname = ""mining-help.ru"" OR questionname = ""miningpoolhub.com"" OR questionname = ""mixpools.org"" OR questionname = ""moner.monerpool.org"" OR questionname = ""moner1min.monerpool.org"" OR questionname = ""monero-master.crypto-pool.fr"" OR questionname = ""monero.crypto-pool.fr"" OR questionname = ""monero.hashvault.pro"" OR questionname = ""monero.herominers.com"" OR questionname = ""monero.lindon-pool.win"" OR questionname = ""monero.miners.pro"" OR questionname = ""monero.riefly.id"" OR questionname = ""monero.us.to"" OR questionname = ""monerocean.stream"" OR questionname = ""monerogb.com"" OR questionname = ""monerohash.com"" OR questionname = ""moneroocean.stream"" OR questionname = ""moneropool.com"" OR questionname = ""moneropool.nl"" OR questionname = ""monerorx.com"" OR questionname = ""monerpool.org"" OR questionname = ""moriaxmr.com"" OR questionname = ""mro.pool.minergate.com"" OR questionname = ""multipool.us"" OR questionname = ""myxmr.pw"" OR questionname = ""na.luckpool.net"" OR questionname = ""nanopool.org"" OR questionname = ""nbminer.com"" OR questionname = ""node3.luckpool.net"" OR questionname = ""noobxmr.com"" OR questionname = ""pangolinminer.comgandalph3000.com"" OR questionname = ""pool.4i7i.com"" OR questionname = ""pool.armornetwork.org"" OR questionname = ""pool.cortins.tk"" OR questionname = ""pool.gntl.co.uk"" OR questionname = ""pool.hashvault.pro"" OR questionname = ""pool.minergate.com"" OR questionname = ""pool.minexmr.com"" OR questionname = ""pool.monero.hashvault.pro"" OR questionname = ""pool.ppxxmr.com"" OR questionname = ""pool.somec.cc"" OR questionname = ""pool.support"" OR questionname = ""pool.supportxmr.com"" OR questionname = ""pool.usa-138.com"" OR questionname = ""pool.xmr.pt"" OR questionname = ""pool.xmrfast.com"" OR questionname = ""pool2.armornetwork.org"" OR questionname = ""poolchange.ppxxmr.com"" OR questionname = ""pooldd.com"" OR questionname = ""poolmining.org"" OR questionname = ""poolto.be"" OR questionname = ""ppxvip1.ppxxmr.com"" OR questionname = ""ppxxmr.com"" OR questionname = ""prohash.net"" OR questionname = ""r.twotouchauthentication.online"" OR questionname = ""randomx.xmrig.com"" OR questionname = ""ratchetmining.com"" OR questionname = ""seed.emercoin.com"" OR questionname = ""seed.emercoin.net"" OR questionname = ""seed.emergate.net"" OR questionname = ""seed1.joulecoin.org"" OR questionname = ""seed2.joulecoin.org"" OR questionname = ""seed3.joulecoin.org"" OR questionname = ""seed4.joulecoin.org"" OR questionname = ""seed5.joulecoin.org"" OR questionname = ""seed6.joulecoin.org"" OR questionname = ""seed7.joulecoin.org"" OR questionname = ""seed8.joulecoin.org"" OR questionname = ""sg-aipg.miningocean.org"" OR questionname = ""sg-dynex.miningocean.org"" OR questionname = ""sg-neurai.miningocean.org"" OR questionname = ""sg-qrl.miningocean.org"" OR questionname = ""sg-upx.miningocean.org"" OR questionname = ""sg-zephyr.miningocean.org"" OR questionname = ""sg.minexmr.com"" OR questionname = ""sheepman.mine.bz"" OR questionname = ""siamining.com"" OR questionname = ""sumokoin.minerrocks.com"" OR questionname = ""supportxmr.com"" OR questionname = ""suprnova.cc"" OR questionname = ""teracycle.net"" OR questionname = ""trtl.cnpool.cc"" OR questionname = ""trtl.pool.mine2gether.com"" OR questionname = ""turtle.miner.rocks"" OR questionname = ""us-aipg.miningocean.org"" OR questionname = ""us-dynex.miningocean.org"" OR questionname = ""us-neurai.miningocean.org"" OR questionname = ""us-west.minexmr.com"" OR questionname = ""us-zephyr.miningocean.org"" OR questionname = ""usxmrpool.com"" OR questionname = ""viaxmr.com"" OR questionname = ""webservicepag.webhop.net"" OR questionname = ""xiazai.monerpool.org"" OR questionname = ""xiazai1.monerpool.org"" OR questionname = ""xmc.pool.minergate.com"" OR questionname = ""xmo.pool.minergate.com"" OR questionname = ""xmr-asia1.nanopool.org"" OR questionname = ""xmr-au1.nanopool.org"" OR questionname = ""xmr-eu1.nanopool.org"" OR questionname = ""xmr-eu2.nanopool.org"" OR questionname = ""xmr-jp1.nanopool.org"" OR questionname = ""xmr-us-east1.nanopool.org"" OR questionname = ""xmr-us-west1.nanopool.org"" OR questionname = ""xmr-us.suprnova.cc"" OR questionname = ""xmr-usa.dwarfpool.com"" OR questionname = ""xmr.2miners.com"" OR questionname = ""xmr.5b6b7b.ru"" OR questionname = ""xmr.alimabi.cn"" OR questionname = ""xmr.bohemianpool.com"" OR questionname = ""xmr.crypto-pool.fr"" OR questionname = ""xmr.crypto-pool.info"" OR questionname = ""xmr.f2pool.com"" OR questionname = ""xmr.hashcity.org"" OR questionname = ""xmr.hex7e4.ru"" OR questionname = ""xmr.ip28.net"" OR questionname = ""xmr.monerpool.org"" OR questionname = ""xmr.mypool.online"" OR questionname = ""xmr.nanopool.org"" OR questionname = ""xmr.pool.gntl.co.uk"" OR questionname = ""xmr.pool.minergate.com"" OR questionname = ""xmr.poolto.be"" OR questionname = ""xmr.ppxxmr.com"" OR questionname = ""xmr.prohash.net"" OR questionname = ""xmr.simka.pw"" OR questionname = ""xmr.somec.cc"" OR questionname = ""xmr.suprnova.cc"" OR questionname = ""xmr.usa-138.com"" OR questionname = ""xmr.vip.pool.minergate.com"" OR questionname = ""xmr1min.monerpool.org"" OR questionname = ""xmrf.520fjh.org"" OR questionname = ""xmrf.fjhan.club"" OR questionname = ""xmrfast.com"" OR questionname = ""xmrigcc.graef.in"" OR questionname = ""xmrminer.cc"" OR questionname = ""xmrpool.de"" OR questionname = ""xmrpool.eu"" OR questionname = ""xmrpool.me"" OR questionname = ""xmrpool.net"" OR questionname = ""xmrpool.xyz"" OR questionname = ""xx11m.monerpool.org"" OR questionname = ""xx11mv2.monerpool.org"" OR questionname = ""xxx.hex7e4.ru"" OR questionname = ""zarabotaibitok.ru"" OR questionname = ""zer0day.ru"")
+| stats values(questionname) as Domain_Name values(action) as Action count by Time Alert_Severity src_ip",FPT - Network Communication With Crypto Mining Pool
+admin,"| tstats count where index=* by _time source
+| eventstats latest(_time) as latest_Time_source by source
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_source
+| eval Status=if(conditions>=86400,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""High""
+| stats values(Status) as Status values(conditions) as conditions, values(latest_Time_source) as latest_Time_source, values(latest_Time_all) as Curent_Time by Alert_Severity source
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(latest_Time_source) as latest_Time_source,  ctime(Curent_Time) as Curent_Time
+| convert timeformat=""%Ss"" ctime(conditions) as Lost_Time
+| search Status=""Missing Data!"" (source=""*Cyble*"")",FPT - No log from Cyble TI (24h)
+admin,"| tstats count where index=* by _time sourcetype host
+| eventstats latest(_time) as latest_Time_host by host
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_host
+| eval Status=if(conditions>=3600,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""Medium""
+| stats values(Status) as Status values(conditions) as ""Lost_Time (Seconds)"" values(latest_Time_host) as Latest_Time_on_host values(latest_Time_all) as Current_Time by Alert_Severity host 
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(Latest_Time_on_host) as Latest_Time_on_host  ctime(Current_Time) as Current_Time 
+| search (host=""10.15.31.11"" OR host=""10.15.31.12"" OR host=""10.15.31.13"" OR host=""10.14.60.101"" OR host=""10.14.60.102"" OR host=""10.14.60.103"" OR host=""10.14.60.104"" OR host=""10.14.60.105"" OR host=""10.14.60.106"" OR host=""10.14.60.107"" OR host=""10.14.60.108"" OR host=""10.14.60.109"" OR host=""10.14.60.110"" OR host=""10.14.60.111"" OR host=""10.14.60.112"" OR host=""10.14.60.113"" OR host=""10.14.60.115"" OR host=""10.14.60.114"" OR host=""10.14.60.116"" OR host=""10.14.60.117"" OR host=""10.14.60.118"" OR host=""10.14.60.119"" OR host=""10.14.60.120"" OR host=""10.14.60.121"" OR host=""10.14.60.122"" OR host=""10.14.60.123"" OR host=""10.14.60.124"" OR host=""10.14.60.125"" OR host=""10.14.60.126"" OR host=""10.14.60.127"" OR host=""10.14.60.128"" OR host=""10.14.60.129"" OR host=""10.14.60.130"" OR host=""10.14.60.171"" OR host=""10.14.60.172"" OR host=""10.15.31.14"" OR host=""10.14.60.100"") Status=""Missing Data!""",FPT - No Log from ESXi/vCenter host over 1 hour
+admin,"| tstats count where index=* by _time sourcetype source
+| eventstats latest(_time) as latest_Time_source by source
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_source
+| eval Status=if(conditions>=3600,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""Medium""
+| stats values(Status) as Status values(conditions) as conditions values(latest_Time_source) as Latest_Time values(latest_Time_all) as Curent_Time by Alert_Severity sourcetype source
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(Latest_Time) as Latest_Time  ctime(Curent_Time) as Curent_Time 
+| search (source=tcp:2910 OR source=udp:1514) Status=""Missing Data!""",FPT - No Log from Firewall LogSource over 1 hour
+admin,"| tstats count where index=* by _time sourcetype host
+| eventstats latest(_time) as latest_Time_host by host
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_host
+| eval Status=if(conditions>=3600,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""Medium""
+| stats values(Status) as Status values(conditions) as conditions values(latest_Time_host) as Latest_Time_on_host values(latest_Time_all) as Current_Time by Alert_Severity host 
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(Latest_Time_on_host) as Latest_Time_on_host  ctime(Current_Time) as Current_Time 
+| search host=GIT-FIS Status=""Missing Data!""",FPT - No Log from GIT LAB over 1 hour
+admin,"| tstats count where index=* by _time host
+| eventstats latest(_time) as latest_Time_host by host
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_host
+| eval Status=if(conditions>=86400,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""Medium""
+| stats values(Status) as Status values(conditions) as Lost_Time_(Seconds) values(latest_Time_host) as Last_seen_on_Host values(latest_Time_all) as Real_Time by Alert_Severity host
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(Last_seen_on_Host) as Last_seen_on_Host,  ctime(Real_Time) as Real_Time, ctime('Lost_Time_(Seconds)') as Lost_Time_(Seconds)
+| search Status=""Missing Data!"" NOT (`filter_host_separate_monitoring`)",FPT - No Log from Host over 24 hours
+admin,"| tstats count where index=* by _time sourcetype host source
+| eventstats latest(_time) as latest_Time_host by host
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_host
+| eval Status=if(conditions>=14400,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""Medium""
+| stats values(Status) as Status values(conditions) as conditions values(latest_Time_host) as latest_Time_host values(latest_Time_all) as latest_Time_all by Alert_Severity host sourcetype source
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(latest_Time_host) as latest_Time_host  ctime(latest_Time_all) as latest_Time_all 
+| search host=""RP.fis"" Status=""Missing Data!""",FPT - No Log from RP.FIS over 4 hours
+admin,"| tstats count where index=* by _time source
+| eventstats latest(_time) as latest_Time_source by source
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_source
+| eval Status=if(conditions>=86400,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""High""
+| stats values(Status) as Status values(conditions) as Lost_Time_(Seconds) values(latest_Time_source) as Last_seen_on_Source values(latest_Time_all) as Real_Time by Alert_Severity source
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(Last_seen_on_Source) as Last_seen_on_Source,  ctime(Real_Time) as Real_Time, ctime('Lost_Time_(Seconds)') as Lost_Time_(Seconds)
+| search Status=""Missing Data!"" (source=""tcp:*"" OR source=""udp:*"")",FPT - No log from sources (24h)
+admin,"| tstats count where index=* by _time host
+| eventstats latest(_time) as latest_Time_host by host
+| eventstats latest(_time) as latest_Time_all
+| eval conditions=latest_Time_all - latest_Time_host
+| eval Status=if(conditions>=86400,""Missing Data!"",""OK!"")
+| eval Alert_Severity=""Medium""
+| stats values(Status) as Status values(conditions) as conditions values(latest_Time_host) as Latest_Time_on_host values(latest_Time_all) as Current_Time by Alert_Severity host 
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(Latest_Time_on_host) as Latest_Time_on_host  ctime(Current_Time) as Current_Time
+| search (host=""HCM-REPSVN"" OR host=""HN-REPSVN"" OR host=""FISSVN-HN"" OR host=""FISHCM-SVN"") Status=""Missing Data!""",FPT - No Log from SVN over 24 hour
+soc_monitor,"index=* sourcetype=nginx:plus:access server=* NOT (src_ip=""10.14.131.3"" OR src_ip=""10.15.6.11"") 
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(dest_port) as Dest_Port values(http_user_agent) as HTTP_User_Agent values(uri_path) as URI_Path count by Alert_Severity Time src_ip dest_ip server
+| eval HTTP_User_Agent=mvindex(HTTP_User_Agent,0,4)
+| eval URI_Path=mvindex(URI_Path,0,4)
+| sort - count
+| where count>=12000",FPT - P2P Request over 12000 Threshold by Nginx Access
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (""*../../../../../lib/password*"" OR ""*../../../../windows/*"" OR ""*../../../etc/*"" OR ""*..%252f..%252f..%252fetc%252f*"" OR ""*..%c0%af..%c0%af..%c0%afetc%c0%af*"" OR ""*%252e%252e%252fetc%252f*"") NOT (client_ip=172.71.81.13 OR src_ip=""10.14.131.3"" OR src_ip=""10.14.128.10"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(src_ip) as src_ip , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time http_x_forwarded_for
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent
+|  eval src_ip=mvindex(src_ip, 0, 15)
+|  eval http_user_agent=mvindex(http_user_agent, 0, 9)
+|  eval src_ip=mvindex(src_ip, 0, 9)
+|  eval Method=mvindex(Method, 0, 9)
+|  eval uri_path=mvindex(uri_path, 0, 9)
+|  eval uri_query=mvindex(uri_query, 0, 9)
+|  eval Status_Code=mvindex(Status_Code, 0, 9)",FPT - Path Traversal Exploitation Attempts
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=21 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT (src=""10.0.0.0/8"" OR src=""172.16.0.0/12"" OR src=""192.168.0.0/16"") 
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+| where count > 100",FPT - Posible SCAN FTP Port (21) Per Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=21 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT (src=""10.14.124.0/24"" OR src=""10.14.125.0/24"" OR src=""10.14.126.0/24"" OR src=""10.14.127.0/24"" OR src=""10.15.30.0/24"" OR src=""10.15.31.0/24"" OR src=""10.15.16.68"" OR src=""10.15.16.69"" OR src=""10.201.75.0/24"" OR src=""10.14.60.0/24"") 
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src
+| rename src as src_ip
+| where Total_dest >= 5 AND count > 100",FPT - Posible SCAN FTP Port (21) To Multiple Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=80 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") 
+NOT src IN (10.15.2.22, 10.15.6.11, 10.14.131.3, 10.14.128.10, 10.15.81.40, 10.15.81.39) 
+NOT (action=""Accept"" AND dest_ip=""10.33.3.113"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+| rename src as src_ip
+| where count > 1000
+| sort - count",FPT - Posible SCAN HTTP Port (80) Per Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=80 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT (src=10.15.6.11)
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src
+| rename src as src_ip
+| where Total_dest >= 5 AND count > 100",FPT - Posible SCAN HTTP Port (80) To Multiple Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=22 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT (src=""10.0.0.0/8"" OR src=""172.16.0.0/12"" OR src=""192.168.0.0/16"" OR src_ip=""10.14.128.10"") 
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+| rename src as src_ip
+| where count > 100",FPT - Posible SCAN SSH Port (22) Per Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=22 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT (src=""10.14.124.0/24"" OR src=""10.14.125.0/24"" OR src=""10.14.126.0/24"" OR src=""10.14.127.0/24"" OR src=""10.15.30.0/24"" OR src=""10.15.31.0/24"" OR src=""10.15.16.68"" OR src=""10.15.16.69"" OR src=""10.201.75.0/24"" OR src=""10.14.60.0/24"" OR src_ip=""10.14.128.10"") 
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src
+| rename src as src_ip
+| where Total_dest >= 5 AND count > 100",FPT - Posible SCAN SSH Port (22) To Multiple Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=23 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT src_ip=""10.14.128.10""
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+| rename src as src_ip
+| where count > 100",FPT - Posible SCAN Telnet Port (23) Per Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=23 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT (src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"" OR src_ip=""10.14.0.0/8"" OR src_ip=""10.15.0.0/8"" OR src_ip=""10.35.31.200"" OR src_ip=""10.14.51.52"" OR src_ip=""10.14.124.19"" OR src_ip=""10.15.6.11"" OR src_ip=""10.15.146.39"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src
+| rename src as src_ip
+| where Total_dest >= 5 AND count > 100",FPT - Posible SCAN Telnet Port (23) To Multiple Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=69 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT src_ip=""10.14.128.10""
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src dest_ip
+| rename src as src_ip
+| where count > 100",FPT - Posible SCAN TFTP Backup Port (69) Per Host
+admin,"index=* sourcetype=cp_log (tag=network OR tag=communicate) dest_port=69 (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") NOT src_ip=""10.14.128.10""
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(sourcetype) as ""Source Type"" values(action) as action values(dest_ip) as dest_ip dc(dest_ip) as Total_dest values(dest_port) as dest_port count by Alert_Severity Time src
+| rename src as src_ip
+| where Total_dest >= 5 AND count > 100",FPT - Posible SCAN TFTP Backup Port (69) To Multiple Host
+admin,"index=* sourcetype=""*WinEventLog*"" EventID=4625 user!="""" src!=- src_ip!=- user!=*$
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats count(eval(action=""failure"")) as failures values(Source_Workstation) as Source_Workstation values(name) as Messages values(src_ip) as src_ip values(dest) as dest by Alert_Severity Time user
+| where failures>=100
+| sort - failures",FPT - Possible Brute Force Attack by User
+admin,"index=* sourcetype=""*WinEvent*"" source=""WinEventLog:*"" ((parent_process_path=""*vmtoolsd.exe"" OR parent_process_name=""vmtoolsd.exe"") (Process_Name=""*cmd.exe"" OR Process_Name=""*powershell.exe""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical""  
+| stats values(status) as status values(process_path) as Process_Path values(ProcessCommandLine) as ProcessCommandLine values(src_user) as src_user count by Alert_Severity Alert_Severity Time Computer",FPT - Possible VMware VM Abuse from ESXi via cmdline
+admin,"index=* sourcetype=""*WinEvent*"" EventID=4663 ((ObjectName=""*.aspx"" OR ObjectName=""*.asp"" OR ObjectName=""*.ashx"" OR ObjectName=""*.ps1"" OR ObjectName=""*.bat"" OR ObjectName=""*.exe"" OR ObjectName=""*.dll"" OR ObjectName=""*.vbs"" OR ObjectName=""*.req"") (((ObjectName=""*wwwroot*"") (ObjectName=""*aspnet_client*"") (ObjectName=""*inetpub*"")) OR (((ObjectName=""*Microsoft*"") (ObjectName=""*Exchange*"") (ObjectName=""*Server*"")) (((ObjectName=""*ClientAccess*"") (ObjectName=""*owa*"")) OR ((ObjectName=""*FrontEnd*"") (ObjectName=""*HttpProxy*"") (ObjectName=""*owa*""))))))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""Critical""  
+| stats values(status) as status values(ObjectName) as ObjectName values(process_name) as Process_Name values(signature) as Signature values(src_user) as src_user count by Alert_Severity Time Computer",FPT - Possible Webshell Creation In Microsoft Exchange Directories - WinEvent
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (http_user_agent=""*="" OR Agent=""*="")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Potential Base64 Encoded User-Agent
+admin,"index=* source=""*WinEventLog:Security*"" EventCode=4663 object_file_path=""*\\spinstall0.aspx""
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Critical""
+| stats values(src_nt_domain) as Source_Domain, values(Caller_User_Name) as Caller_User_Name, values(file_name) as File_Name, values(file_path) as File_Path, values(vendor_product) as Vendor_Product count by Alert_Severity Time action Computer",FPT - Potential SharePoint ToolShell CVE-2025-53770 Exploitation - WinEvent
+admin,"index=* source=""*WinEventLog:Security*"" EventCode=4688 (ParentProcessName=""*\\w3wp.exe"" CommandLine=""*cwBwAGkAbgBzAHQAYQBsAGwAMAAuAGEAcwBwAHgA*"" OR CommandLine=""*MAcABpAG4AcwB0AGEAbABsADAALgBhAHMAcAB4A*"" OR CommandLine=""*zAHAAaQBuAHMAdABhAGwAbAAwAC4AYQBzAHAAeA*"" OR CommandLine=""*c3BpbnN0YWxsMC5hc3B4*"" OR CommandLine=""*OgBcAFAAUgBPAEcAUgBBAH4AMQBcAEMATwBNAE0ATwBOAH4AMQBcAE0ASQBDAFIATwBTAH4AMQBcAFcARQBCAFMARQBSAH4AMQBcADEANQBcAFQARQBNAFAATABBAFQARQBcAEwAQQBZAE8AVQBUAFMA*"" OR CommandLine=""*oAXABQAFIATwBHAFIAQQB+ADEAXABDAE8ATQBNAE8ATgB+ADEAXABNAEkAQwBSAE8AUwB+ADEAXABXAEUAQgBTAEUAUgB+ADEAXAAxADUAXABUAEUATQBQAEwAQQBUAEUAXABMAEEAWQBPAFUAVABTA*"" OR CommandLine=""*6AFwAUABSAE8ARwBSAEEAfgAxAFwAQwBPAE0ATQBPAE4AfgAxAFwATQBJAEMAUgBPAFMAfgAxAFwAVwBFAEIAUwBFAFIAfgAxAFwAMQA1AFwAVABFAE0AUABMAEEAVABFAFwATABBAFkATwBVAFQAUw*"" OR CommandLine=""*OgBcAFAAUgBPAEcAUgBBAH4AMQBcAEMATwBNAE0ATwBOAH4AMQBcAE0ASQBDAFIATwBTAH4AMQBcAFcARQBCAFMARQBSAH4AMQBcADEANgBcAFQARQBNAFAATABBAFQARQBcAEwAQQBZAE8AVQBUAFMA*"" OR CommandLine=""*oAXABQAFIATwBHAFIAQQB+ADEAXABDAE8ATQBNAE8ATgB+ADEAXABNAEkAQwBSAE8AUwB+ADEAXABXAEUAQgBTAEUAUgB+ADEAXAAxADYAXABUAEUATQBQAEwAQQBUAEUAXABMAEEAWQBPAFUAVABTA*"" OR CommandLine=""*6AFwAUABSAE8ARwBSAEEAfgAxAFwAQwBPAE0ATQBPAE4AfgAxAFwATQBJAEMAUgBPAFMAfgAxAFwAVwBFAEIAUwBFAFIAfgAxAFwAMQA2AFwAVABFAE0AUABMAEEAVABFAFwATABBAFkATwBVAFQAUw*"" OR CommandLine=""*OgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABDAG8AbQBtAG8AbgAgAEYAaQBsAGUAcwBcAE0AaQBjAHIAbwBzAG8AZgB0ACAAUwBoAGEAcgBlAGQAXABXAGUAYgAgAFMAZQByAHYAZQByACAARQB4AHQAZQBuAHMAaQBvAG4AcwBcADEANQBcAFQARQBNAFAATABBAFQARQBcAEwAQQBZAE8AVQBUAFMA*"" OR CommandLine=""*oAXABQAHIAbwBnAHIAYQBtACAARgBpAGwAZQBzAFwAQwBvAG0AbQBvAG4AIABGAGkAbABlAHMAXABNAGkAYwByAG8AcwBvAGYAdAAgAFMAaABhAHIAZQBkAFwAVwBlAGIAIABTAGUAcgB2AGUAcgAgAEUAeAB0AGUAbgBzAGkAbwBuAHMAXAAxADUAXABUAEUATQBQAEwAQQBUAEUAXABMAEEAWQBPAFUAVABTA*"" OR CommandLine=""*6AFwAUAByAG8AZwByAGEAbQAgAEYAaQBsAGUAcwBcAEMAbwBtAG0AbwBuACAARgBpAGwAZQBzAFwATQBpAGMAcgBvAHMAbwBmAHQAIABTAGgAYQByAGUAZABcAFcAZQBiACAAUwBlAHIAdgBlAHIAIABFAHgAdABlAG4AcwBpAG8AbgBzAFwAMQA1AFwAVABFAE0AUABMAEEAVABFAFwATABBAFkATwBVAFQAUw*"" OR CommandLine=""*OgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABDAG8AbQBtAG8AbgAgAEYAaQBsAGUAcwBcAE0AaQBjAHIAbwBzAG8AZgB0ACAAUwBoAGEAcgBlAGQAXABXAGUAYgAgAFMAZQByAHYAZQByACAARQB4AHQAZQBuAHMAaQBvAG4AcwBcADEANgBcAFQARQBNAFAATABBAFQARQBcAEwAQQBZAE8AVQBUAFMA*"" OR CommandLine=""*oAXABQAHIAbwBnAHIAYQBtACAARgBpAGwAZQBzAFwAQwBvAG0AbQBvAG4AIABGAGkAbABlAHMAXABNAGkAYwByAG8AcwBvAGYAdAAgAFMAaABhAHIAZQBkAFwAVwBlAGIAIABTAGUAcgB2AGUAcgAgAEUAeAB0AGUAbgBzAGkAbwBuAHMAXAAxADYAXABUAEUATQBQAEwAQQBUAEUAXABMAEEAWQBPAFUAVABTA*"" OR CommandLine=""*6AFwAUAByAG8AZwByAGEAbQAgAEYAaQBsAGUAcwBcAEMAbwBtAG0AbwBuACAARgBpAGwAZQBzAFwATQBpAGMAcgBvAHMAbwBmAHQAIABTAGgAYQByAGUAZABcAFcAZQBiACAAUwBlAHIAdgBlAHIAIABFAHgAdABlAG4AcwBpAG8AbgBzAFwAMQA2AFwAVABFAE0AUABMAEEAVABFAFwATABBAFkATwBVAFQAUw*"") OR (CommandLine=""*-EncodedCommand JABiAGEAcwBlADYANABTAHQAcgBpAG4AZwAgAD0*"" OR CommandLine=""*TEMPLATE\\LAYOUTS\\spinstall0.aspx*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Critical""
+| stats values(src_nt_domain) as Source_Domain, values(Caller_User_Name) as Caller_User_Name, values(parent_process_name) as parent_process_name, values(parent_process_path) as parent_process_path, values(process_name) as process_name, values(process_path) as process_path, values(CommandLine) as CommandLine, values(vendor_product) as Vendor_Product count by Alert_Severity Time action Computer",FPT - Potential SharePoint ToolShell CVE-2025-53770 Exploitation Indicators
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_query=""rclone/v*"" OR URL=""rclone/v*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Rclone Activity via Proxy
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" Method=""GET"" (""*={{*"" OR ""*=%7B%7B*"" OR ""*=${*"" OR ""*=$%7B*"" OR ""*=<%=*"" OR ""*=%3C%25=*"" OR ""*=@(*"" OR ""*freemarker.template.utility.Execute*"" OR ""*.getClass().forName('javax.script.ScriptEngineManager')*"" OR ""*T(org.apache.commons.io.IOUtils)*"") NOT (Status_Code=""404"") NOT (client_ip=""10.14.131.3"")
+NOT Status_Code=4*
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Server Side Template Injection Strings Detected
+admin,"index=* sourcetype=""nginx:plus:access"" (""Method""=""POST"" ((""uri_path""=""*/_layouts/15/ToolPane.aspx*"" OR ""uri_path""=""*DisplayMode=Edit&a=/ToolPane.aspx*"") OR (""uri_query""=""*/_layouts/15/ToolPane.aspx*"" OR ""uri_query""=""*DisplayMode=Edit&a=/ToolPane.aspx*""))) OR (""Method""=""GET"" ""uri_path""=""*/_layouts/15/spinstall0.aspx*"") ""http_referrer""=""*/_layouts/SignOut.aspx*""
+| bucket _time span=15m
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Critical"" 
+| stats values(dest_ip) as dest_ip, values(dest_port) as dest_port, values(http_referrer) as http_referrer, values(http_user_agent) as http_user_agent, values(vendor_product) as vendor_product, values(http_x_header) as http_x_header, values(Method) as Method, values(server) as Attack_Server, values(Status_Code) as Status_Code, values(uri_path) as uri_path, values(uri_query) as uri_query, values(URL) as URL, values(user) as user, values(Agent) as Agent count by Alert_Severity Time source_ip
+| eval http_user_agent=mvindex(http_user_agent,0,4)
+| fillnull value=N/A dest_ip dest_port http_referrer http_user_agent http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - SharePoint ToolShell CVE-2025-53770 Exploitation
+admin,"index=iis sourcetype=iis (""cs_method""=""POST"" ""cs_uri_stem""=""*/_layouts/15/ToolPane.aspx*"" ""cs_uri_query""=""*DisplayMode=Edit&a=/ToolPane.aspx*"") OR (""cs_method""=""GET"" ""cs_uri_stem""=""*/_layouts/15/spinstall0.aspx*"") ""cs_Referer""=""*/_layouts/SignOut.aspx*""
+| bucket _time span=15m 
+| convert timeformat=""%d-%m-%Y %H:%M:%S"" ctime(_time) as Time 
+| eval Alert_Severity=""Critical""
+| stats values(cs_method) as cs_method, values(cs_uri_stem) as cs_uri_stem, values(cs_uri_query) as cs_uri_query, values(sc_status) as sc_status, values(s_ip) as s_ip count by Alert_Severity Time c_ip
+| sort - count",FPT - SharePoint ToolShell CVE-2025-53770 Exploitation - Web IIS
+admin,"index=* sourcetype=*winevent* (EventID=4726 OR EventID=4720)
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time 
+| eval Target_User_Name=mvindex(Target_User_Name,1) 
+| transaction Target_User_Name maxspan=180m startswith=""EventID=4726"" endswith=""EventID=4720"" connected=false
+| eval Alert_Severity=""Low""
+| stats earliest(Time) as ""Earliest_Time"" latest(Time) as ""Latest_Time"" values(Computer) as Computer_Name values(action) as Action values(name) as name values(duration) as Duration values(EventID) as EventID values(TargetUserName) as Target_User_Name count by Alert_Severity Caller_User_Name
+| rename Caller_User_Name as Source_User, EventID as Event_ID name as Message",FPT - Short Lived Windows Accounts
+admin,"((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) (dest_ip=""10.0.0.0/8"" OR dest_ip=""172.16.0.0/12"" OR dest_ip=""192.168.0.0/16"") 
+(src!=10.15.16.68 dest_port!=53) ```DNS Server```
+| bucket _time span=1h  
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium"" 
+| stats values(action) as Action values(dest) as dest dc(dest) as uniq_count_dest count by Alert_Severity Time src dest_port  
+| eval dest=mvindex(dest,0,9)
+| where  uniq_count_dest >= 255 AND count >= 2000 ```Numbers of IPs in /24 Range```",FPT - Single IP connects to multiple IP on Single Port
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" "".git/"" NOT (client_ip=""10.0.0.0/8"" OR client_ip=""172.16.0.0/12"" OR client_ip=""192.168.0.0/16"" OR src_ip=""10.0.0.0/8"" OR src_ip=""172.16.0.0/12"" OR src_ip=""192.168.0.0/16"") 
+|  bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+|  stats values(client_ip) as client_ip, values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(src_ip) as src_ip , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time http_x_forwarded_for
+|  fillnull value=N/A client_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Source Code Enumeration Detection by Keyword
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (""@@version"" OR ""%271%27%3D%271"" OR ""=select "" OR ""=select("" OR ""=select%20"" OR ""concat_ws("" OR ""CONCAT(0x"" OR ""from mysql.innodb_table_stats"" OR ""from%20mysql.innodb_table_stats"" OR ""group_concat("" OR ""information_schema.tables"" OR ""json_arrayagg("" OR ""or 1=1#"" OR ""or%201=1#"" OR ""order by "" OR ""order%20by%20"" OR ""select * "" OR ""select database()"" OR ""select version()"" OR ""select%20*%20"" OR ""select%20database()"" OR ""select%20version()"" OR ""select%28sleep%2810%29"" OR ""SELECTCHAR("" OR ""table_schema"" OR ""UNION ALL SELECT"" OR ""UNION SELECT"" OR ""UNION%20ALL%20SELECT"" OR ""UNION%20SELECT"" OR ""'1'='1"") NOT (Status_Code=""404"") NOT (src_ip=10.14.131.3 OR client_ip=10.14.131.3)
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+| eval src_ip=mvindex('src_ip',0,9)
+| eval client_ip=mvindex('client_ip',0,9)
+| eval Agent=mvindex('Agent',0,9)
+| eval uri_path=mvindex('uri_path',0,9)
+| eval uri_query=mvindex('uri_query',0,9)
+| eval URL=mvindex('URL',0,9)
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - SQL Injection Detected
+admin,"index=* sourcetype=cp_log (dest=""10.1.0.0/16"" OR dest=""10.4.0.0/16"" OR dest=""10.225.0.0/16"" OR dest=""10.226.0.0/16"" OR dest=""10.227.0.0/16"" OR dest=""10.210.0.0/16"")
+| bucket _time span=1h 
+| stats values(dest) as dest_ip values(dest_port) as dest_port dc(dest) as num_dest dc(dest_port) as num_dest_port count by Alert_Severity _time src 
+| rename src as src_ip
+| eval dest=mvindex(dest,0,5)
+| where num_dest >= 100 AND count >= 100
+| sort - count",FPT - Suspected IP SCAN to FIM
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((http_user_agent=""Q2hyb21l*"" OR http_user_agent=""QXBwbGVXZWJLaX*"" OR http_user_agent=""RGFsdmlr*"" OR http_user_agent=""TW96aWxsY*"") OR (Agent=""Q2hyb21l*"" OR Agent=""QXBwbGVXZWJLaX*"" OR Agent=""RGFsdmlr*"" OR Agent=""TW96aWxsY*""))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Suspicious Base64 Encoded User-Agent
+admin,"index=netdns AND sourcetype=MSAD:NT6:DNS questionname=* NOT (src_ip=8.8.8.8 OR src_ip=10.15.30.254 OR src_ip=10.15.16.68 OR src_ip=10.15.16.69 OR src_ip=10.1.1.13 OR src_ip=10.1.1.54 OR src_ip=10.1.1.51)
+| eval questionname=replace(questionname,""(\(\d+)\)"",""."") 
+| eval questionname=replace(questionname,""^."","""") 
+| eval questionname=replace(questionname,"".$"","""")
+| search (questionname = ""aaa.stage.*"" OR questionname = ""post.1*"")
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(questionname) as Domain_Name values(action) as Action count by Alert_Severity Time src_ip",FPT - Suspicious Cobalt Strike DNS Beaconing
+admin,"((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=10.14.51.53 OR srcip=10.14.124.19 OR srcip=10.14.51.54 OR srcip=10.14.124.28 OR srcip=172.16.68.3 OR srcip=10.15.225.54) (dstip=""10.15.31.11"" OR dstip=""10.15.31.12"" OR dstip=""10.15.31.13"" OR dstip=""10.14.60.101"" OR dstip=""10.14.60.102"" OR dstip=""10.14.60.103"" OR dstip=""10.14.60.104"" OR dstip=""10.14.60.105"" OR dstip=""10.14.60.106"" OR dstip=""10.14.60.107"" OR dstip=""10.14.60.108"" OR dstip=""10.14.60.109"" OR dstip=""10.14.60.110"" OR dstip=""10.14.60.111"" OR dstip=""10.14.60.112"" OR dstip=""10.14.60.113"" OR dstip=""10.14.60.115"" OR dstip=""10.14.60.114"" OR dstip=""10.14.60.116"" OR dstip=""10.14.60.117"" OR dstip=""10.14.60.118"" OR dstip=""10.14.60.119"" OR dstip=""10.14.60.120"" OR dstip=""10.14.60.121"" OR dstip=""10.14.60.122"" OR dstip=""10.14.60.123"" OR dstip=""10.14.60.124"" OR dstip=""10.14.60.125"" OR dstip=""10.14.60.126"" OR dstip=""10.14.60.127"" OR dstip=""10.14.60.128"" OR dstip=""10.14.60.129"" OR dstip=""10.14.60.130"" OR dstip=""10.14.60.171"" OR dstip=""10.14.60.172"") action=accept
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(dstip) as Dest_IP values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto
+| replace 6 with TCP, 17 with UDP in proto",FPT - Suspicious Connects to ESXi Accept by Firewall
+admin,"((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=""10.15.225.28"" OR srcip=""10.15.226.228"" OR srcip=""10.15.225.73"" OR srcip=""10.15.183.57"" OR srcip=""10.15.225.225"" OR srcip=""10.15.225.169"" OR srcip=""10.15.226.83"" OR srcip=""10.15.225.42"" OR srcip=""10.86.133.252"" OR srcip=""10.86.132.150"" OR srcip=""10.15.225.204"" OR srcip=""10.15.226.75"" OR srcip=""10.15.225.149"" OR srcip=""10.15.225.36"" OR srcip=""10.15.225.20"" OR srcip=""15.10.8.17"" OR srcip=""15.10.8.32"" OR srcip=""15.10.8.10"" OR srcip=""15.10.8.19"" OR srcip=""15.10.8.5"" OR srcip=""15.10.8.7"" OR srcip=""10.15.6.11"" OR srcip=""10.15.180.107"" OR srcip=""10.15.225.131"" OR srcip=""10.15.225.120"" OR srcip=""10.15.226.105"") dstip=""10.14.51.55"" (proto=6 OR proto=17) action=accept 
+NOT srcip IN (10.15.30.15, 10.15.152.43, 10.15.225.54)
+| convert timeformat=""%m/%d/%Y"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(dstip) as Dest_IP values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto
+| replace 6 with TCP, 17 with UDP in proto",FPT - Suspicious Connects to JUMP Accept by Firewall
+admin,"((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=10.14.51.55 OR srcip=10.14.51.56 OR srcip=""10.86.133.252"" OR srcip=""10.86.108.240"" OR srcip=10.15.225.54) dstip=""10.14.124.28"" (proto=6 OR proto=17) action=accept
+| convert timeformat=""%m/%d/%Y"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(dstip) as Dest_IP values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto
+| replace 6 with TCP, 17 with UDP in proto",FPT - Suspicious Connects to PAM Accept by Firewall
+admin,"((index=main sourcetype=fortinet) OR (index=checkpoint sourcetype=cp_log)) NOT (srcip=10.14.124.53 OR srcip=10.14.124.22 OR srcip=10.14.51.53 OR srcip=10.14.124.19 OR srcip=10.14.51.54 OR srcip=10.14.124.28 OR srcip=10.15.225.120 OR srcip=""172.16.68.3"" OR srcip=10.14.128.10 OR srcip=""10.14.124.210"") (dstip=""10.15.31.14"" OR dstip=""10.14.60.100"") action=accept
+| convert timeformat=""%m/%d/%Y %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High"" 
+| stats values(dstip) as Dest_IP values(dstport) as Dest_Port count by Alert_Severity Time srcip action service proto
+| replace 6 with TCP, 17 with UDP in proto",FPT - Suspicious Connects to vCenter Accept by Firewall
+admin,"index=* sourcetype=*winevent* (ParentProcessName=""*w3wp.exe"" OR ParentProcessName=""*httpd.exe"") NOT ((process_path=""*csc.exe"" OR process_path=""*vbc.exe"" OR process_path=""*TranscodingService.exe"" OR process_path=""*w3wp.exe"" OR process_path=""*httpd.exe"" OR process_path=""*inetinfo.exe"" OR process_path=""*aspnet_wp.exe""))
+NOT (Computer=""FISS-WEB02-PROD.fsoft.fpt.vn"" AND src_user=""Bot ServiceDesk"" AND process_path=C:\\Windows\\System32\\where.exe)
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) as Time | eval Alert_Severity=""High""  
+| stats values(status) as status values(process_path) as Process_Path values(ProcessCommandLine) as ProcessCommandLine values(src_user) as src_user count by Alert_Severity Time Computer",FPT - Suspicious process spawned by w3wp.exe
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" ((((http_user_agent=""user-agent*"" OR http_user_agent=""Mozilla/3.0 *"" OR http_user_agent=""Mozilla/2.0 *"" OR http_user_agent=""Mozilla/1.0 *"" OR http_user_agent=""Mozilla *"" OR http_user_agent="" Mozilla/*"" OR http_user_agent=""Mozila/*"" OR http_user_agent=""Mozilla/4.0 (compatible; MSIE 6.0; MS Web Services Client Protocol*"")) OR (http_user_agent=""* (compatible;MSIE *"" OR http_user_agent=""*.0;Windows NT *"" OR http_user_agent=""*loader*"") OR (http_user_agent=""_"" OR http_user_agent=""CertUtil URL Agent"" OR http_user_agent=""Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0)"" OR http_user_agent=""Mozilla/5.0 (Windows NT 6.3; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0"" OR http_user_agent=""HTTPS"" OR http_user_agent=""Erbium-UA-4ce7c27cb4be9d32e333bf032c88235a"" OR http_user_agent=""x"" OR http_user_agent=""xxx""))  OR (((Agent=""user-agent*"" OR Agent=""Mozilla/3.0 *"" OR Agent=""Mozilla/2.0 *"" OR Agent=""Mozilla/1.0 *"" OR Agent=""Mozilla *"" OR Agent="" Mozilla/*"" OR Agent=""Mozila/*"" OR Agent=""Mozilla/4.0 (compatible; MSIE 6.0; MS Web Services Client Protocol*"")) OR (Agent=""* (compatible;MSIE *"" OR Agent=""*.0;Windows NT *"" OR Agent=""*loader*"") OR (Agent=""_"" OR Agent=""CertUtil URL Agent"" OR Agent=""Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0)"" OR Agent=""Mozilla/5.0 (Windows NT 6.3; WOW64; rv:28.0) Gecko/20100101 Firefox/28.0"" OR Agent=""HTTPS"" OR Agent=""Erbium-UA-4ce7c27cb4be9d32e333bf032c88235a"" OR Agent=""x"" OR Agent=""xxx""))) NOT (http_user_agent=""Mozilla/3.0 * Acrobat *"" OR Agent=""Mozilla/3.0 * Acrobat *"")
+NOT (src_ip=162.158.114.1* AND Status_Code=4*)
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time 
+| eval Alert_Severity=""Medium""  
+|  stats latest(Time) as Time, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity client_ip vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Suspicious User Agent
+admin,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_query=""*=C:/Users*"" OR uri_query=""*=C:/Program%20Files*"" OR uri_query=""*=C:/Windows*"" OR uri_query=""*=C%3A%5CUsers*"" OR uri_query=""*=C%3A%5CProgram%20Files*"" OR uri_query=""*=C%3A%5CWindows*"" OR URL=""*=C:/Users*"" OR URL=""*=C:/Program%20Files*"" OR URL=""*=C:/Windows*"" OR URL=""*=C%3A%5CUsers*"" OR URL=""*=C%3A%5CProgram%20Files*"" OR URL=""*=C%3A%5CWindows*"") NOT (src_ip=""10.14.131.3"")
+| bucket _time span=1h
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium"" 
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Suspicious Windows Strings In URI Detected
+admin,"index=* (sourcetype=*mcafee* OR sourcetype=*eset*) NOT (action_taken=Blocked OR action_taken=*Clean* OR action_taken=*delete*) file_hash=* NOT (file_name=*svchost.exe* OR file_name=*msiexec.exe*)
+| convert timeformat=""%Y-%m-%d %H:%M:00"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(file_name) as File_Name values(file_path) as File_Path values(file_hash) as File_Hash values(signature) as Signature values(action_taken) as Action_taken count by Alert_Severity Time hostname",FPT - Uncleaned Malware Detection (by Host)
+admin,"index=* (sourcetype=*mcafee* OR sourcetype=*eset*) NOT (action_taken=Blocked OR action_taken=*Clean* OR action_taken=*delete*) file_hash=* NOT (file_name=*svchost.exe* OR file_name=*msiexec.exe*)
+| convert timeformat=""%Y-%m-%d %H:%M:00"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(file_name) as File_Name values(file_path) as File_Path values(file_hash) as File_Hash values(hostname) as Host_Name values(action_taken) as Action_taken count by Alert_Severity Time signature",FPT - Uncleaned Malware Detection (by Risk Name)
+admin,"index=* (sourcetype=cp_log OR sourcetype=forti*) (dst_domain_name=""ifferfsodp9ifjaposdfjhgosurijfaewrwergwea.testing"" OR dst_domain_name=""ifferfsodp9ifjaposdfjhgosurijfaewrwergwea.test"" OR dst_domain_name=""ifferfsodp9ifjaposdfjhgosurijfaewrwergwea.com"" OR dst_domain_name=""ayylmaotjhsstasdfasdfasdfasdfasdfasdfasdf.com"" OR dst_domain_name=""iuqssfsodp9ifjaposdfjhgosurijfaewrwergwea.com"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+| stats values(dest_ip) as Dest_IP values(dst_domain_name) as Dst_Domain_Name values(action) as Action values(sourcetype) as ""Source Type"" count by Alert_Severity Time src_ip",FPT - Wannacry Killswitch Domain
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (uri_query=""*cmd=read*"" OR uri_query=""*connect&target*"" OR uri_query=""*cmd=connect*"" OR uri_query=""*cmd=disconnect*"" OR uri_query=""*cmd=forward*"") AND (http_referrer=""*"" AND http_user_agent=""*"" AND Method=""POST"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium"" 
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Webshell ReGeorg Detection Via Web Logs
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (http_user_agent=""* WindowsPowerShell/*"" OR Agent=""* WindowsPowerShell/*"")
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Windows PowerShell User Agent
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (http_user_agent=""Microsoft-WebDAV-MiniRedir/*"" OR Agent=""Microsoft-WebDAV-MiniRedir/*"") Method=GET
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Windows WebDAV User Agent
+soc_monitor,"index=* sourcetype=""nginx:plus:access"" source=""/var/log/audit/log/*access.log*"" (Method=""GET"" ((""=whoami"" OR ""=net%20user"" OR ""=net+user"" OR ""=net%2Buser"" OR ""=cmd%20/c%"" OR ""=cmd+/c+"" OR ""=cmd%2B/c%"" OR ""=cmd%20/r%"" OR ""=cmd+/r+"" OR ""=cmd%2B/r%"" OR ""=cmd%20/k%"" OR ""=cmd+/k+"" OR ""=cmd%2B/k%"" OR ""=powershell%"" OR ""=powershell+"" OR ""=tasklist%"" OR ""=tasklist+"" OR ""=wmic%"" OR ""=wmic+"" OR ""=ssh%"" OR ""=ssh+"" OR ""=python%"" OR ""=python+"" OR ""=python3%"" OR ""=python3+"" OR ""=ipconfig"" OR ""=wget%"" OR ""=wget+"" OR ""=curl%"" OR ""=curl+"" OR ""=certutil"" OR ""=copy%20%5C%5C"" OR ""=dsquery%"" OR ""=dsquery+"" OR ""=nltest%"" OR ""=nltest+"")))
+| convert timeformat=""%Y/%m/%d %H:%M:%S"" ctime(_time) AS Time | eval Alert_Severity=""Medium""  
+|  stats values(client_ip) as client_ip, values(src_ip) as src_ip , values(dest_ip) as dest_ip , values(dest_port) as dest_port , values(http_referrer) as http_referrer , values(http_user_agent) as http_user_agent , values(http_x_forwarded_for) as http_x_forwarded_for , values(http_x_header) as http_x_header , values(Method) as Method , values(server) as Attack_Server , values(Status_Code) as Status_Code , values(uri_path) as uri_path , values(uri_query) as uri_query , values(URL) as URL , values(user) as user, values(Agent) as Agent count by Alert_Severity Time vendor_product
+|  fillnull value=N/A client_ip src_ip dest_ip dest_port http_referrer http_user_agent http_x_forwarded_for http_x_header Method Attack_Server Status_Code uri_path uri_query URL user Agent",FPT - Windows Webshell Strings Detected
+admin,"`xplat_access_log`
+| search status_code != ""1*"" AND status_code != ""2*"" AND status_code != ""3*"" AND http_request_uri_without_query!=*.woff2 AND http_request_uri_without_query!=*.css AND http_request_uri_without_query!=*.png  AND http_request_uri_without_query!=*.ico  AND http_request_uri_without_query!=*.svg AND http_request_uri_without_query!=*.json AND http_request_uri_without_query!=*.chunk.js AND http_request_uri_without_query!=//assets/*  AND http_request_uri_without_query!=/assets/* AND http_request_uri_without_query!=/rest/sms/latest/relationship/isApiError/*
+| bucket _time span=1h
+| convert timeformat=""%m-%d-%Y %H:%M:%S"" ctime(_time) as ""Detected Time"" 
+| lookup local=t asn ip AS client_ip
+| iplocation client_ip 
+| rex field=service_name ""^(?<service_name>[^-]*-[^-]*-[^-]*)""
+| join type=left service_name [inputlookup xplat_service_owner_2.csv 
+    |  table service_name service_owner]
+| stats count values(status_code)  values(http_method) values(server_name) values(service_name) values(service_owner)  values(http_request_uri) by ""Detected Time"" client_ip autonomous_system Country 
+| sort - count
+| where count > 50
+| rename values(status_code) as ""Status Code"", values(http_method) as ""HTTP Method"", values(server_name) as ""Server Name"", values(http_request_uri) as ""HTTP Request URI"", values(service_name) as ""Service Name"", values(service_owner) as ""Service Owner""",FPT - xPlat - Possible Scan IP Status Code 4XX 5XX Over Threshold 50Req/Hour
+admin,"`xplat_access_log`  
+|  search status_code!=304 AND http_request_uri_without_query!=/delivery/* AND http_request_uri_without_query!=/my/apiv1/* AND http_request_uri_without_query!=/dang-ky-thi AND  http_request_uri_without_query!=/auth/realms/xcbt-my-hust/protocol/openid-connect/token AND http_request_uri_without_query!=/_next/static/*.js	 AND http_request_uri_without_query!=*.css AND http_request_uri_without_query!=*.png  AND http_request_uri_without_query!=*.ico  AND http_request_uri_without_query!=*.svg AND http_request_uri_without_query!=*.json AND http_request_uri_without_query!=*.chunk.js AND http_request_uri_without_query!=//assets/*  AND http_request_uri_without_query!=/assets/* AND http_request_uri!=*.gif AND http_request_uri!=*.min.js NOT (client_ip=""10.0.0.0/8"" OR client_ip=""172.16.0.0/12"" OR client_ip=""192.168.0.0/16"" OR client_ip=""1.52.0.0/14"" OR client_ip=""1.53.0.0/14"" OR client_ip=""1.54.0.0/14"" OR client_ip=""118.68.0.0/14"") 
+| bucket _time span=1h
+| convert timeformat=""%m-%d-%Y %H:%M:%S"" ctime(_time) as ""Detected Time"" 
+| lookup local=t asn ip AS client_ip
+| iplocation client_ip 
+| rex field=service_name ""^(?<service_name>[^-]*-[^-]*-[^-]*)""
+| join type=left service_name [inputlookup xplat_service_owner_2.csv 
+    |  table service_name service_owner]
+| stats values(http_request_query_string) values(status_code)  values(http_method) values(server_name) values(service_name) values(service_owner) values(http_request_uri) count by ""Detected Time"" client_ip autonomous_system Country 
+| sort  - count
+| where count >= 3000
+| rename values(http_request_query_string) as ""http_request_query_string"", values(status_code) as ""status_code"", values(http_method) as http_method, values(server_name) as server_name, values(http_request_uri) as http_request_uri, values(service_name) as ""Service Name"", values(service_owner) as ""Service Owner""",FPT - xPlat - Source IP From Internet Send HTTP Request Over Threshold 3000 Req/Min

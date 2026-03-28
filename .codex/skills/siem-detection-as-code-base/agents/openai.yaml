@@ -1,0 +1,4 @@
+interface:
+  display_name: "SIEM Detection as Code"
+  short_description: "Work safely in this multi-tenant detection repo"
+  default_prompt: "Use $siem-detection-as-code-base to update rules, mappings, tenants, or validation in this repository."

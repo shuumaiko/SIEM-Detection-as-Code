@@ -3,8 +3,8 @@ schema_version: 1.0
 device_id: nginx-webserver
 
 datasets:
-  - dataset_id: nginx-webserver-access
-    description: Nginx web server access logs
+  - dataset_id: webserver-access
+    description: Web server access logs dataset for Linux webserver device.
     category: security
     log_type: access
     enabled: true

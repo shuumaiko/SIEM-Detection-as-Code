@@ -53,10 +53,25 @@
       "items": {
         "type": "object",
         "required": [
-          "canonical_field",
           "source_fields"
         ],
+        "oneOf": [
+          {
+            "required": [
+              "target_field"
+            ]
+          },
+          {
+            "required": [
+              "canonical_field"
+            ]
+          }
+        ],
         "properties": {
+          "target_field": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          },
           "canonical_field": {
             "type": "string",
             "pattern": "^canonical\\.[A-Za-z0-9_.-]+$"

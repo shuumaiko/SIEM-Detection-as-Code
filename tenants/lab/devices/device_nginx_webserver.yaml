@@ -2,7 +2,7 @@
 
 tenant_id: lab
 device_type: webserver
-device_id: nginx-webserver
+device_id: lab-webserver
 category: security
 
 vendor: Nginx

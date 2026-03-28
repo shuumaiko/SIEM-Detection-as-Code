@@ -1,0 +1,67 @@
+---
+name: detection-mapping-ocsf
+description: Create or update detection field mapping files under mappings/detections using repository canonical fields that are designed from OCSF semantics. Use when Codex needs to write or revise *.fields.yaml mapping files, choose canonical fields from a relevant OCSF event or object, or build source_fields from rule field requirements explicitly provided by the user.
+---
+
+# Detection Mapping OCSF
+
+Use this skill to write or revise `mappings/detections/**/*.fields.yaml` files from user-defined required rule fields.
+
+## Inputs To Gather
+
+Collect the minimum information needed before editing.
+
+- Collect the rule's required source fields from the user or from the rule file.
+- Identify the target logsource tuple: `category`, `product`, `service`.
+- Locate the mapping file that should be edited; create one only when a shared dictionary for that taxonomy does not already exist.
+- Treat `.tmp/ocsf-schema` as the preferred local OCSF reference if present.
+
+## Mapping Workflow
+
+Follow this order.
+
+1. List only the source fields the rule actually requires for detection, correlation, or useful output.
+2. Search the existing repo mappings and tenant field bindings to reuse an established canonical field before proposing a new one.
+3. Inspect the most relevant OCSF event class and supporting object files under `.tmp/ocsf-schema`.
+4. Choose the canonical field name that best preserves the OCSF semantic while still fitting this repo's internal naming conventions.
+5. Append or update `source_fields` aliases using the user-defined required fields as the primary input set.
+6. Keep the mapping file shared and detection-driven; do not turn it into a rule-specific dump of every possible raw field.
+
+## Canonical Field Rules
+
+- Prefer `canonical_field` entries for canonical mappings.
+- Preserve an existing file's style if the file already mixes legacy `target_field` patterns, unless the task explicitly includes cleanup.
+- Reuse canonical names that already exist in nearby mappings when the meaning matches.
+- Use OCSF as the semantic reference, not as a strict requirement to mirror every OCSF path verbatim.
+- Create a new canonical field only when the repo does not already express that meaning clearly enough.
+- Avoid tenant-specific or SIEM-specific names in `canonical_field`.
+
+## OCSF Lookup Rules
+
+- Prefer non-deprecated OCSF event classes when multiple candidates exist.
+- Read the event class first, then read referenced objects that carry the field semantics.
+- For web access and WAF-style detections, start with `events/application/web_resources_activity.json`, then inspect `objects/http_request.json`, `objects/url.json`, and related endpoint objects.
+- If `.tmp/ocsf-schema` is unavailable, fall back to the repo's existing mappings and architecture docs, and say that the local OCSF clone was missing.
+- Read `references/ocsf-lookup.md` for fast lookup paths and naming guidance.
+
+## File Shape Rules
+
+Keep the file valid against `schema/mappings/detection_fields.schema.json`.
+
+- Keep `mapping_type: detection_fields`.
+- Keep `logsource.category`, `logsource.product`, and `logsource.service` aligned with the target rules.
+- Keep every `source_fields` list unique and non-empty.
+- Update the `description` so it states the mapping scope and, when helpful, the OCSF class or object that informed the canonical design.
+
+## Editing Guardrails
+
+- Avoid adding fields that the user did not request and the rule does not require.
+- Avoid renaming an established canonical field unless the change is intentional and the impact has been checked.
+- Avoid baking tenant bindings into `mappings/detections/`; tenant-specific physical fields belong in `tenants/.../bindings/fields/`.
+- Prefer a compact, maintainable shared dictionary over exhaustive vendor normalization.
+
+## Validation
+
+- Re-read `schema/mappings/detection_fields.schema.json` after structural edits.
+- Compare with nearby mappings in the same taxonomy to keep naming and scope consistent.
+- Mention clearly when no dedicated automated validator was run for mappings.

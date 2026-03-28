@@ -1,0 +1,108 @@
+schema_version: 1.0
+mapping_type: detection_fields
+
+logsource:
+  category: webserver
+  product: any
+  service: access
+
+description: >
+  Shared source-rule-field to canonical-field mapping for webserver detection
+  content.
+  Defined based on the Web Resources Activity [6001] class in OCSF.
+
+fields:
+  - target_field: time
+    source_fields:
+      - _time
+      - Time
+      - event_time
+
+  - target_field: src_endpoint.ip
+    source_fields:
+      - src_ip
+      - client_ip
+      - src
+      - source.ip
+
+  - target_field: dst_endpoint.ip
+    source_fields:
+      - dest_ip
+      - dst_ip
+      - dst
+      - destination.ip
+
+  - target_field: dst_endpoint.port
+    source_fields:
+      - dest_port
+      - dst_port
+      - dport
+      - service
+
+  - target_field: http_request.referrer
+    source_fields:
+      - http_referrer
+      - http_referer
+      - referrer
+      - referer
+
+  - target_field: http_request.user_agent
+    source_fields:
+      - http_user_agent
+      - user_agent
+      - http.agent
+      - Agent
+
+  - target_field: http_request.x_forwarded_for
+    source_fields:
+      - http_x_forwarded_for
+      - x_forwarded_for
+      - xff
+
+  - target_field: canonical.http_request.x_header
+    source_fields:
+      - http_x_header
+      - x_header
+
+  - target_field: http_request.http_method
+    source_fields:
+      - Method
+      - method
+      - http_method
+
+  - target_field: dst_endpoint.hostname
+    source_fields:
+      - server
+      - server_name
+
+  - target_field: status_code
+    source_fields:
+      - Status_Code
+      - status_code
+      - http_status
+      - status
+
+  - target_field: http_request.url.path
+    source_fields:
+      - uri_path
+      - url_path
+      - path
+
+  - target_field: http_request.url.query_string
+    source_fields:
+      - uri_query
+      - query
+      - query_string
+
+  - target_field: http_request.url.url_string
+    source_fields:
+      - URL
+      - url
+      - request_url
+      - uri
+
+  - target_field: canonical.user.name
+    source_fields:
+      - user
+      - username
+      - user_name
