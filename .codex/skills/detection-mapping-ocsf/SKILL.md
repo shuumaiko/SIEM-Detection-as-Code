@@ -1,6 +1,6 @@
 ---
 name: detection-mapping-ocsf
-description: Create or update detection field mapping files under mappings/detections using repository canonical fields that are designed from OCSF semantics. Use when Codex needs to write or revise *.fields.yaml mapping files, choose canonical fields from a relevant OCSF event or object, or build source_fields from rule field requirements explicitly provided by the user.
+description: Create or update detection field mapping files under mappings/detections by preferring direct OCSF field paths where they map cleanly, and using repository canonical fields only when a direct OCSF path is not a good fit. Use when Codex needs to write or revise *.fields.yaml mapping files, choose field contracts from a relevant OCSF event or object, or build source_fields from rule field requirements explicitly provided by the user.
 ---
 
 # Detection Mapping OCSF
@@ -22,20 +22,24 @@ Collect the minimum information needed before editing.
 Follow this order.
 
 1. List only the source fields the rule actually requires for detection, correlation, or useful output.
-2. Search the existing repo mappings and tenant field bindings to reuse an established canonical field before proposing a new one.
-3. Inspect the most relevant OCSF event class and supporting object files under `.tmp/ocsf-schema`, and note the exact files, version, and field paths that justify each mapped field group.
-4. Choose the canonical field name that best preserves the OCSF semantic while still fitting this repo's internal naming conventions.
-5. Append or update `source_fields` aliases using the user-defined required fields as the primary input set.
-6. Write the mapping `description` so it records the detailed field-reference sources that informed the mapping, not just a generic mention of OCSF.
-7. Keep the mapping file shared and detection-driven; do not turn it into a rule-specific dump of every possible raw field.
+2. Inspect the most relevant OCSF event class and supporting object files under `.tmp/ocsf-schema`, and note the exact files, version, and field paths that justify each mapped field group.
+3. Prefer the direct OCSF field path when the rule field meaning maps cleanly and stably to an OCSF attribute.
+4. Search existing repo mappings and tenant field bindings to reuse an established field contract when the repo already settled on the same OCSF path or when a repo-specific `canonical.*` field is required.
+5. Use a repo-specific `canonical.*` field only when a direct OCSF path would be lossy, ambiguous, vendor-specific, or would break an intentional internal contract.
+6. Append or update `source_fields` aliases using the user-defined required fields as the primary input set.
+7. Write the mapping `description` so it records the detailed field-reference sources that informed the mapping, not just a generic mention of OCSF.
+8. Keep the mapping file shared and detection-driven; do not turn it into a rule-specific dump of every possible raw field.
 
 ## Canonical Field Rules
 
 - Prefer `canonical_field` entries for canonical mappings.
 - Preserve an existing file's style if the file already mixes legacy `target_field` patterns, unless the task explicitly includes cleanup.
-- Reuse canonical names that already exist in nearby mappings when the meaning matches.
-- Use OCSF as the semantic reference, not as a strict requirement to mirror every OCSF path verbatim.
-- Create a new canonical field only when the repo does not already express that meaning clearly enough.
+- Prefer a direct OCSF field path in `canonical_field` when the semantics are exact enough to stand on their own.
+- Reuse an existing OCSF field path already present in nearby mappings when the meaning matches.
+- Reuse an existing repo-specific `canonical.*` field when the repo already depends on that internal contract for the same meaning.
+- Use OCSF as the primary semantic reference and default output shape unless there is a clear reason not to.
+- Create or keep a repo-specific `canonical.*` field only when the repo does not express that meaning cleanly with a direct OCSF path.
+- When falling back to `canonical.*`, capture the reason in the mapping description if it is not obvious from the field name.
 - Avoid tenant-specific or SIEM-specific names in `canonical_field`.
 
 ## OCSF Lookup Rules

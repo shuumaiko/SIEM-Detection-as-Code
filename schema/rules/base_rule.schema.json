@@ -5,15 +5,20 @@
   "type": "object",
   "required": [
     "title",
+    "name",
+    "rule_type",
     "id",
     "status",
     "description",
     "references",
     "author",
     "date",
+    "modified",
     "tags",
     "logsource",
-    "detection"
+    "detection",
+    "falsepositives",
+    "level"
   ],
   "properties": {
     "title": {
@@ -26,7 +31,7 @@
     },
     "rule_type": {
       "type": "string",
-      "enum": ["detection", "detection_base", "base"]
+      "enum": ["detection", "base"]
     },
     "id": {
       "type": "string",
@@ -34,7 +39,7 @@
     },
     "status": {
       "type": "string",
-      "minLength": 1
+      "enum": ["stable", "test", "experimental", "deprecated", "unsupported"]
     },
     "description": {
       "type": "string",
@@ -85,17 +90,7 @@
     },
     "logsource": {
       "type": "object",
-      "anyOf": [
-        {
-          "required": ["category"]
-        },
-        {
-          "required": ["product"]
-        },
-        {
-          "required": ["service"]
-        }
-      ],
+      "required": ["category", "product", "service"],
       "properties": {
         "category": {
           "type": "string",
@@ -204,6 +199,19 @@
   },
   "additionalProperties": true,
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "rule_type": {
+            "const": "detection"
+          }
+        },
+        "required": ["rule_type"]
+      },
+      "then": {
+        "required": ["fields", "x_query"]
+      }
+    },
     {
       "if": {
         "properties": {

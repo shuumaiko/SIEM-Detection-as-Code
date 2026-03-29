@@ -7,49 +7,59 @@ logsource:
   service: traffic
 
 description: >
-  Shared source-rule-field to canonical-field mapping for firewall detection
-  content.
+  Shared source-rule-field to canonical-field mapping for firewall traffic
+  detections and analyst correlations. Defined using local OCSF 1.9.0-dev
+  from .tmp/ocsf-schema/version.json with
+  events/network/network_activity.json for network traffic event scope,
+  objects/endpoint.json plus objects/network_endpoint.json for source and
+  destination endpoint ip, port, and zone semantics,
+  objects/network_connection_info.json for network_connection_info.protocol_name,
+  objects/firewall_rule.json plus objects/rule.json for firewall_rule.name,
+  and events/base_event.json for time and count. Reuses the repo-specific
+  field canonical.event.action because firewall vendor actions such as Accept,
+  Drop, Detect, and Denied do not map cleanly to a single direct OCSF field
+  path across the current firewall rule set.
 
 fields:
-  - canonical_field: canonical.event.time
+  - canonical_field: time
     source_fields:
       - _time
       - Time
       - event_time
 
-  - canonical_field: canonical.source.ip
+  - canonical_field: src_endpoint.ip
     source_fields:
       - src_ip
       - src
       - source.ip
 
-  - canonical_field: canonical.source.port
+  - canonical_field: src_endpoint.port
     source_fields:
       - src_port
       - sport
       - s_port
 
-  - canonical_field: canonical.source.zone
+  - canonical_field: src_endpoint.zone
     source_fields:
       - src_zone
       - source_zone
       - security_inzone
 
-  - canonical_field: canonical.destination.ip
+  - canonical_field: dst_endpoint.ip
     source_fields:
       - dest_ip
       - dst_ip
       - dst
       - destination.ip
 
-  - canonical_field: canonical.destination.port
+  - canonical_field: dst_endpoint.port
     source_fields:
       - dest_port
       - dst_port
       - dport
       - service
 
-  - canonical_field: canonical.destination.zone
+  - canonical_field: dst_endpoint.zone
     source_fields:
       - dest_zone
       - destination_zone
@@ -61,18 +71,18 @@ fields:
       - act
       - rule_action
 
-  - canonical_field: canonical.firewall.policy.name
+  - canonical_field: firewall_rule.name
     source_fields:
       - firewall_policy_name
       - rule_name
       - policy_name
 
-  - canonical_field: canonical.network.protocol
+  - canonical_field: network_connection_info.protocol_name
     source_fields:
       - protocol
       - proto
 
-  - canonical_field: canonical.event.count
+  - canonical_field: count
     source_fields:
       - event_count
       - count

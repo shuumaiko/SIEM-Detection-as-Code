@@ -4,22 +4,22 @@ rule_deployments_by_siem:
   splunk:
   - rule_id: 238527ad-3c2c-4e4f-a1f6-92fd63adb864
     enabled: true
-    display_name: Antivirus Exploitation Framework Detection
+    display_name: mcafee-epo - Antivirus Exploitation Framework Detection
   - rule_id: fa0c05b6-8ad3-468d-8231-c1cbccb64fba
     enabled: true
-    display_name: Antivirus Hacktool Detection
+    display_name: mcafee-epo - Antivirus Hacktool Detection
   - rule_id: 78cc2dd2-7d20-4d32-93ff-057084c38b93
     enabled: true
-    display_name: Antivirus Password Dumper Detection
+    display_name: mcafee-epo - Antivirus Password Dumper Detection
   - rule_id: 4c6ca276-d4d0-4a8c-9e4c-d69832f8671f
     enabled: true
-    display_name: Antivirus Ransomware Detection
+    display_name: mcafee-epo - Antivirus Ransomware Detection
   - rule_id: fdf135a2-9241-4f96-a114-bb404948f736
     enabled: true
-    display_name: Antivirus Web Shell Detection
+    display_name: mcafee-epo - Antivirus Web Shell Detection
   - rule_id: 2a129a58-7725-48c9-8b3a-0a2264522a68
     enabled: true
-    display_name: Accepted Default Telnet Port Connection
-  - rule_id: 6ec820f2-e963-4801-9127-d8b2dce4d31b
+    display_name: checkpoint-fw - Accepted Default Telnet Port Connection
+  - rule_id: faee897b-2394-45cf-ae5d-0379476fbf3e
     enabled: true
-    display_name: APT User Agent
+    display_name: checkpoint-fw - Request reached over threshold

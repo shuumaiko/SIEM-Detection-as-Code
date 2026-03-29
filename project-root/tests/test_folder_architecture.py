@@ -19,7 +19,7 @@ def test_tenant_repository_reads_deployments_from_new_structure() -> None:
         "index": "cyble_alerts",
         "sourcetype": "_json",
     }
-    assert tenant.bindings["checkpoint-fw"].field_mappings["traffic"]["canonical.source.ip"] == "src_ip"
+    assert tenant.bindings["checkpoint-fw"].field_mappings["traffic"]["src_endpoint.ip"] == "src_ip"
     assert (workspace_root / "tenants" / "lab" / "deployments" / "rule-deployments.yaml").exists()
 
 
@@ -36,7 +36,12 @@ def test_rule_repository_reads_render_candidates_from_current_rules() -> None:
 
     assert rules
     assert any(rule.rule_id == "fa0c05b6-8ad3-468d-8231-c1cbccb64fba" for rule in rules)
-    assert any(rule.source_path == "category\\antivirus\\av_hacktool.yml" for rule in rules)
+    assert any(rule.rule_id == "faee897b-2394-45cf-ae5d-0379476fbf3e" for rule in rules)
+    assert any(rule.source_path == "detections\\category\\antivirus\\av_hacktool.yml" for rule in rules)
+    assert any(
+        rule.source_path == "analysts\\network\\firewall\\base\\net_fw_request_reached_over_threshold.yaml"
+        for rule in rules
+    )
 
 
 def test_rule_repository_saves_and_reads_rendered_artifacts() -> None:
@@ -55,13 +60,41 @@ def test_rule_repository_saves_and_reads_rendered_artifacts() -> None:
         "lab",
         [
             {
-                "relative_path": "category/antivirus/av_hacktool.yml",
+                "relative_path": "detections/category/antivirus/av_hacktool.yml",
                 "document": {
-                    "id": "fa0c05b6-8ad3-468d-8231-c1cbccb64fba",
-                    "logsource": {"category": "antivirus", "product": "any"},
+                    "artifact_schema_version": 1.0,
+                    "artifact_type": "tenant_rule",
+                    "tenant_id": "lab",
+                    "siem_id": "splunk",
+                    "source_rule": {
+                        "rule_id": "fa0c05b6-8ad3-468d-8231-c1cbccb64fba",
+                        "rule_name": "av_hacktool",
+                        "rule_type": "detection",
+                        "source_path": "rules/detections/category/antivirus/av_hacktool.yml",
+                        "status": "stable",
+                        "level": "medium",
+                        "version": "1.0.0",
+                    },
+                    "display_name": "mcafee-epo - Antivirus Hacktool Detection",
+                    "metadata": {
+                        "tags": ["attack.execution"],
+                        "owner": "team-detection",
+                        "last_rendered": "2026-03-29T00:00:00Z",
+                    },
                     "x_splunk_es": {
-                        "targets": {"index": "epav", "sourcetype": "eset:ra"},
-                        "search_query": "index=epav sourcetype=eset:ra signature=*Hacktool*",
+                        "targets": {
+                            "ingest_targets": [
+                                {
+                                    "device_id": "mcafee-epo",
+                                    "dataset_id": "mcafee-epo-syslog",
+                                    "index": "epo",
+                                    "sourcetype": "mcafee:epo:syslog",
+                                }
+                            ],
+                            "index": "epo",
+                            "sourcetype": "mcafee:epo:syslog",
+                        },
+                        "search_query": "index=epo sourcetype=mcafee:epo:syslog signature=*Hacktool*",
                     },
                 },
             }
@@ -73,5 +106,14 @@ def test_rule_repository_saves_and_reads_rendered_artifacts() -> None:
 
     assert len(rules) == 1
     assert rules[0].rule_id == "fa0c05b6-8ad3-468d-8231-c1cbccb64fba"
-    assert rules[0].siem_query == "index=epav sourcetype=eset:ra signature=*Hacktool*"
-    assert (test_root / "artifacts" / "lab" / "tenant-rules" / "detections").exists()
+    assert rules[0].siem_query == "index=epo sourcetype=mcafee:epo:syslog signature=*Hacktool*"
+    assert (
+        test_root
+        / "artifacts"
+        / "lab"
+        / "tenant-rules"
+        / "detections"
+        / "category"
+        / "antivirus"
+        / "av_hacktool.yml"
+    ).exists()

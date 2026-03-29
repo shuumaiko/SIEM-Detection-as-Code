@@ -21,3 +21,7 @@ class RuleService:
     def save_rendered_rules_for_tenant(self, tenant_id: str, rendered_rules: list[dict]) -> None:
         """Persist rendered tenant rule documents into the artifact layer."""
         self.rule_repository.save_rendered_for_tenant(tenant_id, rendered_rules)
+
+    def sync_artifact_enabled_states(self, tenant: Tenant) -> None:
+        """Refresh persisted artifact enabled flags from the tenant deployment manifest."""
+        self.rule_repository.sync_artifact_enabled_states(tenant)

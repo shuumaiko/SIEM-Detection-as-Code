@@ -1,0 +1,7 @@
+schema_version: 1.0
+tenant_id: lab
+rule_deployments_by_siem:
+  splunk:
+  - rule_id: 78cc2dd2-7d20-4d32-93ff-057084c38b93
+    enabled: true
+    display_name: mcafee-epo - Antivirus Password Dumper Detection

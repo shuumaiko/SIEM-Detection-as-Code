@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tenant Config From SIEM Logs"
+  short_description: "Build tenant config from real SIEM logs"
+  default_prompt: "Use $tenant-config-from-siem-logs to create or update tenant configuration from real SIEM log samples, and use $tenant-field-binding-writer for field bindings when needed."

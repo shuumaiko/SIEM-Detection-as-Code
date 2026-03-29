@@ -2,7 +2,7 @@ title: Antivirus Web Shell Detection
 name: av_webshell
 rule_type: detection
 id: fdf135a2-9241-4f96-a114-bb404948f736
-status: test
+status: stable
 description: |
     Detects a highly relevant Antivirus alert that reports a web shell.
     It's highly recommended to tune this rule to the specific strings used by your anti virus solution by downloading a big WebShell repository from e.g. github and checking the matches.
@@ -102,7 +102,7 @@ level: high
 
 x_query:
     splunk: |
-        (threat_name IN ("ASP.*", "IIS/BackDoor*", "JAVA/Backdoor*", "JSP.*", "Perl.*", "PHP.*", "Troj/ASP*", "Troj/JSP*", "Troj/PHP*", "VBS/Uxor*") OR threat_name IN ("*ASP_*", "*ASP:*", "*ASP.Agent*", "*ASP/*", "*Aspdoor*", "*ASPXSpy*", "*Backdoor.ASP*", "*Backdoor.Java*", "*Backdoor.JSP*", "*Backdoor.PHP*", "*Backdoor.VBS*", "*Backdoor/ASP*", "*Backdoor/Java*", "*Backdoor/JSP*", "*Backdoor/PHP*", "*Backdoor/VBS*", "*C99shell*", "*Chopper*", "*filebrowser*", "*JSP_*", "*JSP:*", "*JSP.Agent*", "*JSP/*", "*Perl:*", "*Perl/*", "*PHP_*", "*PHP:*", "*PHP.Agent*", "*PHP/*", "*PHPShell*", "*PShlSpy*", "*SinoChoper*", "*Trojan.ASP*", "*Trojan.JSP*", "*Trojan.PHP*", "*Trojan.VBS*", "*VBS.Agent*", "*VBS/Agent*", "*Webshell*"))
+        index=$index$ sourcetype=$sourcetype$ (threat_name IN ("ASP.*", "IIS/BackDoor*", "JAVA/Backdoor*", "JSP.*", "Perl.*", "PHP.*", "Troj/ASP*", "Troj/JSP*", "Troj/PHP*", "VBS/Uxor*") OR threat_name IN ("*ASP_*", "*ASP:*", "*ASP.Agent*", "*ASP/*", "*Aspdoor*", "*ASPXSpy*", "*Backdoor.ASP*", "*Backdoor.Java*", "*Backdoor.JSP*", "*Backdoor.PHP*", "*Backdoor.VBS*", "*Backdoor/ASP*", "*Backdoor/Java*", "*Backdoor/JSP*", "*Backdoor/PHP*", "*Backdoor/VBS*", "*C99shell*", "*Chopper*", "*filebrowser*", "*JSP_*", "*JSP:*", "*JSP.Agent*", "*JSP/*", "*Perl:*", "*Perl/*", "*PHP_*", "*PHP:*", "*PHP.Agent*", "*PHP/*", "*PHPShell*", "*PShlSpy*", "*SinoChoper*", "*Trojan.ASP*", "*Trojan.JSP*", "*Trojan.PHP*", "*Trojan.VBS*", "*VBS.Agent*", "*VBS/Agent*", "*Webshell*"))
         | bucket _time span=15m
         | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
         | eval Alert_Severity="High"

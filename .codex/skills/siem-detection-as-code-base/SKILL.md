@@ -1,6 +1,6 @@
 ---
 name: siem-detection-as-code-base
-description: Work inside the SIEM-Detection-as-Code repository with the repository's layered model for rules, mappings, tenants, artifacts, and the Python engine under project-root. Use when Codex needs to create or update detection rules, tenant config, ingest or field bindings, deployment manifests, validation flows, or architecture-aligned documentation for this repo.
+description: Work inside the SIEM-Detection-as-Code repository with the repository's layered model for rules, mappings, tenants, artifacts, and the Python engine under project-root. Use when Codex needs to create or update detection rules, tenant config, ingest or field bindings, validation flows, generated deployment behavior in code, or architecture-aligned documentation for this repo. Prefer changing deployment-generation code over hand-editing tenant deployment manifests.
 ---
 
 # SIEM Detection as Code Base
@@ -30,7 +30,8 @@ Read only the files needed for the requested change.
 ## Choose The Correct Edit Target
 
 - Edit `rules/detections/` when changing reusable detection content.
-- Edit `tenants/<tenant>/devices/`, `logsources/`, `bindings/ingest/`, `bindings/fields/`, `filters/`, or `deployments/` when changing tenant-specific deployment context.
+- Edit `tenants/<tenant>/devices/`, `logsources/`, `bindings/ingest/`, `bindings/fields/`, or `filters/` when changing tenant-specific deployment context.
+- Edit `project-root/` when the behavior that generates deployment manifests must change.
 - Edit `schema/` and `project-root/app/services/` together when changing validation contracts.
 - Edit tests in `project-root/tests/` whenever behavior, structure, or validation expectations change.
 
@@ -46,7 +47,8 @@ Read only the files needed for the requested change.
 - Keep `tenant_id`, `device_id`, `dataset_id`, and `siem_id` consistent across related files.
 - Ensure `bindings/ingest/*.yaml` dataset entries match the datasets declared in the corresponding logsource.
 - Ensure field bindings map canonical fields to the actual tenant SIEM fields instead of inventing new canonical names ad hoc.
-- Update deployment manifests when a tenant should start or stop receiving a rule.
+- Do not hand-edit `tenants/<tenant>/deployments/rule-deployments.yaml` unless the user explicitly asks for a generated artifact fixture or legacy compatibility update.
+- When deployment enablement logic must change, prefer updating the code path that generates deployment manifests and then regenerate or validate the output.
 
 ## Validate Before Finishing
 

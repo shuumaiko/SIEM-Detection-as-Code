@@ -1,0 +1,11 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_id: carbonblack-edr
+siem_id: splunk
+
+datasets:
+  - dataset_id: carbonblack-edr-alerts
+    index: edr
+    sourcetype: bit9:carbonblack:json
+

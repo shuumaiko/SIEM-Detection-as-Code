@@ -1,0 +1,45 @@
+artifact_schema_version: 1.0
+artifact_type: tenant_rule
+id: faee897b-2394-45cf-ae5d-0379476fbf3e
+tenant_id: lab
+siem_id: splunk
+source_rule:
+  rule_id: faee897b-2394-45cf-ae5d-0379476fbf3e
+  rule_name: null
+  rule_type: analyst
+  source_path: rules/analysts/network/firewall/base/net_fw_request_reached_over_threshold.yaml
+  status: stable
+  level: low
+  version: null
+display_name: checkpoint-fw - Request reached over threshold
+metadata:
+  tags:
+  - attack.discovery
+  - attack.t1046
+  owner: AnhPT127
+  last_rendered: '2026-03-29T14:35:45Z'
+x_splunk_es:
+  targets:
+    ingest_targets:
+    - device_id: checkpoint-fw
+      dataset_id: traffic
+      index: checkpoint
+      sourcetype: cp_log
+    device_id: checkpoint-fw
+    dataset_id: traffic
+    index: checkpoint
+    sourcetype: cp_log
+    schedule_cron: '*/30 * * * *'
+    earliest: -30m
+    latest: now
+    notable:
+      enabled: true
+      severity: low
+      risk_score: 10
+    enabled: true
+  search_query: |-
+    ((index=checkpoint sourcetype=cp_log)) | where NOT (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("192.168.0.0/16", src_ip) OR cidrmatch("172.16.0.0/12", src_ip))
+    | bucket _time span=1h
+    | stats count dc(dest_ip) as Total_dest values(action) as Action by _time src_ip
+    | where count > 200000
+    | sort - count

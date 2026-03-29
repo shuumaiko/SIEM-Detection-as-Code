@@ -26,3 +26,8 @@ class RuleRepository(ABC):
     def save_rendered_for_tenant(self, tenant_id: str, rendered_rules: list[dict]) -> None:
         """Persist rendered tenant rules into the artifact store."""
         raise NotImplementedError
+
+    @abstractmethod
+    def sync_artifact_enabled_states(self, tenant: Tenant) -> None:
+        """Update persisted tenant artifacts so their enabled state matches deployments."""
+        raise NotImplementedError
