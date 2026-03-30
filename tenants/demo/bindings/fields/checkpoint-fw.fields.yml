@@ -5,7 +5,7 @@ device_id: checkpoint-fw
 
 description: >
   Canonical-field and OCSF-field to tenant SIEM-field mapping for Check Point
-  firewall logs in tenant demo. Built from sampled rows of checkpoint-log.csv
+  firewall logs in tenant demo. Built from a sampled slice of checkpoint-log.csv
   and the firewall detection and analyst rule pack already present in the repo.
 
 default_field_mapping:
@@ -18,4 +18,4 @@ default_field_mapping:
   dst_endpoint.zone: dest_zone
   canonical.event.action: action
   firewall_rule.name: rule_name
-  network_connection_info.protocol_name: proto
+  network_connection_info.protocol_name: protocol

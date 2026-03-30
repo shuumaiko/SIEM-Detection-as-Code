@@ -15,7 +15,7 @@ functions:
 
 location: unknown
 network_zone: perimeter
-description: Check Point firewall observed from sampled Check Point traffic logs
+description: Check Point firewall observed from a sampled slice of checkpoint-log.csv
 
 criticality: high
 

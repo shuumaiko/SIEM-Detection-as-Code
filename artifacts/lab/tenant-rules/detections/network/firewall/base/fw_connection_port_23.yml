@@ -1,7 +1,7 @@
 artifact_schema_version: 1.0
 artifact_type: tenant_rule
 id: 2a129a58-7725-48c9-8b3a-0a2264522a68
-tenant_id: demo
+tenant_id: lab
 siem_id: splunk
 source_rule:
   rule_id: 2a129a58-7725-48c9-8b3a-0a2264522a68
@@ -19,7 +19,7 @@ metadata:
   - attack.initial-access
   - attack.t1190
   owner: AnhPT127
-  last_rendered: '2026-03-30T04:06:54Z'
+  last_rendered: '2026-03-29T14:35:44Z'
 x_splunk_es:
   targets:
     ingest_targets:
@@ -39,4 +39,4 @@ x_splunk_es:
       severity: medium
       risk_score: 30
     enabled: true
-  search_query: ((index=checkpoint sourcetype=cp_log)) dest_port=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny"))
+  search_query: ((index=checkpoint sourcetype=cp_log)) dst_port=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny"))

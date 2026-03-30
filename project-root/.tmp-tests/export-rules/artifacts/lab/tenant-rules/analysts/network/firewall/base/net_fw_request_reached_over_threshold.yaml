@@ -1,7 +1,7 @@
 artifact_schema_version: 1.0
 artifact_type: tenant_rule
 id: faee897b-2394-45cf-ae5d-0379476fbf3e
-tenant_id: demo
+tenant_id: lab
 siem_id: splunk
 source_rule:
   rule_id: faee897b-2394-45cf-ae5d-0379476fbf3e
@@ -17,7 +17,7 @@ metadata:
   - attack.discovery
   - attack.t1046
   owner: AnhPT127
-  last_rendered: '2026-03-30T04:06:54Z'
+  last_rendered: '2026-03-29T14:53:50Z'
 x_splunk_es:
   targets:
     ingest_targets:

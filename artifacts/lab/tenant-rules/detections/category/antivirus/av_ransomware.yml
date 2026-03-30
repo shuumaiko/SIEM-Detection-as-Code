@@ -1,7 +1,7 @@
 artifact_schema_version: 1.0
 artifact_type: tenant_rule
 id: 4c6ca276-d4d0-4a8c-9e4c-d69832f8671f
-tenant_id: demo
+tenant_id: lab
 siem_id: splunk
 source_rule:
   rule_id: 4c6ca276-d4d0-4a8c-9e4c-d69832f8671f
@@ -17,7 +17,7 @@ metadata:
   - attack.t1486
   - attack.impact
   owner: Florian Roth (Nextron Systems), Arnim Rupp
-  last_rendered: '2026-03-30T04:06:54Z'
+  last_rendered: '2026-03-29T14:35:44Z'
 x_splunk_es:
   targets:
     ingest_targets:
@@ -36,9 +36,9 @@ x_splunk_es:
       enabled: true
       severity: critical
       risk_score: 90
-    enabled: false
+    enabled: true
   search_query: |-
     ((index=epav sourcetype=mcafee:epo:syslog)) signature IN ("*BlackWorm*", "*Chaos*", "*Cobra*", "*ContiCrypt*", "*Crypter*", "*CRYPTES*", "*Cryptor*", "*CylanCrypt*", "*DelShad*", "*Destructor*", "*Filecoder*", "*GandCrab*", "*GrandCrab*", "*Haperlock*", "*Hiddentear*", "*HydraCrypt*", "*Krypt*", "*Lockbit*", "*Locker*", "*Mallox*", "*Phobos*", "*Ransom*", "*Ryuk*", "*Ryzerlo*", "*Stopcrypt*", "*Tescrypt*", "*TeslaCrypt*", "*WannaCry*", "*Xorist*")
     | convert timeformat="%Y-%m-%d %H:%M:00" ctime(_time) as Time
     | eval Alert_Severity="Critical"
-    | stats values(TargetName) as file_name values(TargetPath) as file_path values(file_hash) as file_hash values(dest_host) as hostname values(dest_ip) as ipv4 values(user) as user values(action) as action_taken count by Alert_Severity Time signature
+    | stats values(file_name) as file_name values(file_path) as file_path values(file_hash) as file_hash values(hostname) as hostname values(ipv4) as ipv4 values(user) as user values(action_taken) as action_taken count by Alert_Severity Time signature

@@ -14,7 +14,7 @@ functions:
 
 location: unknown
 network_zone: unknown
-description: McAfee ePO endpoint protection events observed from sampled syslog export
+description: McAfee ePO endpoint protection events observed from a sampled slice of mcafee-log.csv
 
 criticality: high
 
@@ -24,4 +24,5 @@ metadata:
   observed_analyzer_name: Trellix Endpoint Security
   observed_index: epav
   observed_sourcetype: mcafee:epo:syslog
+  observed_eventtype: mcafee_epo_hip_file
   observed_from_sample: mcafee-log.csv
