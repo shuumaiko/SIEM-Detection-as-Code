@@ -19,7 +19,7 @@ metadata:
   - attack.initial-access
   - attack.t1190
   owner: AnhPT127
-  last_rendered: '2026-03-30T04:06:54Z'
+  last_rendered: '2026-03-30T08:45:52Z'
 x_splunk_es:
   targets:
     ingest_targets:

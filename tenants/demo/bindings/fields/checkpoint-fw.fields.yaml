@@ -18,4 +18,4 @@ default_field_mapping:
   dst_endpoint.zone: dest_zone
   canonical.event.action: action
   firewall_rule.name: rule_name
-  network_connection_info.protocol_name: protocol
+  network_connection_info.protocol_name: proto
