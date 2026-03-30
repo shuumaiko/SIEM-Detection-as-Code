@@ -1,3 +1,4 @@
+Shu Puuccu
 Viết schema map log <=> ocsf (excl phân tích log)
   => field k map đc vào ocsf 
     PA1: sử dụng ocsf custom field định dạng ocsf.
