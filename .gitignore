@@ -1,1 +1,7 @@
 .vscode/
+.tmp/ocsf-schema/
+__pycache__/
+*.pyc
+.pytest_cache/
+.pytest_cache_local/
+pytest-cache-files-*/
