@@ -1,0 +1,39 @@
+title: Connection to SSH port (22) (base)
+name: fw_connection_port_22
+id: fe03b0a4-4ce1-4d62-a1c7-2fb2671cdb85
+rule_type: base
+status: test
+description: Base rule for firewall traffic targeting SSH port 22.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#10
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - attack.discovery
+    - attack.t1046
+logsource:
+    category: firewall
+    product: any
+    service: traffic
+detection:
+    selection:
+        dest_port: 22
+    condition: selection
+falsepositives:
+    - Legitimate SSH traffic
+fields:
+    - _time
+    - src_ip
+    - src_port
+    - src_zone
+    - dest_ip
+    - dest_port
+    - dest_zone
+    - action
+    - firewall_policy_name
+    - rule_action
+    - protocol
+    - event_count
+level: informational
+version: 1.0.0

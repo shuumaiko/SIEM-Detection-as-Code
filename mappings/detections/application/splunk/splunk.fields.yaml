@@ -1,0 +1,41 @@
+schema_version: 1.0
+mapping_type: detection_fields
+
+logsource:
+  category: siem
+  product: splunk
+  service: internal
+
+description: >
+  Shared source-rule-field mapping for Splunk internal SIEM monitoring content.
+  OCSF version referenced: `1.9.0-dev` from `.tmp/ocsf-schema/version.json`.
+  OCSF references used: `events/base_event.json` for `time`;
+  `profiles/host.json` plus `objects/device.json` for `device.hostname`;
+  `events/application/application.json` as the generic application-activity
+  envelope considered for Splunk platform telemetry; and
+  `events/system/event_log_activity.json` plus `objects/file.json` as
+  comparison references when evaluating whether Splunk `source` could map
+  cleanly to a direct OCSF field. Repo references used:
+  `docs/architecture/mappings-relationship.md` and
+  `mappings/detections/network/firewall/firewall.fields.yaml` to preserve the
+  repo's `canonical_field` style for shared dictionaries. Keeps the
+  repo-specific field `canonical.log.source` because Splunk `source` is
+  overloaded across file paths, network inputs, and collector-defined source
+  names, so mapping it directly to one OCSF field such as `file.path` would be
+  lossy for the current monitoring rule set.
+
+fields:
+  - canonical_field: time
+    source_fields:
+      - _time
+      - Time
+      - event_time
+
+  - canonical_field: device.hostname
+    source_fields:
+      - host
+      - hostname
+
+  - canonical_field: canonical.log.source
+    source_fields:
+      - source

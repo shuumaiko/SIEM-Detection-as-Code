@@ -1,0 +1,44 @@
+title: No Log from Source over 1 hour
+id: 83c2f165-fdff-4914-8f14-9739863055b9
+rule_type: analyst
+status: test
+description: Detects Splunk sources whose last observed event time is older than 1 hour.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#2
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - monitoring
+    - data_availability
+correlation:
+    type: inactivity_gap
+    rules:
+        - siem_log_activity
+    group-by:
+        - source
+    timespan: 1h
+    condition:
+        gte: 3600
+    measure: last_seen_gap_seconds
+    filters:
+        macro: sources_filter
+fields:
+    - _time
+    - source
+falsepositives:
+    - Source is intentionally muted or decommissioned
+    - Planned parser, collector, or maintenance window
+level: high
+x_query:
+    splunk: |
+      | tstats count where index=* by _time source
+      | eventstats latest(_time) as latest_Time_source by source
+      | eventstats latest(_time) as latest_Time_all
+      | eval conditions=latest_Time_all - latest_Time_source
+      | eval Status=if(conditions>=3600,"Missing Data!","OK!")
+      | eval Alert_Severity="High"
+      | stats values(Status) as Status values(conditions) as Lost_Time_(Seconds) values(latest_Time_source) as Last_seen_on_Source values(latest_Time_all) as Real_Time by Alert_Severity source
+      | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(Last_seen_on_Source) as Last_seen_on_Source,  ctime(Real_Time) as Real_Time, ctime('Lost_Time_(Seconds)') as Lost_Time_(Seconds)
+      | search Status="Missing Data!" AND (source=`sources_filter`)
+version: 1.0.0

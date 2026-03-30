@@ -1,0 +1,42 @@
+title: No Log from Host over 24 hours
+id: 5ba45de0-b184-4e72-b5eb-d05f3412314f
+rule_type: analyst
+status: test
+description: Detects Splunk hosts whose last observed event time is older than 24 hours.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#1
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - monitoring
+    - data_availability
+correlation:
+    type: inactivity_gap
+    rules:
+        - siem_log_activity
+    group-by:
+        - host
+    timespan: 24h
+    condition:
+        gte: 86400
+    measure: last_seen_gap_seconds
+fields:
+    - _time
+    - host
+falsepositives:
+    - Host is retired or intentionally not sending logs
+    - Scheduled maintenance or planned forwarder downtime
+level: medium
+x_query:
+    splunk: |
+      | tstats count where index=* by _time host
+      | eventstats latest(_time) as latest_Time_host by host
+      | eventstats latest(_time) as latest_Time_all
+      | eval conditions=latest_Time_all - latest_Time_host
+      | eval Status=if(conditions>=86400,"Missing Data!","OK!")
+      | eval Alert_Severity="Medium"
+      | stats values(Status) as Status values(conditions) as Lost_Time_(Seconds) values(latest_Time_host) as Last_seen_on_Host values(latest_Time_all) as Real_Time by Alert_Severity host
+      | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(Last_seen_on_Host) as Last_seen_on_Host,  ctime(Real_Time) as Real_Time, ctime('Lost_Time_(Seconds)') as Lost_Time_(Seconds)
+      | search Status="Missing Data!"
+version: 1.0.0

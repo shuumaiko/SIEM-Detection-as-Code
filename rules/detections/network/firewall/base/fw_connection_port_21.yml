@@ -1,0 +1,39 @@
+title: Connection to FTP port (21) (base)
+name: fw_connection_port_21
+id: 03d6237f-cc80-49c0-afa0-96cb1016252e
+rule_type: base
+status: test
+description: Base rule for firewall traffic targeting FTP port 21.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#4-6
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - attack.discovery
+    - attack.t1046
+logsource:
+    category: firewall
+    product: any
+    service: traffic
+detection:
+    selection:
+        dest_port: 21
+    condition: selection
+falsepositives:
+    - Legitimate FTP traffic
+fields:
+    - _time
+    - src_ip
+    - src_port
+    - src_zone
+    - dest_ip
+    - dest_port
+    - dest_zone
+    - action
+    - firewall_policy_name
+    - rule_action
+    - protocol
+    - event_count
+level: informational
+version: 1.0.0

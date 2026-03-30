@@ -1,0 +1,49 @@
+title: Possible scan on RDP port 3389 per host (excessive blocked)
+id: c61ddf52-dd58-44ef-aaba-540299712fa7
+rule_type: analyst
+status: test
+description: Detects repeated blocked external attempts to RDP port 3389 against the same destination host within 1 hour.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#8
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - attack.discovery
+    - attack.t1046
+correlation:
+    type: event_count
+    rules:
+        - fw_connection_port_3389
+    group-by:
+        - src_ip
+        - dest_ip
+    timespan: 1h
+    condition:
+        gt: 50
+    filters:
+        action:
+            - blocked
+        src_ip_scope: external
+fields:
+    - _time
+    - src_ip
+    - dest_ip
+    - dest_port
+    - action
+    - total_dest
+    - count
+falsepositives:
+    - Internet-wide scanning blocked by perimeter controls
+    - Repeated failed access from approved but misconfigured remote sources
+level: medium
+x_query:
+    splunk: |
+      index=$index$ sourcetype=$sourcetype$ action=blocked dest_port=3389 NOT (src_ip=10.0.0.0/8 OR src_ip=192.168.0.0/16 OR src_ip=172.16.0.0/12)
+      | bucket _time span=1h
+      | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time
+      | eval Alert_Severity="Medium"
+      | stats values(action) as Action, dc(dest_ip) as Total_dest, values(dest_port) as "Dest Port" count by Alert_Severity Time src_ip dest_ip
+      | where count > 50
+      | sort - count
+version: 1.0.0

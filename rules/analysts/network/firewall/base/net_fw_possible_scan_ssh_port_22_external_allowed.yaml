@@ -1,0 +1,49 @@
+title: Possible scan on SSH port 22 (external allowed)
+id: 23ae3c5e-8d70-432b-bf36-5449ddf44cb9
+rule_type: analyst
+status: test
+description: Highlights non-blocked external traffic to SSH port 22 for analyst review over 1 hour.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#10
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - attack.discovery
+    - attack.t1046
+correlation:
+    type: event_count
+    rules:
+        - fw_connection_port_22
+    group-by:
+        - src_ip
+    timespan: 1h
+    condition:
+        gt: 0
+    filters:
+        action_not:
+            - blocked
+            - dropped
+            - denied
+            - deny
+        src_ip_scope: external
+fields:
+    - _time
+    - src_ip
+    - dest_ip
+    - dest_port
+    - action
+    - count
+falsepositives:
+    - Internet-facing SSH services intended for external administration
+    - Approved vendor or automation access from external networks
+level: high
+x_query:
+    splunk: |
+      index=$index$ sourcetype=$sourcetype$ action!=blocked dest_port=22 NOT (src_ip=10.0.0.0/8 OR src_ip=192.168.0.0/16 OR src_ip=172.16.0.0/12)
+      | bucket _time span=1h
+      | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time
+      | eval Alert_Severity="High"
+      | stats values(action) as Action, values(dest_ip) as "Dest IP", values(dest_port) as "Dest Port" count by Alert_Severity Time src_ip
+      | sort - count
+version: 1.0.0

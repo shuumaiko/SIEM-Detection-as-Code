@@ -1,13 +1,14 @@
 title: Request reached over threshold
 id: faee897b-2394-45cf-ae5d-0379476fbf3e
 rule_type: analyst
-status: stable
+status: test
 description: Request volume from a single source IP exceeds threshold within 1 hour
 references:
     - Internal_HaoDA4
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#3
 author: AnhPT127
 date: 2025-12-17
-modified: 2025-12-17
+modified: 2026-03-30
 tags:
     - attack.discovery
     - attack.t1046
@@ -21,8 +22,10 @@ correlation:
     condition:
         gt: 200000
 fields:
+    - _time
     - src_ip
     - dest_ip
+    - dest_port
     - action
     - count
 falsepositives:
@@ -31,9 +34,12 @@ level: low
 
 x_query:
   splunk: |
-    index=$index$ sourcetype=$sourcetype$
-    | where NOT (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("192.168.0.0/16", src_ip) OR cidrmatch("172.16.0.0/12", src_ip))
+    index=$index$ sourcetype=$sourcetype$ NOT (src_ip=10.0.0.0/8 OR src_ip=192.168.0.0/16 OR src_ip=172.16.0.0/12)
     | bucket _time span=1h
-    | stats count dc(dest_ip) as Total_dest values(action) as Action by _time src_ip
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time
+    | eval Alert_Severity="Low"
+    | stats values(action) as Action, values(dest_ip) as dest_ip, dc(dest_ip) as Total_dest, values(dest_port) as "Dest Port" count by Alert_Severity Time src_ip
+    | eval dest_ip=mvindex(dest_ip,0,9)
+    | eval dest_port=mvindex(dest_port,0,9)
     | where count > 200000
     | sort - count

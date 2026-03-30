@@ -1,0 +1,30 @@
+title: SIEM log activity (base)
+name: siem_log_activity
+id: 0113bea3-a6cc-40c1-bc1c-c72f0a796c07
+rule_type: base
+status: test
+description: Base rule for Splunk log activity used by analyst rules that monitor last-seen gaps by host or source.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#1-2
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - monitoring
+    - siem
+logsource:
+    category: siem
+    product: splunk
+    service: internal
+detection:
+    selection:
+        _time|exists: true
+    condition: selection
+falsepositives:
+    - Unknown
+fields:
+    - _time
+    - host
+    - source
+level: informational
+version: 1.0.0

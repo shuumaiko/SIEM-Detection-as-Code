@@ -1,0 +1,49 @@
+title: Possible scan on FTP port 21 to multiple hosts
+id: aa757c6d-e91b-4d00-97d2-39c245830795
+rule_type: analyst
+status: test
+description: Detects external activity targeting FTP port 21 across multiple destination hosts within 1 hour.
+references:
+    - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#6
+author: AnhPT127
+date: 2026-03-30
+modified: 2026-03-30
+tags:
+    - attack.discovery
+    - attack.t1046
+correlation:
+    type: event_count
+    rules:
+        - fw_connection_port_21
+    group-by:
+        - src_ip
+    timespan: 1h
+    condition:
+        gt: 20
+    distinct:
+        field: dest_ip
+        gt: 2
+    filters:
+        src_ip_scope: external
+fields:
+    - _time
+    - src_ip
+    - dest_ip
+    - dest_port
+    - action
+    - total_dest
+    - count
+falsepositives:
+    - External security assessments approved by the organization
+    - Shared infrastructure legitimately probing multiple FTP servers
+level: medium
+x_query:
+    splunk: |
+      index=$index$ sourcetype=$sourcetype$ dest_port=21 NOT (src_ip=10.0.0.0/8 OR src_ip=192.168.0.0/16 OR src_ip=172.16.0.0/12)
+      | bucket _time span=1h
+      | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time
+      | eval Alert_Severity="Medium"
+      | stats values(action) as Action, values(dest_ip) as dest_ip, dc(dest_ip) as Total_dest, values(dest_port) as "Dest Port" count by Alert_Severity Time src_ip
+      | where Total_dest > 2 AND count > 20
+      | sort - count
+version: 1.0.0
