@@ -1,0 +1,11 @@
+schema_version: 1.0
+ 
+device_id: cyberark-pam
+
+datasets:
+  - dataset_id: cyberark-pam-audit
+    description: CyberArk Vault audit logs
+    category: security
+    log_type: audit
+    enabled: true
+

@@ -1,18 +1,18 @@
-﻿# SIEM-Detection-as-Code Project Architecture Overview
+# SIEM-Detection-as-Code Project Architecture Overview
 
 > Vietnamese source: [project-architecture.md](../../architecture/project-architecture.md)
 
 ## 1. Purpose and Scope
 
-This document defines the high-level architecture of the `SIEM-Detection-as-Code` repository based on the current directory structure and the current state of the source code.
+This document describes the high-level architecture of the `SIEM-Detection-as-Code` repository based on the current directory structure and the current state of the source code.
 
 Its purpose is to:
 
-- define the standard architectural model used by the rest of the documentation set
-- standardize how `rules`, `mappings`, `tenants`, `artifacts`, and `project-root` are understood
+- define the standard architecture model used by the rest of the documentation set
+- standardize how `rules`, `mappings`, `execution`, `tenants`, `artifacts`, and `project-root` are understood
 - provide a stable reference for future development, review, and extension of the repository
 
-This document focuses on logical architecture and data organization. Implementation details may continue to evolve while `project-root/` is being completed.
+This document focuses on logical architecture and data organization. Concrete implementation details may continue to evolve while `project-root/` is being aligned to the target model.
 
 ## 2. System Objectives
 
@@ -24,23 +24,26 @@ This document focuses on logical architecture and data organization. Implementat
 - support validation, rendering, export, and deployment per tenant
 - improve rule reuse across multiple tenants and SIEM platforms
 
-Under this model, the system is separated into dedicated layers for:
+Under this model, the system is organized into dedicated layers for:
 
 - detection content
 - field normalization and mapping
+- SIEM execution configuration
 - tenant configuration
 - output artifacts used for export or deployment
 - an application engine that reads, validates, renders, and coordinates the process
 
 ## 3. Architectural Model
 
-The current architecture can be described through 3 primary axes.
+The current architecture can be described through 4 primary axes.
 
 ### 3.1. Detection Content Axis
 
 This axis manages reusable detection content:
 
-- `rules/`: base detection rules by category and product
+- `rules/`: semantic rules under a shared taxonomy
+- `rules/detections/`: detection rules and detection bases
+- `rules/analysts/`: analyst-facing rules containing correlation or aggregate logic
 - `mappings/detections/`: mappings from source rule fields to canonical fields
 - `tenants/.../bindings/fields/`: mappings from canonical fields to actual tenant SIEM fields
 
@@ -56,6 +59,7 @@ This axis describes the effective deployment state of each tenant:
 - `bindings/ingest/`: mappings from `dataset_id` to actual ingestion targets such as `index` and `sourcetype`
 - `bindings/fields/`: mappings from canonical fields to actual SIEM fields
 - `filters/`: tenant-specific filters applied during rendering
+- `overrides/`: tenant-specific tuning for execution or filter behavior
 - `deployments/rule-deployments.yaml`: manifest that enables or disables rules by SIEM
 
 This axis answers the following questions:
@@ -64,16 +68,30 @@ This axis answers the following questions:
 - which datasets are active
 - how those datasets are ingested into the SIEM
 - which rules are enabled for the tenant
-- which filters must be applied when rendering from base rules
+- which filters or tuning must be applied when rendering from base rules
 
-### 3.3. Operations and Output Axis
+### 3.3. SIEM Execution Axis
+
+This axis describes how a semantic rule is operated on a specific SIEM:
+
+- `execution/<siem>/defaults.yaml`: default execution policy for the SIEM
+- `execution/<siem>/rule-overrides.yaml`: per-rule execution overrides
+- hardcoded query payloads or SIEM-specific query blocks that still exist in the current transition state
+
+The goal of this axis is to keep execution metadata separate from semantic rules while still supporting practical operation before a generic converter is fully complete.
+
+Detailed execution-layer relationships are documented in [execution-relationship.md](./execution-relationship.md).
+
+### 3.4. Operations and Output Axis
 
 This axis supports validation, build, export, and deployment:
 
-- `project-root/`: CLI, use cases, services, repositories, adapters
+- `project-root/`: CLI, use cases, services, repositories, and adapters
 - `schema/`: contracts used to validate rules and tenant configuration
 - `tests/`: quality gates such as validators, smoke tests, and structure checks
 - `artifacts/`: rendered or exported output for each tenant
+
+The current rendering modes are described in the Vietnamese reference [rule-rendering-flows.md](../../architecture/rule-rendering-flows.md).
 
 ## 4. High-Level Architecture Diagram
 
@@ -83,27 +101,28 @@ flowchart LR
     B --> C[Canonical field requirement]
     C --> D[tenants/bindings/fields\nCanonical to tenant SIEM field]
 
-    E[rules/\nBase detection rules] --> C
+    E[rules/\nSemantic rules] --> C
     C --> F[SIEM-agnostic detection logic]
 
-    G[tenants/\nTenant configuration] --> H[Render / export pipeline]
+    G[execution/\nSIEM execution policy] --> H[Render / export pipeline]
+    I[tenants/\nTenant configuration + overrides] --> H
     D --> H
     F --> H
 
-    H --> I[artifacts/<tenant>/tenant-rules]
-    H --> J[deployments/rule-deployments.yaml]
+    H --> J[artifacts/<tenant>/tenant-rules]
+    H --> K[deployments/rule-deployments.yaml]
 
-    K[project-root/\nCLI + use cases + services] --> H
-    L[schema/ + tests/] --> K
-    K --> M[SIEM adapters]
-    I --> M
+    L[project-root/\nCLI + use cases + services] --> H
+    M[schema/ + tests/] --> L
+    L --> N[SIEM adapters]
+    J --> N
 ```
 
 ## 5. Main Components
 
 ### 5.1. `rules/`
 
-`rules/` stores the source detection rules of the system.
+`rules/` is the source layer for the system's detection content.
 
 Role:
 
@@ -111,7 +130,7 @@ Role:
 - preserve detection logic at a level that is relatively independent from SIEM implementation
 - provide the input used to render tenant-specific rules
 
-Architecturally, `rules/` is the source of truth for detection content; output under `artifacts/` does not replace that role.
+Architecturally, `rules/` is the source of truth for detection content. Output under `artifacts/` does not replace that role.
 
 ### 5.2. `mappings/`
 
@@ -123,32 +142,45 @@ Role:
 - provide a shared vocabulary for detection content
 - establish the basis for connecting detection logic to actual tenant fields
 
-In the current architecture, `mappings/detections/` is the standard mapping layer on the content side; `tenants/.../bindings/fields/` is the tenant-specific implementation layer.
+In the current architecture, `mappings/detections/` is the standard mapping layer on the content side, while `tenants/.../bindings/fields/` is the tenant-specific implementation layer.
 
-### 5.3. `tenants/`
+### 5.3. `execution/`
 
-`tenants/` is the tenant input configuration layer.
+`execution/` is the SIEM execution-configuration layer.
 
 Role:
 
-- describe log sources, devices, datasets, ingest bindings, field bindings, filters, and deployment manifests
+- store execution metadata such as schedules, lookback windows, notable settings, severity, and risk score
+- store default policy per SIEM
+- store rule-specific overrides without changing the semantic rule
+- stay closer to SIEM operation than `rules/`, while still remaining input configuration rather than output
+
+In the current state, `execution/splunk/` is the most explicit branch of this layer.
+
+### 5.4. `tenants/`
+
+`tenants/` is the tenant input-configuration layer.
+
+Role:
+
+- describe log sources, devices, datasets, ingest bindings, field bindings, filters, overrides, and deployment manifests
 - serve as direct input for rendering and deployment
 - reflect the actual deployment state of each tenant
 
-Detailed tenant-layer relationships are specified in [tenants-relationship.md](./tenants-relationship.md).
+Detailed tenant-layer relationships are documented in [tenants-relationship.md](./tenants-relationship.md).
 
-### 5.4. `artifacts/`
+### 5.5. `artifacts/`
 
 `artifacts/` is the materialized output layer for each tenant.
 
 Role:
 
-- store the result after applying base rules, mappings, filters, and deployment decisions
+- store the result after applying base rules, mappings, execution, filters, and deployment decisions
 - provide output for review, export, or deployment
 
 `artifacts/` is pipeline output and should not be treated as the long-term hand-edited configuration layer.
 
-### 5.5. `project-root/`
+### 5.6. `project-root/`
 
 `project-root/` is the application engine of the system.
 
@@ -166,7 +198,7 @@ Its current structure indicates a layered implementation approach:
 
 This shows that the repository is not only a YAML content store; it already includes an application layer for validation, rendering, export, and deployment preparation.
 
-### 5.6. `schema/`
+### 5.7. `schema/`
 
 `schema/` is the contract layer used to validate the structure of rule and configuration files.
 
@@ -176,7 +208,7 @@ Role:
 - provide a shared contract for contributors and automation
 - support validation in the CLI and test pipeline
 
-### 5.7. `tests/`
+### 5.8. `tests/`
 
 `tests/` is the baseline quality gate of the system.
 
@@ -188,18 +220,19 @@ Role:
 
 ## 6. High-Level Processing Flow
 
-The current architectural pipeline can be described as follows:
+The current architectural pipeline can be summarized as follows:
 
 1. Load tenant configuration from `tenants/<tenant>/`.
 2. Resolve `tenant_id`, `siem_id`, device inventory, and dataset inventory.
-3. Load base rules from `rules/`.
+3. Load semantic rules from `rules/`.
 4. Load detection mappings from `mappings/detections/`.
 5. Resolve ingest bindings from `tenants/.../bindings/ingest/`.
 6. Resolve field bindings from `tenants/.../bindings/fields/`.
-7. Apply tenant filters from `tenants/.../filters/`.
-8. Read `deployments/rule-deployments.yaml` to determine which rules are enabled for the tenant.
-9. Render output into `artifacts/<tenant>/tenant-rules/`.
-10. If required, use adapters in `project-root/` to export or deploy to the target SIEM.
+7. Resolve execution policy from `execution/<siem>/`.
+8. Apply tenant filters or tenant overrides when present.
+9. Read `deployments/rule-deployments.yaml` to determine which rules are enabled for the tenant.
+10. Render output into `artifacts/<tenant>/tenant-rules/`.
+11. If required, use adapters in `project-root/` to export or deploy to the target SIEM.
 
 ## 7. Architectural Principles
 
@@ -207,7 +240,7 @@ The following principles must remain consistent throughout future development:
 
 - detection logic must not depend directly on vendor log formats
 - detection logic must not depend directly on SIEM implementation
-- mapping, tenant configuration, and deployment must remain separate layers
+- mapping, execution, tenant configuration, and deployment must remain separate layers
 - deployable output must be generated as an artifact rather than treated as the primary source of truth
 - tenant configuration must drive rendering and deployment
 - validation and testing must evolve together with rule content and configuration
@@ -219,8 +252,9 @@ At the current stage, architecture maturity can be grouped into 3 categories.
 ### 8.1. Components that are clearly present
 
 - tenant layer
+- execution layer at a baseline but explicit level
 - rendered artifacts
-- CLI / use case engine
+- CLI and use-case engine
 - schema validation
 - parts of mappings and SIEM adapters
 
@@ -229,23 +263,24 @@ At the current stage, architecture maturity can be grouped into 3 categories.
 - rule view layer
 - converter layer
 - end-to-end normalization between base rules and rendered rules
-- a consistent tenant-wide `filters/` standard
+- a consistent tenant-wide standard for `filters/` and `overrides/`
 
-### 8.3. Extension direction
+### 8.3. Extension Direction
 
-- rule management UI
+- rule-management UI
 - merge or tuning workflows
 - broader multi-SIEM support
 - a complete per-tenant build-and-deploy pipeline
 
 ## 9. Conclusion
 
-The architecture of `SIEM-Detection-as-Code` is organized around 5 primary layers:
+The architecture of `SIEM-Detection-as-Code` is organized around 6 primary layers:
 
 - `rules/` stores source detection knowledge
 - `mappings/` stores the normalization contract for fields and data
+- `execution/` stores SIEM execution policy and metadata
 - `tenants/` stores the actual deployment configuration of each tenant
 - `artifacts/` stores rendered output
 - `project-root/` stores the application engine used to read, validate, render, and deploy
 
-At the current stage, `tenants/` is the most structurally explicit and stable data layer. The more detailed documentation set is therefore built around the tenant layer and the mapping layer as the basis for a long-term standard architecture reference.
+The detailed documentation set is built around the relationships between tenant configuration, mappings, execution, and the current rendering flow so that the repository can preserve both its long-term target design and its present operational state.

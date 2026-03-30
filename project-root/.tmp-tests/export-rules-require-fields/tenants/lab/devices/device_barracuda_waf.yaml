@@ -1,0 +1,22 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_type: waf
+device_id: barracuda-waf
+category: application
+
+vendor: Barracuda Networks
+product: Barracuda Web Application Firewall
+
+
+role: Web Application Firewall
+functions:
+    - Web Protection
+    - API Security
+
+location: unknown
+network_zone: edge
+description: Between Internet and Web/API servers
+
+criticality: high
+

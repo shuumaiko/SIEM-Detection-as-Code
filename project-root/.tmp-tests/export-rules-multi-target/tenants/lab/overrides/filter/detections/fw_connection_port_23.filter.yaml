@@ -1,0 +1,14 @@
+tenant_id: lab
+rule_id: 2a129a58-7725-48c9-8b3a-0a2264522a68
+rule_name: fw_connection_port_23
+author: AnhPT127
+date: 2026-03-23
+modified: 2026-03-23
+description: Tenant-specific detection filter to exclude trusted admin subnet from Telnet connection alerts.
+
+detection_filters:
+  exclude_trusted_admin_subnet:
+    src_ip|cidr:
+      - 10.10.10.0/24
+
+append_condition: and not exclude_trusted_admin_subnet

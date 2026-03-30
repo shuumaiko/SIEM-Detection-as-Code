@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema/artifacts/artifact.schema.json",
+  "title": "Tenant Rule Artifact Schema",
+  "type": "object",
+  "required": [
+    "artifact_schema_version",
+    "artifact_type",
+    "tenant_id",
+    "siem_id",
+    "source_rule",
+    "display_name",
+    "metadata",
+    "x_splunk_es"
+  ],
+  "properties": {
+    "artifact_schema_version": {
+      "oneOf": [
+        { "type": "number" },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "artifact_type": {
+      "const": "tenant_rule"
+    },
+    "id": {
+      "$ref": "#/$defs/uuid"
+    },
+    "tenant_id": {
+      "$ref": "#/$defs/tenant_id"
+    },
+    "siem_id": {
+      "const": "splunk"
+    },
+    "source_rule": {
+      "$ref": "#/$defs/source_rule"
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "x_splunk_es": {
+      "$ref": "#/$defs/splunk_payload"
+    }
+  },
+  "$defs": {
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["informational", "low", "medium", "high", "critical"]
+    },
+    "nullable_string": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        { "type": "null" }
+      ]
+    },
+    "source_rule": {
+      "type": "object",
+      "required": [
+        "rule_id",
+        "rule_name",
+        "rule_type",
+        "source_path",
+        "status",
+        "level",
+        "version"
+      ],
+      "properties": {
+        "rule_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "rule_name": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "rule_type": {
+          "type": "string",
+          "enum": ["detection", "base", "analyst"]
+        },
+        "source_path": {
+          "type": "string",
+          "pattern": "^rules\\/.+\\.(?:ya?ml)$"
+        },
+        "status": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": ["stable", "test", "experimental", "deprecated", "unsupported"]
+            },
+            { "type": "null" }
+          ]
+        },
+        "level": {
+          "oneOf": [
+            { "$ref": "#/$defs/severity" },
+            { "type": "null" }
+          ]
+        },
+        "version": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "number" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["tags", "owner", "last_rendered"],
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "owner": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "last_rendered": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ingest_target": {
+      "type": "object",
+      "required": ["device_id", "dataset_id", "index", "sourcetype"],
+      "properties": {
+        "device_id": {
+          "$ref": "#/$defs/tenant_id"
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "index": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourcetype": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "notable": {
+      "type": "object",
+      "required": ["enabled", "severity", "risk_score"],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "risk_score": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "splunk_targets": {
+      "type": "object",
+      "properties": {
+        "ingest_targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ingest_target"
+          }
+        },
+        "device_id": {
+          "$ref": "#/$defs/tenant_id"
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$"
+        },
+        "index": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourcetype": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schedule_cron": {
+          "type": "string",
+          "minLength": 1
+        },
+        "earliest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "latest": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "notable": {
+          "$ref": "#/$defs/notable"
+        }
+      },
+      "additionalProperties": false
+    },
+    "splunk_payload": {
+      "type": "object",
+      "required": ["targets", "search_query"],
+      "properties": {
+        "targets": {
+          "$ref": "#/$defs/splunk_targets"
+        },
+        "search_query": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

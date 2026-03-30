@@ -1,0 +1,44 @@
+artifact_schema_version: 1.0
+artifact_type: tenant_rule
+id: fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+tenant_id: demo
+siem_id: splunk
+source_rule:
+  rule_id: fa0c05b6-8ad3-468d-8231-c1cbccb64fba
+  rule_name: av_hacktool
+  rule_type: detection
+  source_path: rules/detections/category/antivirus/av_hacktool.yml
+  status: stable
+  level: high
+  version: null
+display_name: mcafee-epo - AV Hacktool Detection
+metadata:
+  tags:
+  - attack.execution
+  - attack.t1204
+  owner: Florian Roth (Nextron Systems), Arnim Rupp
+  last_rendered: '2026-03-30T03:45:07Z'
+x_splunk_es:
+  targets:
+    ingest_targets:
+    - device_id: mcafee-epo
+      dataset_id: mcafee-epo-syslog
+      index: epav
+      sourcetype: mcafee:epo:syslog
+    device_id: mcafee-epo
+    dataset_id: mcafee-epo-syslog
+    index: epav
+    sourcetype: mcafee:epo:syslog
+    schedule_cron: '*/15 * * * *'
+    earliest: -15m
+    latest: now
+    notable:
+      enabled: true
+      severity: high
+      risk_score: 80
+    enabled: true
+  search_query: |-
+    ((index=epav sourcetype=mcafee:epo:syslog)) ((AVsignature="HTOOL*" OR AVsignature="HKTL*" OR AVsignature="SecurityTool*" OR AVsignature="Adfind*" OR AVsignature="ATK/*" OR AVsignature="Exploit.Script.CVE*" OR AVsignature="PWS.*" OR AVsignature="PWSX*") OR (AVsignature="*Hacktool*" OR AVsignature="*ATK/*" OR AVsignature="*Potato*" OR AVsignature="*Rozena*" OR AVsignature="*Sbelt*" OR AVsignature="*Seatbelt*" OR AVsignature="*SecurityTool*" OR AVsignature="*SharpDump*" OR AVsignature="*Sliver*" OR AVsignature="*Splinter*" OR AVsignature="*Swrort*" OR AVsignature="*Impacket*" OR AVsignature="*Koadic*" OR AVsignature="*Lazagne*" OR AVsignature="*Metasploit*" OR AVsignature="*Meterpreter*" OR AVsignature="*MeteTool*" OR AVsignature="*Mimikatz*" OR AVsignature="*Mpreter*" OR AVsignature="*Nighthawk*" OR AVsignature="*PentestPowerShell*" OR AVsignature="*PowerSploit*" OR AVsignature="*PowerSSH*" OR AVsignature="*PshlSpy*" OR AVsignature="*PSWTool*" OR AVsignature="*PWCrack*" OR AVsignature="*Brutel*" OR AVsignature="*BruteR*" OR AVsignature="*Cobalt*" OR AVsignature="*COBEACON*" OR AVsignature="*Cometer*" OR AVsignature="*DumpCreds*" OR AVsignature="*FastReverseProxy*" OR AVsignature="*PWDump*"))
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
+    | eval Alert_Severity="Critical"
+    | stats values(TargetName) as file_name values(file_hash) as file_hash values(action) as action_taken values(AVsignature) as signature values(dest_host) as host values(dest_host) as hostname count by Alert_Severity Time

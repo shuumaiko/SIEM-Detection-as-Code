@@ -18,6 +18,10 @@ class RuleService:
         """Load source rules that support the tenant's current SIEM render path."""
         return self.rule_repository.list_render_candidates(tenant)
 
-    def save_rendered_rules_for_tenant(self, tenant_id: str, rendered_rules: list[dict]) -> None:
+    def save_rendered_rules_for_tenant(self, tenant: Tenant, rendered_rules: list[dict]) -> None:
         """Persist rendered tenant rule documents into the artifact layer."""
-        self.rule_repository.save_rendered_for_tenant(tenant_id, rendered_rules)
+        self.rule_repository.save_rendered_for_tenant(tenant, rendered_rules)
+
+    def sync_artifact_enabled_states(self, tenant: Tenant) -> None:
+        """Refresh persisted artifact enabled flags from the tenant deployment manifest."""
+        self.rule_repository.sync_artifact_enabled_states(tenant)

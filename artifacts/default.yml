@@ -1,0 +1,42 @@
+artifact_schema_version: 1.0
+artifact_type: tenant_rule
+
+tenant_id: "<tenant_id>"
+siem_id: splunk
+
+source_rule:
+  rule_id: "<uuid>"
+  rule_name: "<source_rule_slug>"
+  rule_type: detection
+  source_path: "rules/detections/<category>/<product>/<rule>.yml"
+  status: stable
+  level: medium
+  version: "1.0.0"
+
+display_name: "<device_id> - <deployable_rule_title>"
+
+metadata:
+  tags:
+    - attack.txxxx
+  owner: "<team_or_author>"
+  last_rendered: "2026-03-29T00:00:00Z"
+
+x_splunk_es:
+  targets:
+    ingest_targets:
+      - device_id: "<device_id>"
+        dataset_id: "<dataset_id>"
+        index: "<index>"
+        sourcetype: "<sourcetype>"
+    index: "<index>"
+    sourcetype: "<sourcetype>"
+    schedule_cron: "*/30 * * * *"
+    earliest: "-30m"
+    latest: "now"
+    enabled: true
+    notable:
+      enabled: true
+      severity: medium
+      risk_score: 30
+  search_query: |
+    index=<index> sourcetype=<sourcetype> <final_spl_query>

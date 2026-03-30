@@ -1,6 +1,6 @@
 ---
 name: project-root-code-maintainer
-description: Maintain and modernize `project-root/` in this repository using the documented repository architecture as the source of business truth. Use when Codex needs to fix bugs, refactor outdated skeleton code, or add features inside `project-root/` while first defining business scope, mapping function flow, adding clear function-level comments or docstrings, and logging key implementation notes under `docs/note/logs/code/`.
+description: Maintain and modernize `project-root/` in this repository using the documented repository architecture as the source of business truth. Treat any `legacy/` folders and legacy-named directories as historical concepts to ignore, not as the real architecture or default runtime input, unless the user explicitly asks for legacy compatibility work. Use when Codex needs to fix bugs, refactor outdated skeleton code, or add features inside `project-root/` while first defining business scope, mapping function flow, adding clear function-level comments or docstrings, and logging key implementation notes under `docs/note/logs/code/`.
 ---
 
 # Project Root Code Maintainer
@@ -8,6 +8,8 @@ description: Maintain and modernize `project-root/` in this repository using the
 ## Overview
 
 Treat `docs/architecture/` and the repository data model as the business source of truth. Treat `project-root/` as a transitional Clean Architecture implementation that can contain thin pass-through layers and outdated assumptions.
+
+Treat any repository folder named `legacy/` or other legacy-only storage as historical context only. Do not use legacy folders to infer current architecture, current business truth, or the default runtime input path. Only read or modify them when the user explicitly asks for legacy compatibility, migration, or historical comparison work.
 
 Use this skill to keep code changes narrow, business-first, and auditable when working on the engine under `project-root/`.
 
@@ -21,6 +23,7 @@ Use this skill to keep code changes narrow, business-first, and auditable when w
 
 - Change code only inside `project-root/`.
 - Allow one exception outside `project-root/`: create or update a task log under `docs/note/logs/code/`.
+- Ignore `legacy/` folders as architectural truth and do not introduce new runtime dependencies on them unless the user explicitly asks for legacy behavior.
 - Define the business scope before writing code.
 - When adding or changing a function, add a clear docstring for purpose, important inputs, return shape, and side effects.
 - Add inline comments only for non-obvious logic, branching, normalization, or side effects.

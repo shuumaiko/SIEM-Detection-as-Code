@@ -1,0 +1,14 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_id: cyble-ti
+siem_id: splunk
+
+datasets:
+  - dataset_id: cyble_alerts
+    index: cyble_alerts
+    sourcetype: _json
+
+  - dataset_id: cyble_iocs
+    index: cyble_iocv2
+    sourcetype: _json

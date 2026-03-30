@@ -1,4 +1,5 @@
-﻿import argparse
+import argparse
+import json
 from typing import Callable
 
 
@@ -17,7 +18,16 @@ def create_parser() -> argparse.ArgumentParser:
     load_tenant = subparsers.add_parser("load-tenant", help="Load tenant configuration")
     load_tenant.add_argument("--tenant-id", required=True, help="Tenant identifier")
 
-    export_rules = subparsers.add_parser("export-rules", help="Export rules for a tenant")
+    gen_artifact = subparsers.add_parser(
+        "gen-artifact",
+        help="Generate tenant rule artifacts and print summary metadata",
+    )
+    gen_artifact.add_argument("--tenant-id", required=True, help="Tenant identifier")
+
+    export_rules = subparsers.add_parser(
+        "export-rules",
+        help="Legacy alias for gen-artifact",
+    )
     export_rules.add_argument("--tenant-id", required=True, help="Tenant identifier")
 
     deploy_rules = subparsers.add_parser("deploy-rules", help="Deploy rules to tenant SIEM")
@@ -47,6 +57,17 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def format_command_result(result: object) -> str:
+    """Render CLI command results for stdout.
+
+    Structured validator payloads are emitted as pretty JSON so operators can
+    redirect the output into files and review or parse it consistently.
+    """
+    if isinstance(result, (dict, list)):
+        return json.dumps(result, indent=2, ensure_ascii=False)
+    return str(result)
+
+
 def run_cli(
     build_app_fn: Callable[[], tuple[object, object, object, object, object]],
     argv: list[str] | None = None,
@@ -60,23 +81,23 @@ def run_cli(
     )
 
     if args.command == "load-tenant":
-        print(load_tenant_uc.execute(args.tenant_id))
+        print(format_command_result(load_tenant_uc.execute(args.tenant_id)))
         return
 
-    if args.command == "export-rules":
-        print(export_rules_uc.execute(args.tenant_id))
+    if args.command in {"gen-artifact", "export-rules"}:
+        print(format_command_result(export_rules_uc.execute(args.tenant_id)))
         return
 
     if args.command == "validate-tenant":
-        print(validate_tenant_uc.execute(args.tenant_id))
+        print(format_command_result(validate_tenant_uc.execute(args.tenant_id)))
         return
 
     if args.command == "validate-rules":
-        print(validate_rules_uc.execute(since=args.since, validate_all=args.all))
+        print(format_command_result(validate_rules_uc.execute(since=args.since, validate_all=args.all)))
         return
 
-    exported = export_rules_uc.execute(args.tenant_id)
-    print(deploy_rules_uc.execute(args.tenant_id, exported))
+    exported, _ = export_rules_uc.prepare_export(args.tenant_id)
+    print(format_command_result(deploy_rules_uc.execute(args.tenant_id, exported)))
 
 
 if __name__ == "__main__":

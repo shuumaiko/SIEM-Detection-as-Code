@@ -1,7 +1,7 @@
 interface:
   display_name: "Project Root Code Maintainer"
   short_description: "Business-first project-root maintenance"
-  default_prompt: "Use $project-root-code-maintainer to analyze the current project-root business flow first, then implement minimal changes inside project-root/ and log important decisions under docs/note/logs/code/."
+  default_prompt: "Use $project-root-code-maintainer to analyze the current project-root business flow first, ignore any legacy folders unless I explicitly ask for them, then implement minimal changes inside project-root/ and log important decisions under docs/note/logs/code/."
 
 policy:
   allow_implicit_invocation: true

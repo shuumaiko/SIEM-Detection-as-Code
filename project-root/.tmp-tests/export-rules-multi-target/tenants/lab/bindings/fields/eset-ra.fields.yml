@@ -1,0 +1,15 @@
+schema_version: 1.0
+tenant_id: lab
+siem_id: splunk
+device_id: eset-ra
+default_field_mapping:
+  time: _time
+  canonical.event.action: action_taken
+  malware.name: threat_name
+  file.name: file_name
+  file.path: file_path
+  file.hashes: file_hash
+  device.hostname: hostname
+  device.ip: ipv4
+  user.name: user
+  process.name: processname

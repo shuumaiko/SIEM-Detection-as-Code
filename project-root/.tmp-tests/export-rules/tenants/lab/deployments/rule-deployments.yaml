@@ -1,0 +1,10 @@
+schema_version: 1.0
+tenant_id: lab
+rule_deployments_by_siem:
+  splunk:
+  - rule_id: 2a129a58-7725-48c9-8b3a-0a2264522a68
+    enabled: false
+    display_name: checkpoint-fw - Accepted Default Telnet Port Connection
+  - rule_id: faee897b-2394-45cf-ae5d-0379476fbf3e
+    enabled: true
+    display_name: checkpoint-fw - Request reached over threshold

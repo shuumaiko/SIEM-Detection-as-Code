@@ -23,12 +23,12 @@
 
 ## Repo-Specific Translation Rules
 
-- Translate OCSF semantics into repo `canonical.*` names when the repo already uses that pattern.
-- Reuse the canonical names already present in existing dictionaries, for example:
-  `canonical.event.time`
-  `canonical.source.ip`
-  `canonical.destination.port`
-  `canonical.network.protocol`
+- Prefer exact OCSF paths such as `time`, `src_endpoint.ip`, `dst_endpoint.port`, `http_request.user_agent`, or `network_connection_info.protocol_name` when they fit the rule field semantics directly.
+- Reuse an existing OCSF path already present in nearby mappings when the meaning matches.
+- Translate OCSF semantics into repo `canonical.*` names only when the repo intentionally uses an internal abstraction or when no clean direct OCSF path exists.
+- Reuse repo-specific canonical names already present in existing dictionaries only when that internal contract is still the better fit, for example:
+  `canonical.event.action`
+  `canonical.http_request.x_header`
 - Keep detection-driven additions narrow: map only the user-defined required rule fields and their obvious aliases.
 
 ## Practical Example
@@ -51,4 +51,4 @@ Use OCSF semantics like:
 - `http_request.url.url_string`
 - `src_endpoint.ip`
 
-Then translate to repo canonical fields by first checking whether the existing mapping file already uses those exact paths or an established `canonical.*` form.
+Then keep those direct OCSF paths unless the existing mapping file has a justified repo-specific `canonical.*` contract that fits better.

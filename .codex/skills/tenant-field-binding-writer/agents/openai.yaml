@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tenant Field Binding Writer"
+  short_description: "Write tenant canonical-to-SIEM bindings"
+  default_prompt: "Use $tenant-field-binding-writer to create or update a tenant field binding file from repository mappings and SIEM event fields provided by the user."

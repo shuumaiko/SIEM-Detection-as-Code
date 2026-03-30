@@ -1,5 +1,7 @@
 # Kiến trúc thành phần Execution
 
+> English mirror: [execution-relationship.md](../en/architecture/execution-relationship.md)
+
 > Tài liệu này mô tả lớp `execution/` trong trạng thái hiện tại của repository.
 
 ## 1. Mục đích

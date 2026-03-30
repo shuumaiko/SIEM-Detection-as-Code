@@ -1,0 +1,11 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_id: cyberark-pam
+siem_id: splunk
+
+datasets:
+  - dataset_id: cyberark-pam-audit
+    index: cyberpam
+    sourcetype: cyberark
+

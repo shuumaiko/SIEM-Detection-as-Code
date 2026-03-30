@@ -1,0 +1,42 @@
+title: Request reached over threshold
+id: faee897b-2394-45cf-ae5d-0379476fbf3e
+rule_type: analyst
+status: stable
+description: Request volume from a single source IP exceeds threshold within 1 hour
+references:
+- Internal_HaoDA4
+author: AnhPT127
+date: 2025-12-17
+modified: 2025-12-17
+tags:
+- attack.discovery
+- attack.t1046
+correlation:
+  type: event_count
+  rules:
+  - fw_external_connection
+  group-by:
+  - src_ip
+  timespan: 1h
+  condition:
+    gt: 200000
+fields:
+- src_ip
+- dest_ip
+- action
+- count
+falsepositives:
+- Vulnerability scanners / load testing
+level: low
+x_query:
+  splunk: 'index=$index$ sourcetype=$sourcetype$
+
+    | where NOT (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("192.168.0.0/16", src_ip) OR cidrmatch("172.16.0.0/12", src_ip))
+
+    | bucket _time span=1h
+
+    | stats count dc(dest_ip) as Total_dest values(action) as Action by _time src_ip
+
+    | where count > 200000
+
+    | sort - count'

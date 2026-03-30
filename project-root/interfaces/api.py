@@ -10,7 +10,7 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-def export_rules(tenant_id: str) -> list[dict]:
-    """Export tenant rules via application use case."""
+def export_rules(tenant_id: str) -> dict:
+    """Generate tenant artifacts and return compact summary metadata."""
     _, export_rules_uc, _, _, _ = build_app()
     return export_rules_uc.execute(tenant_id)

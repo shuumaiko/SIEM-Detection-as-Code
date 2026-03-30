@@ -1,0 +1,11 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_id: mcafee-epo
+siem_id: splunk
+
+datasets:
+  - dataset_id: mcafee-epo-syslog
+    index: epav
+    sourcetype: mcafee:epo:syslog
+

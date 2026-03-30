@@ -1,0 +1,22 @@
+schema_version: 1.0
+
+device_id: barracuda-waf
+
+datasets:
+  - dataset_id: api
+    description: API security events
+    category: application
+    log_type: security
+    enabled: true
+
+  - dataset_id: app
+    description: Web application firewall events
+    category: application
+    log_type: security
+    enabled: true
+
+  - dataset_id: system
+    description: System and service logs
+    category: system
+    log_type: operational
+    enabled: true

@@ -1,0 +1,14 @@
+schema_version: 1.0
+
+device_id: checkpoint-fw
+
+datasets:
+  - dataset_id: traffic
+    description: Firewall traffic logs observed in checkpoint-log.csv
+    category: network
+    log_type: traffic
+    enabled: true
+    metadata:
+      observed_eventtype: Network_Traffic
+      observed_product: Firewall
+      observed_hostname: CP-SMC

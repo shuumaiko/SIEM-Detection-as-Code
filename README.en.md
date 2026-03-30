@@ -1,6 +1,6 @@
 # SIEM-Detection-as-Code
 
-This repository manages `Detection as Code` for a multi-tenant SOC environment, with a structure that separates detection logic, field normalization, tenant-specific configuration, and SIEM-specific deployment artifacts.
+This repository manages `Detection as Code` for a multi-tenant SOC environment, with a structure that separates detection logic, field normalization, execution metadata, tenant-specific configuration, and SIEM-specific output artifacts.
 
 ## What This Repository Is
 
@@ -17,6 +17,7 @@ This repository therefore treats detection engineering as a layered system:
 
 - `rules/` expresses detection intent
 - `mappings/` expresses canonical field contracts
+- `execution/` expresses SIEM-specific execution policy and metadata
 - `tenants/` expresses tenant-specific deployment context
 - `artifacts/` expresses rendered tenant output
 - `project-root/` provides the engine that reads, validates, renders, and exports that model
@@ -37,6 +38,7 @@ From an architectural point of view, this repository is not just a collection of
 
 - `rules/` stores core detection knowledge
 - `mappings/` stores the field normalization layer
+- `execution/` stores SIEM execution defaults and per-rule overrides
 - `tenants/` stores tenant-specific real-world configuration
 - `artifacts/` stores rendered output per tenant
 - `project-root/` contains the application engine used to read, validate, render, and deploy
@@ -72,12 +74,14 @@ This means:
 For deeper details, see:
 
 - `docs/architecture/project-architecture.md`
+- `docs/architecture/rule-rendering-flows.md`
 - `docs/architecture/tenants-relationship.md`
 - `docs/architecture/mappings-relationship.md`
+- `docs/architecture/execution-relationship.md`
 
 ## Architectural View
 
-The system can be understood through 3 main axes.
+The system can be understood through 4 main axes.
 
 ### 1. Detection Content Axis
 
@@ -99,6 +103,7 @@ This axis describes the real operating environment of each tenant:
 - `bindings/ingest/`: mappings from `dataset_id` to real ingestion targets such as `index` and `sourcetype`
 - `bindings/fields/`: mappings from canonical fields to actual SIEM fields
 - `filters/`: tenant-specific filters applied during rendering
+- `overrides/`: tenant-specific execution or filter tuning applied during rendering
 - `deployments/rule-deployments.yaml`: manifest for enabling or disabling rules by SIEM
 
 This axis answers operational questions such as:
@@ -107,9 +112,24 @@ This axis answers operational questions such as:
 - which datasets are active
 - how those datasets are ingested into the SIEM
 - which rules are enabled for the tenant
-- which filters should be applied when rendering from base rules
+- which filters or tuning should be applied when rendering from base rules
 
-### 3. Operations and Output Axis
+### 3. Execution Configuration Axis
+
+This axis describes how a semantic rule is operated on a specific SIEM:
+
+- `execution/<siem>/defaults.yaml`: default execution policy for the SIEM
+- `execution/<siem>/rule-overrides.yaml`: rule-specific execution overrides
+- hardcoded SIEM query payloads that remain valid transition-stage execution artifacts
+
+This axis answers questions such as:
+
+- how often a rule should run
+- what lookback window should be used
+- what severity, risk score, or notable behavior should be attached
+- how execution metadata stays separate from the semantic rule definition
+
+### 4. Operations and Output Axis
 
 This axis supports validation, build, export, and deployment:
 
@@ -137,6 +157,7 @@ Main relationships in the tenant layer:
 - `bindings/ingest` links `dataset_id` to real ingestion targets on the SIEM
 - `bindings/fields` links canonical fields to the tenant's actual SIEM fields
 - `filters` refine base rules during rendering
+- `overrides` tune execution or filter behavior during rendering
 - `deployments` decide which rules continue through the pipeline
 
 ## The Role of `mappings/`
@@ -175,7 +196,8 @@ This is an intentional trade-off:
 In short:
 
 - canonical fields preserve `meaning`
-- hardcoded queries preserve `execution`
+- hardcoded queries preserve transition-stage execution logic
+- `execution/` preserves reusable execution metadata such as schedule, severity, and risk score
 
 ## High-Level Processing Flow
 
@@ -187,10 +209,11 @@ At the architecture level, the project pipeline is currently understood as:
 4. Load detection mappings from `mappings/detections/`.
 5. Resolve ingest bindings from `tenants/.../bindings/ingest/`.
 6. Resolve field bindings from `tenants/.../bindings/fields/`.
-7. Apply tenant filters from `tenants/.../filters/`.
-8. Read `deployments/rule-deployments.yaml` to select the enabled rule set for the tenant.
-9. Render output into `artifacts/<tenant>/tenant-rules/`.
-10. If needed, use adapters in `project-root/` to export or deploy to the target SIEM.
+7. Resolve execution policy from `execution/<siem>/`.
+8. Apply tenant filters or tenant overrides when present.
+9. Read `deployments/rule-deployments.yaml` to select the enabled rule set for the tenant.
+10. Render output into `artifacts/<tenant>/tenant-rules/`.
+11. If needed, use adapters in `project-root/` to export or deploy to the target SIEM.
 
 ## Repository Structure
 
@@ -202,6 +225,11 @@ At the architecture level, the project pipeline is currently understood as:
 |           `-- detections/
 |-- docs/
 |   `-- architecture/
+|-- execution/
+|   `-- <siem>/
+|       |-- defaults.yaml
+|       |-- rule-overrides.yaml
+|       `-- legacy/
 |-- mappings/
 |   `-- detections/
 |-- project-root/
@@ -211,7 +239,8 @@ At the architecture level, the project pipeline is currently understood as:
 |   |-- interfaces/
 |   `-- main.py
 |-- rules/
-|   `-- detections/
+|   |-- detections/
+|   `-- analysts/
 |-- schema/
 |-- tenants/
 |   `-- <tenant>/
@@ -221,6 +250,7 @@ At the architecture level, the project pipeline is currently understood as:
 |       |-- bindings/
 |       |   |-- ingest/
 |       |   `-- fields/
+|       |-- overrides/
 |       |-- filters/
 |       `-- deployments/
 `-- tests/
@@ -230,6 +260,7 @@ Short meaning:
 
 - `rules/` is the source of truth for core detection content
 - `mappings/` is the source of truth for shared content-layer field mapping
+- `execution/` is the source of truth for reusable SIEM execution policy
 - `tenants/` is the source of truth for tenant deployment configuration
 - `artifacts/` is rendered output, not the long-term hand-edited source
 
@@ -238,14 +269,16 @@ Short meaning:
 When working with the repository in its current state, the recommended reading order is:
 
 1. `docs/architecture/project-architecture.md`
-2. `docs/architecture/tenants-relationship.md`
-3. `docs/architecture/mappings-relationship.md`
-4. `rules/`, `mappings/`, `tenants/`, `artifacts/`
-5. `project-root/` as an implementation layer that is still being aligned to the new architecture
+2. `docs/architecture/rule-rendering-flows.md`
+3. `docs/architecture/tenants-relationship.md`
+4. `docs/architecture/mappings-relationship.md`
+5. `docs/architecture/execution-relationship.md`
+6. `rules/`, `mappings/`, `execution/`, `tenants/`, `artifacts/`
+7. `project-root/` as an implementation layer that is still being aligned to the new architecture
 
 ## Contributor Notes
 
-- Treat `rules/`, `mappings/`, and `tenants/` as the main data layers of the repository.
+- Treat `rules/`, `mappings/`, `execution/`, and `tenants/` as the main data layers of the repository.
 - Do not treat `artifacts/` as the long-term place for manual edits; it is tenant-rendered output.
 - When adding a new rule, try to identify clearly:
   - the detection intent
@@ -260,6 +293,7 @@ When working with the repository in its current state, the recommended reading o
 
 - `rules/` stores detection knowledge
 - `mappings/` stores the field contract
+- `execution/` stores SIEM execution policy and metadata
 - `tenants/` stores the real deployment state of each tenant
 - `artifacts/` stores rendered output
 - `project-root/` is the engine that is gradually being aligned to this architecture

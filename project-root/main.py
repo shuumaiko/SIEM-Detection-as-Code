@@ -9,6 +9,7 @@ from app.usecases.export_rules import ExportRulesUseCase
 from app.usecases.load_tenant import LoadTenantUseCase
 from app.usecases.validate_rule_format import ValidateRuleFormatUseCase
 from app.usecases.validate_tenant_config import ValidateTenantConfigUseCase
+from infrastructure.file_loader.detection_field_mapping_loader import DetectionFieldMappingLoader
 from infrastructure.file_loader.execution_config_loader import ExecutionConfigLoader
 from infrastructure.file_loader.registry_loader import RegistryLoader
 from infrastructure.repositories.file_rule_repository import FileRuleRepository
@@ -33,11 +34,17 @@ def build_app() -> tuple[
         tenant_rules_path=workspace_root / "artifacts",
     )
     registry_loader = RegistryLoader(root=workspace_root / "mappings" / "logsources")
+    detection_field_mapping_loader = DetectionFieldMappingLoader(
+        mappings_root=workspace_root / "mappings" / "detections"
+    )
     execution_loader = ExecutionConfigLoader(
-        execution_root=workspace_root / "legacy" / "execution",
+        execution_root=workspace_root / "execution",
         tenants_root=workspace_root / "tenants",
     )
-    deployment_builder = RuleDeploymentBuilder(registry_loader=registry_loader)
+    deployment_builder = RuleDeploymentBuilder(
+        registry_loader=registry_loader,
+        detection_field_mapping_loader=detection_field_mapping_loader,
+    )
     artifact_service = RuleArtifactService(execution_loader=execution_loader)
     siem_adapter = SplunkAdapter()
     tenant_validator = TenantConfigValidator(

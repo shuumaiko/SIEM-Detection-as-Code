@@ -9,6 +9,30 @@ from domain.repositories.rule_repository import RuleRepository
 from infrastructure.file_loader.yaml_loader import YamlLoader
 
 
+class _ArtifactYamlDumper(yaml.SafeDumper):
+    """YAML dumper that renders selected multiline strings in block style."""
+
+
+class _LiteralString(str):
+    """Marker type for strings that should be serialized with YAML block style."""
+
+
+def _represent_literal_string(dumper: yaml.SafeDumper, value: _LiteralString) -> yaml.ScalarNode:
+    """Serialize marked multiline strings with `|` style so artifact queries stay readable.
+
+    Parameters:
+        dumper: Active YAML dumper instance.
+        value: Marked multiline string value being serialized.
+
+    Returns:
+        A YAML scalar node forced to YAML literal block style.
+    """
+    return dumper.represent_scalar("tag:yaml.org,2002:str", str(value), style="|")
+
+
+_ArtifactYamlDumper.add_representer(_LiteralString, _represent_literal_string)
+
+
 class FileRuleRepository(RuleRepository):
     """File-backed rule repository implementation."""
 
@@ -24,8 +48,18 @@ class FileRuleRepository(RuleRepository):
         return self._scan_base_rules(category_path)
 
     def list_for_tenant(self, tenant: Tenant, include_all: bool = False) -> list[Rule]:
-        """Read already-rendered tenant rules from the artifact layer."""
-        tenant_root = self._resolve_tenant_rules_root(tenant.tenant_id)
+        """Read exported tenant rule artifacts from the artifact layer.
+
+        Parameters:
+            tenant: Tenant whose rendered artifacts should be loaded.
+            include_all: When True, return all saved artifacts even if disabled in
+                the tenant deployment manifest.
+
+        Returns:
+            Lightweight `Rule` models rebuilt from persisted tenant artifacts so
+            deployment flows can read the final SIEM query and resolved targets.
+        """
+        tenant_root = self._resolve_tenant_rules_root(tenant.tenant_id, tenant.siem_id)
         if tenant_root is None:
             return []
 
@@ -39,17 +73,20 @@ class FileRuleRepository(RuleRepository):
             if not isinstance(data, dict):
                 continue
 
-            rule_id = data.get("id", path.stem)
+            source_rule = data.get("source_rule") or {}
+            if not isinstance(source_rule, dict):
+                source_rule = {}
+
+            rule_id = data.get("id") or source_rule.get("rule_id") or path.stem
             if not include_all and enabled_rule_ids and rule_id not in enabled_rule_ids:
                 continue
 
             siem_ext = data.get("x_splunk_es", {}) if tenant.siem_id == "splunk" else {}
-            logsource = data.get("logsource", {})
             result.append(
                 Rule(
                     rule_id=rule_id,
-                    category=logsource.get("category", data.get("category", "unknown")),
-                    product=logsource.get("product", data.get("product")),
+                    category=data.get("category", "unknown"),
+                    product=data.get("product"),
                     siem_query=siem_ext.get("search_query"),
                     siem_targets=siem_ext.get("targets"),
                     source_path=str(path.relative_to(tenant_root)),
@@ -59,38 +96,57 @@ class FileRuleRepository(RuleRepository):
         return result
 
     def list_render_candidates(self, tenant: Tenant) -> list[Rule]:
-        """Read source detection rules that expose a hardcoded query for the tenant SIEM."""
-        rules_root = self._resolve_rules_root()
+        """Read source rules that expose a hardcoded query for the tenant SIEM.
+
+        Only `stable` rules are exported into the render pipeline. Transitional rules
+        with statuses such as `test` remain in the source repository but are not
+        rendered for deployment. Both `rules/detections/` and `rules/analysts/`
+        are scanned so analyst correlation content can be rendered, while base
+        rules remain available as semantic references for analyst resolution.
+        """
         result: list[Rule] = []
-        for path in sorted(list(rules_root.rglob("*.yml")) + list(rules_root.rglob("*.yaml"))):
-            try:
-                data = self.loader.load(path)
-            except Exception:
-                continue
-            if not isinstance(data, dict):
-                continue
+        for rules_root in self._resolve_render_roots():
+            for path in sorted(list(rules_root.rglob("*.yml")) + list(rules_root.rglob("*.yaml"))):
+                try:
+                    data = self.loader.load(path)
+                except Exception:
+                    continue
+                if not isinstance(data, dict):
+                    continue
+                if self._normalize_status(data.get("status")) != "stable":
+                    continue
 
-            siem_query, siem_targets = self._extract_siem_config(data, tenant.siem_id or "")
-            if not siem_query:
-                continue
+                siem_query, siem_targets = self._extract_siem_config(data, tenant.siem_id or "")
+                if not siem_query:
+                    continue
 
-            logsource = data.get("logsource", {})
-            result.append(
-                Rule(
-                    rule_id=data.get("id", path.stem),
-                    category=logsource.get("category", data.get("category", "unknown")),
-                    product=logsource.get("product", data.get("product")),
-                    siem_query=siem_query,
-                    siem_targets=siem_targets,
-                    source_path=str(path.relative_to(rules_root)),
-                    raw=data,
+                logsource = data.get("logsource", {})
+                result.append(
+                    Rule(
+                        rule_id=data.get("id", path.stem),
+                        category=logsource.get("category", data.get("category", "unknown")),
+                        product=logsource.get("product", data.get("product")),
+                        siem_query=siem_query,
+                        siem_targets=siem_targets,
+                        source_path=str(path.relative_to(self.base_path)),
+                        raw=data,
+                    )
                 )
-            )
         return result
 
-    def save_rendered_for_tenant(self, tenant_id: str, rendered_rules: list[dict]) -> None:
-        """Write rendered tenant rules under `artifacts/<tenant>/tenant-rules/detections`."""
-        target_root = self.tenant_rules_path / tenant_id / "tenant-rules" / "detections"
+    def save_rendered_for_tenant(self, tenant: Tenant, rendered_rules: list[dict]) -> None:
+        """Write rendered tenant rule artifacts under `artifacts/<tenant>/<siem_id>/`.
+
+        Parameters:
+            tenant: Tenant whose current SIEM artifact tree should be refreshed.
+            rendered_rules: Artifact documents with rule-relative paths that mirror
+                the source `rules/` tree.
+
+        Side effects:
+            Removes the previous artifact tree for the active tenant/SIEM pair
+            before writing the new per-rule artifact set.
+        """
+        target_root = self._build_tenant_artifact_root(tenant.tenant_id, tenant.siem_id)
         if target_root.exists():
             shutil.rmtree(target_root)
 
@@ -106,7 +162,76 @@ class FileRuleRepository(RuleRepository):
             output_path = target_root / relative_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as file:
-                yaml.safe_dump(document, file, sort_keys=False, allow_unicode=True, width=4096)
+                yaml.dump(
+                    self._prepare_for_dump(document),
+                    file,
+                    Dumper=_ArtifactYamlDumper,
+                    sort_keys=False,
+                    allow_unicode=True,
+                    width=4096,
+                )
+
+    def sync_artifact_enabled_states(self, tenant: Tenant) -> None:
+        """Rewrite saved tenant artifacts so `targets.enabled` matches deployments.
+
+        Parameters:
+            tenant: Tenant freshly reloaded after `rule-deployments.yaml` was saved.
+
+        Side effects:
+            Reads persisted artifact files for the active tenant/SIEM artifact root
+            and updates the SIEM-specific `targets.enabled` flag for every artifact
+            whose `id` or `source_rule.rule_id` resolves to one deployment entry.
+        """
+        tenant_root = self._resolve_tenant_rules_root(tenant.tenant_id, tenant.siem_id)
+        if tenant_root is None:
+            return
+
+        enabled_by_rule_id = {
+            item.rule_id: item.enabled for item in (tenant.rule_deployments or []) if item.rule_id
+        }
+        if not enabled_by_rule_id:
+            return
+
+        extension_key = self._resolve_siem_extension_key(tenant.siem_id or "")
+        for path in sorted(list(tenant_root.rglob("*.yml")) + list(tenant_root.rglob("*.yaml"))):
+            try:
+                data = self.loader.load(path)
+            except Exception:
+                continue
+            if not isinstance(data, dict):
+                continue
+
+            source_rule = data.get("source_rule") or {}
+            if not isinstance(source_rule, dict):
+                source_rule = {}
+
+            rule_id = data.get("id") or source_rule.get("rule_id") or path.stem
+            if rule_id not in enabled_by_rule_id:
+                continue
+
+            extension = data.get(extension_key)
+            if not isinstance(extension, dict):
+                continue
+
+            targets = extension.get("targets") or {}
+            if not isinstance(targets, dict):
+                targets = {}
+
+            # Deployment manifest is the final tenant decision, so it overrides
+            # any enabled value coming from execution defaults or rule overrides.
+            targets["enabled"] = enabled_by_rule_id[rule_id]
+            extension["targets"] = targets
+            data[extension_key] = extension
+
+            with open(path, "w", encoding="utf-8") as file:
+                yaml.dump(
+                    self._prepare_for_dump(data),
+                    file,
+                    Dumper=_ArtifactYamlDumper,
+                    sort_keys=False,
+                    allow_unicode=True,
+                    width=4096,
+                )
 
     def _resolve_rules_root(self) -> Path:
         """Return the active detection rules root while supporting old folder names."""
@@ -119,17 +244,30 @@ class FileRuleRepository(RuleRepository):
                 return candidate
         return candidates[0]
 
-    def _resolve_tenant_rules_root(self, tenant_id: str) -> Path | None:
-        """Return the tenant artifact root while supporting legacy artifact layouts."""
+    def _resolve_tenant_rules_root(self, tenant_id: str, siem_id: str | None) -> Path | None:
+        """Return the tenant artifact root for one SIEM while supporting older layouts."""
         candidates = (
+            self._build_tenant_artifact_root(tenant_id, siem_id),
+            self.tenant_rules_path / tenant_id / "tenant-rules",
             self.tenant_rules_path / tenant_id / "tenant-rules" / "detections",
             self.tenant_rules_path / tenant_id / "tenant-rules" / "detection-raw",
-            self.tenant_rules_path / tenant_id,
         )
         for candidate in candidates:
             if candidate.exists():
                 return candidate
         return None
+
+    def _build_tenant_artifact_root(self, tenant_id: str, siem_id: str | None) -> Path:
+        """Return the current artifact directory for one tenant and one SIEM."""
+        return self.tenant_rules_path / tenant_id / self._normalize_siem_directory(siem_id)
+
+    def _resolve_render_roots(self) -> tuple[Path, ...]:
+        """Return source rule roots that participate in the hardcoded render flow."""
+        roots: list[Path] = []
+        for candidate in (self.base_path / "detections", self.base_path / "analysts"):
+            if candidate.exists():
+                roots.append(candidate)
+        return tuple(roots)
 
     def _scan_base_rules(self, root: Path) -> list[Rule]:
         if not root.exists():
@@ -170,3 +308,41 @@ class FileRuleRepository(RuleRepository):
                     return query, targets if isinstance(targets, dict) else {}
 
         return None, {}
+
+    def _normalize_status(self, value: object) -> str:
+        """Normalize rule status comparisons for export filtering."""
+        if not isinstance(value, str):
+            return ""
+        return value.strip().lower()
+
+    def _prepare_for_dump(self, value: object) -> object:
+        """Recursively mark multiline strings so artifact YAML stays human-readable.
+
+        Parameters:
+            value: Arbitrary document value before YAML serialization.
+
+        Returns:
+            The same logical document, but with multiline strings wrapped in a marker
+            type that the artifact dumper serializes using block style.
+        """
+        if isinstance(value, dict):
+            return {key: self._prepare_for_dump(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._prepare_for_dump(item) for item in value]
+        if isinstance(value, set):
+            return [self._prepare_for_dump(item) for item in sorted(value)]
+        if isinstance(value, str) and "\n" in value:
+            return _LiteralString(value)
+        return value
+
+    def _resolve_siem_extension_key(self, siem_id: str) -> str:
+        """Return the artifact extension key used for one tenant SIEM."""
+        if siem_id == "splunk":
+            return "x_splunk_es"
+        return f"x_{siem_id}"
+
+    def _normalize_siem_directory(self, siem_id: str | None) -> str:
+        """Return the directory name used for one tenant SIEM artifact tree."""
+        if isinstance(siem_id, str) and siem_id.strip():
+            return siem_id.strip()
+        return "_default"

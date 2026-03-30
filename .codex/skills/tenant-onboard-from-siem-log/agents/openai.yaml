@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tenant Onboard From SIEM Log"
+  short_description: "Combine tenant config and field binding"
+  default_prompt: "Use $tenant-onboard-from-siem-log to create or update tenant config and tenant field bindings from one SIEM log file or event sample."

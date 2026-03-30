@@ -1,0 +1,16 @@
+schema_version: 1.0
+
+device_id: cyble-ti
+
+datasets:
+  - dataset_id: cyble_alerts
+    description: Alerts generated from Cyble Threat Intelligence platform
+    category: threat-intelligence
+    log_type: security
+    enabled: true
+
+  - dataset_id: cyble_iocs
+    description: Indicators of Compromise (IOCs) from Cyble Threat Intelligence platform
+    category: threat-intelligence
+    log_type: security
+    enabled: true

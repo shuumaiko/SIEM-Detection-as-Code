@@ -1,4 +1,4 @@
-﻿# Tenant Component Architecture
+# Tenant Component Architecture
 
 > Vietnamese source: [tenants-relationship.md](../../architecture/tenants-relationship.md)
 
@@ -24,6 +24,7 @@ This document uses tenant `lab` as a reference example for the current data stat
 - map datasets to the actual SIEM ingestion model
 - map canonical fields to actual SIEM fields
 - apply tenant-specific filters during rendering
+- apply execution overrides or tenant-specific tuning during operation
 - determine which rules are enabled or disabled by tenant and SIEM
 - generate output under `artifacts/<tenant>/tenant-rules/`
 
@@ -42,6 +43,15 @@ tenants/
         *.yaml
       fields/
         *.yml
+    overrides/
+      execution/
+        <siem>/
+          ...
+      filter/
+        detections/
+          ...
+        analysts/
+          ...
     filters/
       detections/
         <category>/
@@ -58,6 +68,8 @@ In tenant `lab`, the current file groups are:
 - `logsources/*.yaml`
 - `bindings/ingest/*.yaml`
 - `bindings/fields/*.yml`
+- `overrides/execution/**`
+- `overrides/filter/**`
 - `deployments/rule-deployments.yaml`
 
 Current data snapshot of `lab` at the time of writing:
@@ -81,15 +93,17 @@ flowchart TD
     A --> E[bindings/fields/*.yml\nCanonical field to tenant SIEM field]
 
     A --> F[filters/detections/**\nTenant rule filters]
-    A --> G[deployments/rule-deployments.yaml\nRule deployment manifest]
+    A --> G[overrides/**\nTenant-specific overrides]
+    A --> H[deployments/rule-deployments.yaml\nRule deployment manifest]
 
-    H[Base rules] --> I[Rule rendering]
-    D --> H
-    E --> I
-    F --> I
-    G --> I
+    I[Base rules] --> J[Rule rendering]
+    D --> J
+    E --> J
+    F --> J
+    G --> J
+    H --> J
 
-    I --> J[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
+    J --> K[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
 ```
 
 ## 5. Data Components
@@ -106,7 +120,7 @@ Typical content:
 - `timezone`
 - `siem_id`
 - `default_index`
-- operational metadata such as `owner`, `contact`, `criticality`
+- operational metadata such as `owner`, `contact`, and `criticality`
 
 Role:
 
@@ -119,6 +133,7 @@ Relationships:
 - `tenant.yaml` 1-n `devices`
 - `tenant.yaml` 1-n `bindings`
 - `tenant.yaml` 1-n `filters`
+- `tenant.yaml` 1-n `overrides`
 - `tenant.yaml` 1-1 `deployments/rule-deployments.yaml`
 
 ### 5.2. `devices/*.yaml`
@@ -228,7 +243,7 @@ Relationships:
 
 ### 5.6. `filters/`
 
-`filters/` is the tenant rule filter layer applied during rendering.
+`filters/` is the tenant rule-filter layer applied during rendering.
 
 Standard structure:
 
@@ -244,7 +259,7 @@ Role:
 
 - constrain or refine base-rule logic according to tenant-specific characteristics
 - apply exceptions, allowlists, environment conditions, or source constraints
-- allow reuse of a `base rule` without maintaining a separate fork per tenant
+- allow reuse of a base rule without maintaining a separate fork per tenant
 
 Relationships:
 
@@ -252,7 +267,25 @@ Relationships:
 - `filters` is typically resolved by `category`, `product`, or the relevant source set
 - output after applying filters is written to `artifacts/<tenant>/tenant-rules/`
 
-### 5.7. `deployments/rule-deployments.yaml`
+### 5.7. `overrides/`
+
+`overrides/` is the tenant-specific tuning layer applied during rendering.
+
+Role:
+
+- adjust execution metadata for a specific tenant, such as schedule, severity, or risk score
+- add tenant-specific filter logic without forking the original semantic rule
+- support operational SOC tuning at the tenant level
+
+Principles:
+
+- tenant overrides should contain only the delta from the base rule or base execution configuration
+- tenant overrides are the final tuning layer in the render process
+- tenant overrides do not replace the role of `deployments/rule-deployments.yaml`
+
+Additional detail on override behavior is described in [execution-relationship.md](./execution-relationship.md) and in the Vietnamese rendering-flow reference [rule-rendering-flows.md](../../architecture/rule-rendering-flows.md).
+
+### 5.8. `deployments/rule-deployments.yaml`
 
 This file stores rule enable or disable decisions by SIEM under `rule_deployments_by_siem`.
 
@@ -279,10 +312,10 @@ The current tenant model revolves around 4 primary keys:
 
 | Key | Appears in | Meaning |
 | --- | --- | --- |
-| `tenant_id` | `tenant.yaml`, `devices`, `bindings`, `deployments` | tenant identifier |
+| `tenant_id` | `tenant.yaml`, `devices`, `bindings`, `deployments`, `overrides` | tenant identifier |
 | `device_id` | `devices`, `logsources`, `bindings` | log-source or platform identifier |
 | `dataset_id` | `logsources`, `bindings` | logical dataset identifier for a device |
-| `siem_id` | `tenant.yaml`, `bindings`, `deployments` | target SIEM identifier |
+| `siem_id` | `tenant.yaml`, `bindings`, `deployments`, `overrides/execution` | target SIEM identifier |
 
 ## 7. Standard Processing Sequence
 
@@ -294,11 +327,11 @@ The standard processing sequence of the tenant layer is as follows:
 4. Resolve `bindings/ingest/*.yaml` to map each `dataset_id` to `index` and `sourcetype` on the target SIEM.
 5. Resolve `bindings/fields/*.yml` to map canonical fields to the tenant's actual fields.
 6. Read `deployments/rule-deployments.yaml` to obtain rule enable or disable decisions by `siem_id`.
-7. Load `filters/` to apply tenant-specific filters during rendering.
-8. Combine base rules, ingest bindings, field bindings, tenant filters, and deployment decisions.
+7. Load `filters/` and `overrides/` to apply tenant-specific filters or tenant-specific tuning during rendering.
+8. Combine base rules, ingest bindings, field bindings, tenant filters, tenant overrides, and deployment decisions.
 9. Generate output under `artifacts/<tenant>/tenant-rules/`.
 
-## 8. Reference Data Flow Example
+## 8. Reference Data-Flow Example
 
 Example using `eset-ra`:
 
@@ -307,31 +340,33 @@ Example using `eset-ra`:
 3. `bindings/ingest/binding_eset_ra.yaml` maps `eset-ra-alerts` to `index: epav` and `sourcetype: eset:ra` on `splunk`.
 4. `bindings/fields/*.yml`, if present, maps the rule's canonical fields to tenant-specific fields.
 5. `filters/detections/...`, if present, adds tenant-specific conditions or exceptions during rendering.
-6. `deployments/rule-deployments.yaml` determines which rules are enabled for `splunk`.
-7. The rendered output is written to `artifacts/lab/tenant-rules/...`.
+6. `overrides/execution/...`, if present, adjusts tenant-specific execution metadata.
+7. `deployments/rule-deployments.yaml` determines which rules are enabled for `splunk`.
+8. The rendered output is written to `artifacts/lab/tenant-rules/...`.
 
 ## 9. Distinction Between `tenants/` and `artifacts/`
 
-- `tenants/` is the tenant input configuration layer
+- `tenants/` is the tenant input-configuration layer
 - `filters/` under `tenants/` is input used during rendering
+- `overrides/` under `tenants/` is tuning input used during rendering
 - `artifacts/<tenant>/tenant-rules/` is the output layer already rendered for the tenant
 
 In summary:
 
 - `tenants/` stores configuration and rendering policy
-- `artifacts/` stores the result after applying mappings, filters, and deployment decisions
+- `artifacts/` stores the result after applying mappings, filters, execution, and deployment decisions
 
 ## 10. Conclusion
 
 In the current architecture:
 
-- a `tenant` owns `devices`
+- a tenant owns `devices`
 - each `device` has a `logsource`
-- an `ingest binding` connects a `logsource dataset` to the actual SIEM ingestion model
-- a `field binding` connects canonical fields to tenant-specific fields
+- an ingest binding connects a logsource dataset to the actual SIEM ingestion model
+- a field binding connects canonical fields to tenant-specific fields
 - `filters` refine base rules during rendering
+- `overrides` tune execution or logic during rendering
 - `deployment` determines which rules are allowed to continue
 - the final output is materialized under `artifacts/<tenant>/tenant-rules`
 
 This document is the normative reference for all changes related to tenant structure, tenant bindings, and tenant-driven rendering in the repository.
-

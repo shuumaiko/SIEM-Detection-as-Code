@@ -1,0 +1,10 @@
+schema_version: 1.0
+
+device_id: mcafee-epo
+
+datasets:
+  - dataset_id: mcafee-epo-syslog
+    description: McAfee ePO syslog events
+    category: antivirus
+    log_type: security
+    enabled: true

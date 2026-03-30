@@ -66,6 +66,22 @@ Decision hint:
 
 - Keep per-file-type schemas for tenant data unless the user explicitly requests consolidation.
 
+## Artifact Files
+
+- Artifact template:
+  - `artifacts/default.yml`
+- Current rendered samples:
+  - `artifacts/*/tenant-rules/**/*.yml`
+  - `artifacts/*/tenant-rules/**/*.yaml`
+- Current schema target:
+  - `schema/artifacts/artifact.schema.json`
+
+Decision hint:
+
+- Prefer one artifact envelope schema per rendered artifact family.
+- Treat `artifacts/default.yml` and the current render flow as the contract source of truth.
+- Call out drift when older rendered samples still look like flattened source rules instead of the documented envelope.
+
 ## Notes To Reuse
 
 - Read `docs/note/repo-gap-review-2026-03-23.md` when the task is about rule schema drift or split-vs-unified rule contracts.

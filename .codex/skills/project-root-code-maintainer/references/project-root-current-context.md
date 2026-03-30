@@ -2,8 +2,9 @@
 
 ## Repository Truth
 
-- Prefer `docs/architecture/project-architecture.md` when the documented repository model conflicts with legacy assumptions inside `project-root/`.
+- Prefer `docs/architecture/project-architecture.md` when the documented repository model conflicts with older assumptions inside `project-root/`.
 - Treat `project-root/` as a Clean Architecture-oriented skeleton that already exposes useful boundaries, but still contains transitional logic and compatibility behavior.
+- Treat all repository folders named `legacy/` as historical-only concepts. Do not use them to infer the real architecture, the default runtime path, or the current business contract unless the user explicitly asks for legacy compatibility or migration work.
 
 ## Current Main Flows
 
@@ -60,7 +61,7 @@ Validate rule YAML format and schema compatibility for detection and analyst rul
 ## Important Transitional Patterns
 
 - Several use cases and services are thin pass-through wrappers. Do not add more layers unless the task gains clear business value.
-- `FileTenantRepository` and `FileRuleRepository` currently normalize both newer and older on-disk layouts. Preserve compatibility unless the task explicitly retires a legacy path and the tests are updated with it.
+- `FileTenantRepository` and `FileRuleRepository` may still contain compatibility helpers for older layouts inside active code. Preserve only the compatibility that is already part of current runtime contracts; do not reintroduce or depend on on-disk `legacy/` folders unless the user explicitly requests it.
 - `RuleDeploymentBuilder` currently owns target resolution, deployment payload shaping, and query placeholder replacement such as `$INDEX$` and `$SOURCETYPE$`.
 - Validators are self-contained application services that walk files, load schemas, and emit structured result dictionaries.
 

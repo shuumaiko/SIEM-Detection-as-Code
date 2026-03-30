@@ -1,0 +1,10 @@
+schema_version: 1.0
+tenant_id: lab
+siem_id: splunk
+device_id: eset-ra
+default_field_mapping:
+  time: _time
+  canonical.event.action: action_taken
+  malware.name: threat_name
+  device.hostname: hostname
+  device.ip: ipv4

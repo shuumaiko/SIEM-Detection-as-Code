@@ -1,0 +1,14 @@
+schema_version: 1.0
+tenant_id: demo
+device_id: checkpoint-fw
+siem_id: splunk
+
+datasets:
+  - dataset_id: traffic
+    index: checkpoint
+    sourcetype: cp_log
+    source: checkpoint-log.csv
+    metadata:
+      observed_product: Firewall
+      observed_hostname: CP-SMC
+      observed_vendor_product: checkpoint
