@@ -280,6 +280,7 @@ When working with the repository in its current state, the recommended reading o
 
 - Treat `rules/`, `mappings/`, `execution/`, and `tenants/` as the main data layers of the repository.
 - Do not treat `artifacts/` as the long-term place for manual edits; it is tenant-rendered output.
+- For OCSF-driven mapping work, prefer cloning `ocsf-schema` into `.tmp/ocsf-schema` so the `detection-mapping-ocsf` skill can use a stable local reference.
 - When adding a new rule, try to identify clearly:
   - the detection intent
   - the source rule fields being used

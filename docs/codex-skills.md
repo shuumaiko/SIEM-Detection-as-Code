@@ -48,6 +48,10 @@ Dùng khi:
 
 ### `detection-mapping-ocsf`
 
+Khuyến nghị:
+- clone `ocsf-schema` vào `.tmp/ocsf-schema` khi muốn skill có local OCSF reference ổn định
+
+
 Mục đích:
 - viết hoặc cập nhật detection field mapping theo OCSF hoặc canonical field của repo
 
