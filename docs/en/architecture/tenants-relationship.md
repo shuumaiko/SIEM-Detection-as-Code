@@ -26,7 +26,7 @@ This document uses tenant `lab` as a reference example for the current data stat
 - apply tenant-specific filters during rendering
 - apply execution overrides or tenant-specific tuning during operation
 - determine which rules are enabled or disabled by tenant and SIEM
-- generate output under `artifacts/<tenant>/tenant-rules/`
+- generate output under `artifacts/<tenant>/<siem-id>/`
 
 ## 3. Standard Structure
 
@@ -103,7 +103,7 @@ flowchart TD
     G --> J
     H --> J
 
-    J --> K[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
+    J --> K[artifacts/<tenant>/<siem-id>/\nRendered tenant rules]
 ```
 
 ## 5. Data Components
@@ -265,7 +265,7 @@ Relationships:
 
 - `filters` participates directly in the rendering step
 - `filters` is typically resolved by `category`, `product`, or the relevant source set
-- output after applying filters is written to `artifacts/<tenant>/tenant-rules/`
+- output after applying filters is written to `artifacts/<tenant>/<siem-id>/`
 
 ### 5.7. `overrides/`
 
@@ -276,6 +276,11 @@ Role:
 - adjust execution metadata for a specific tenant, such as schedule, severity, or risk score
 - add tenant-specific filter logic without forking the original semantic rule
 - support operational SOC tuning at the tenant level
+
+In the current hardcoded-query flow of `project-root/`:
+
+- `overrides/filter/**` may provide `query_modifiers.<siem>.search_query` to replace the hardcoded query before tenant field mapping runs
+- `overrides/execution/**` adjusts execution metadata such as `enabled`, `display_name`, `schedule`, and `notable`
 
 Principles:
 
@@ -329,7 +334,7 @@ The standard processing sequence of the tenant layer is as follows:
 6. Read `deployments/rule-deployments.yaml` to obtain rule enable or disable decisions by `siem_id`.
 7. Load `filters/` and `overrides/` to apply tenant-specific filters or tenant-specific tuning during rendering.
 8. Combine base rules, ingest bindings, field bindings, tenant filters, tenant overrides, and deployment decisions.
-9. Generate output under `artifacts/<tenant>/tenant-rules/`.
+9. Generate output under `artifacts/<tenant>/<siem-id>/`.
 
 ## 8. Reference Data-Flow Example
 
@@ -342,14 +347,14 @@ Example using `eset-ra`:
 5. `filters/detections/...`, if present, adds tenant-specific conditions or exceptions during rendering.
 6. `overrides/execution/...`, if present, adjusts tenant-specific execution metadata.
 7. `deployments/rule-deployments.yaml` determines which rules are enabled for `splunk`.
-8. The rendered output is written to `artifacts/lab/tenant-rules/...`.
+8. The rendered output is written to `artifacts/lab/splunk/...`.
 
 ## 9. Distinction Between `tenants/` and `artifacts/`
 
 - `tenants/` is the tenant input-configuration layer
 - `filters/` under `tenants/` is input used during rendering
 - `overrides/` under `tenants/` is tuning input used during rendering
-- `artifacts/<tenant>/tenant-rules/` is the output layer already rendered for the tenant
+- `artifacts/<tenant>/<siem-id>/` is the output layer already rendered for the tenant
 
 In summary:
 
@@ -367,6 +372,6 @@ In the current architecture:
 - `filters` refine base rules during rendering
 - `overrides` tune execution or logic during rendering
 - `deployment` determines which rules are allowed to continue
-- the final output is materialized under `artifacts/<tenant>/tenant-rules`
+- the final output is materialized under `artifacts/<tenant>/<siem-id>`
 
 This document is the normative reference for all changes related to tenant structure, tenant bindings, and tenant-driven rendering in the repository.

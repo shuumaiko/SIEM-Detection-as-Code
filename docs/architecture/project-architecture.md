@@ -59,7 +59,7 @@ Trục này mô tả hiện trạng triển khai thực tế của từng tenant
 - `bindings/ingest/`: ánh xạ `dataset_id` sang ingest target thực tế như `index`, `sourcetype`
 - `bindings/fields/`: ánh xạ canonical field sang field thực tế trên SIEM
 - `filters/`: tenant-specific filter áp dụng trong quá trình render
-- `overrides/`: tenant-specific tuning cho execution hoặc filter logic
+- `overrides/`: tenant-specific tuning cho execution hoặc hardcoded-query/filter logic
 - `deployments/rule-deployments.yaml`: manifest bật hoặc tắt rule theo SIEM
 
 Trục này trả lời các câu hỏi chính:
@@ -109,7 +109,7 @@ flowchart LR
     D --> H
     F --> H
 
-    H --> J[artifacts/<tenant>/tenant-rules]
+    H --> J[artifacts/<tenant>/<siem-id>]
     H --> K[deployments/rule-deployments.yaml]
 
     L[project-root/\nCLI + use cases + services] --> H
@@ -229,9 +229,9 @@ Pipeline kiến trúc hiện tại có thể được mô tả ngắn gọn như
 5. Resolve ingest binding từ `tenants/.../bindings/ingest/`.
 6. Resolve field binding từ `tenants/.../bindings/fields/`.
 7. Resolve execution policy từ `execution/<siem>/`.
-8. Áp tenant filters hoặc tenant overrides nếu có.
+8. Áp tenant filters hoặc tenant overrides nếu có. Trong hardcoded-query flow hiện tại, `overrides/filter/` có thể override `search_query` trước bước tenant field mapping.
 9. Đọc `deployments/rule-deployments.yaml` để chọn tập rule bật cho tenant.
-10. Render output vào `artifacts/<tenant>/tenant-rules/`.
+10. Render output vào `artifacts/<tenant>/<siem-id>/`.
 11. Nếu cần, dùng adapter trong `project-root/` để export hoặc deploy sang SIEM đích.
 
 Chi tiết cách render theo từng mode được mô tả trong [rule-rendering-flows.md](./rule-rendering-flows.md).

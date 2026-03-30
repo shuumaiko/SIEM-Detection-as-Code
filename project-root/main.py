@@ -55,6 +55,9 @@ def build_app() -> tuple[object, object, object, object, object]:
     )
     from infrastructure.file_loader.execution_config_loader import ExecutionConfigLoader
     from infrastructure.file_loader.registry_loader import RegistryLoader
+    from infrastructure.file_loader.tenant_filter_override_loader import (
+        TenantFilterOverrideLoader,
+    )
     from infrastructure.repositories.file_rule_repository import FileRuleRepository
     from infrastructure.repositories.file_tenant_repository import FileTenantRepository
     from infrastructure.siem.splunk_adapter import SplunkAdapter
@@ -74,9 +77,13 @@ def build_app() -> tuple[object, object, object, object, object]:
         execution_root=workspace_root / "execution",
         tenants_root=workspace_root / "tenants",
     )
+    tenant_filter_override_loader = TenantFilterOverrideLoader(
+        tenants_root=workspace_root / "tenants"
+    )
     deployment_builder = RuleDeploymentBuilder(
         registry_loader=registry_loader,
         detection_field_mapping_loader=detection_field_mapping_loader,
+        tenant_filter_override_loader=tenant_filter_override_loader,
     )
     artifact_service = RuleArtifactService(execution_loader=execution_loader)
     siem_adapter = SplunkAdapter()

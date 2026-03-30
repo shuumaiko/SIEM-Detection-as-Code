@@ -26,7 +26,7 @@ Trình tự mục tiêu:
 7. Áp tenant filter hoặc tenant override nếu có.
 8. Dùng converter hoặc renderer để sinh query theo SIEM từ semantic rule.
 9. Resolve execution policy từ `execution/<siem>/`.
-10. Render output vào `artifacts/<tenant>/tenant-rules/`.
+10. Render output vào `artifacts/<tenant>/<siem-id>/`.
 
 Luồng này giữ separation tốt nhất giữa:
 
@@ -43,10 +43,18 @@ Trình tự thực tế:
 
 1. Nạp source rule từ `rules/detections/` và `rules/analysts/`.
 2. Chỉ chọn các rule có status phù hợp với current render flow, hiện chủ yếu là `stable`.
-3. Đọc hardcoded query từ `x_query` hoặc execution payload đã có sẵn theo SIEM hiện tại.
-4. Resolve ingest binding để bổ sung `index`, `sourcetype`, `device_id`, `dataset_id`.
-5. Chỉ render các target có field binding hợp lệ.
-6. Resolve execution config theo thứ tự:
+3. Đọc hardcoded query từ `x_query` hoặc payload SIEM-specific đã có sẵn trên rule.
+4. Nếu có tenant filter override trong `tenants/<tenant>/overrides/filter/`, dùng `query_modifiers.<siem>.search_query` để override hardcoded query trước bước map field.
+5. Resolve ingest binding để bổ sung `index`, `sourcetype`, `device_id`, `dataset_id`.
+6. Chỉ render các target có field binding hợp lệ và rewrite field trong hardcoded query theo chuỗi:
+
+```text
+source rule field
+  -> canonical field
+  -> tenant SIEM field
+```
+
+7. Resolve execution config theo thứ tự:
 
 ```text
 execution/<siem>/defaults.yaml
@@ -54,9 +62,9 @@ execution/<siem>/defaults.yaml
   <= tenants/<tenant>/overrides/execution/...
 ```
 
-7. Sinh output vào `artifacts/<tenant>/tenant-rules/` theo envelope artifact hiện tại.
-8. Refresh `deployments/rule-deployments.yaml`.
-9. Đồng bộ trạng thái `enabled` từ deployment manifest ngược vào artifact.
+8. Sinh output vào `artifacts/<tenant>/<siem-id>/` theo envelope artifact hiện tại.
+9. Refresh `deployments/rule-deployments.yaml`.
+10. Đồng bộ trạng thái `enabled` từ deployment manifest ngược vào artifact.
 
 ## 4. Phân tách vai trò giữa các lớp
 
@@ -68,11 +76,13 @@ Trong current hardcoded-query flow:
 - `bindings/ingest/` giữ ingest target thực tế
 - `execution/` giữ metadata thực thi như schedule, severity, risk score
 - `deployments/rule-deployments.yaml` giữ quyết định enablement cuối cùng
-- `artifacts/` giữ output cuối cùng sau render
+- `artifacts/` giữ output cuối cùng sau render, hiện theo root `artifacts/<tenant>/<siem-id>/`
 
 ## 5. Ghi chú quan trọng
 
 - Hardcoded query là execution artifact chuyển tiếp, không thay thế semantic rule.
+- Trong hardcoded-query flow hiện tại, `tenants/<tenant>/overrides/filter/` có thể override trực tiếp `search_query` trước bước field mapping.
+- Engine hiện tại mới consume phần `query_modifiers.<siem>.search_query` của tenant filter override; các block như `detection_filters` và `append_condition` vẫn là contract dữ liệu, chưa được dựng thành semantic render flow tổng quát.
 - Việc giữ hai luồng không có nghĩa kiến trúc bị thay đổi; đây là cách tài liệu phản ánh đúng cả target design lẫn current operational state.
 - Artifact hiện tại nên được hiểu theo `artifacts/default.yml`, không theo flattened legacy artifacts.
 

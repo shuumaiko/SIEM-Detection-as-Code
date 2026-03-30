@@ -17,7 +17,7 @@ metadata:
   - attack.execution
   - attack.t1204
   owner: Florian Roth (Nextron Systems), Arnim Rupp
-  last_rendered: '2026-03-30T07:55:35Z'
+  last_rendered: '2026-03-30T09:34:57Z'
 x_splunk_es:
   targets:
     ingest_targets:

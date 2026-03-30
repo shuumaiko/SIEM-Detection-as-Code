@@ -12,3 +12,7 @@ detection_filters:
       - 10.10.10.0/24
 
 append_condition: and not exclude_trusted_admin_subnet
+
+query_modifiers:
+  splunk:
+    search_query: service=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")) NOT src_ip IN (10.10.10.0/24)

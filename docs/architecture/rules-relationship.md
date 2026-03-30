@@ -216,7 +216,8 @@ Tuy nhiên, trong giai đoạn hiện tại, `rules/` vẫn có thể chứa `x_
 
 Khi render thực tế:
 
-- tenant filter có thể tinh chỉnh logic theo ngữ cảnh tenant
+- tenant filter hoặc `overrides/filter/` có thể tinh chỉnh logic theo ngữ cảnh tenant
+- trong hardcoded-query flow hiện tại, `overrides/filter/` có thể thay trực tiếp `search_query` trước bước map field `source rule field -> canonical field -> tenant SIEM field`
 - tenant execution override có thể tinh chỉnh metadata thực thi
 
 Nhưng các lớp đó không thay thế semantic ownership của `rules/`.

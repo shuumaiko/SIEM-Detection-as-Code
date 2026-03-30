@@ -2,6 +2,7 @@ import re
 
 from infrastructure.file_loader.detection_field_mapping_loader import DetectionFieldMappingLoader
 from infrastructure.file_loader.registry_loader import RegistryLoader
+from infrastructure.file_loader.tenant_filter_override_loader import TenantFilterOverrideLoader
 
 
 class RuleDeploymentBuilder:
@@ -57,10 +58,12 @@ class RuleDeploymentBuilder:
         self,
         registry_loader: RegistryLoader,
         detection_field_mapping_loader: DetectionFieldMappingLoader | None = None,
+        tenant_filter_override_loader: TenantFilterOverrideLoader | None = None,
     ) -> None:
         """Store loaders used for ingest target resolution and query field mapping."""
         self.registry_loader = registry_loader
         self.detection_field_mapping_loader = detection_field_mapping_loader
+        self.tenant_filter_override_loader = tenant_filter_override_loader
 
     def build(self, tenant, exported_rules: list[dict]) -> tuple[list[dict], dict]:
         """Return rendered rule payloads with resolved targets plus one deployment manifest.
@@ -87,6 +90,11 @@ class RuleDeploymentBuilder:
             if not rule_id or rule_id in seen_rule_ids:
                 continue
             seen_rule_ids.add(rule_id)
+
+            # Apply tenant query tuning before field rewriting so override queries
+            # can still use source-rule field names and flow through the normal
+            # source -> canonical -> tenant field translation.
+            self._apply_tenant_filter_override(tenant, mapped)
             mapping = self._resolve_mapping(tenant, mapped)
             expanded_mappings = self._expand_mappings(mapping)
             for expanded_mapping in expanded_mappings:
@@ -114,6 +122,33 @@ class RuleDeploymentBuilder:
             "rule_deployments_by_siem": {tenant.siem_id or "": deployments},
         }
         return mapped_rules, payload
+
+    def _apply_tenant_filter_override(self, tenant, item: dict) -> None:
+        """Replace one hardcoded query with a tenant filter override when present.
+
+        Parameters:
+            tenant: Active tenant whose `overrides/filter/` tree may contain a rule override.
+            item: Flat render payload that still uses source-rule field names in its query.
+
+        Side effects:
+            Updates `item["search_query"]` in place when a tenant filter override
+            provides `query_modifiers.<siem>.search_query` for the current rule.
+        """
+        if self.tenant_filter_override_loader is None:
+            return
+
+        rule_id = item.get("id")
+        if not isinstance(rule_id, str) or not rule_id:
+            return
+
+        override_query = self.tenant_filter_override_loader.load_query_override(
+            tenant_id=getattr(tenant, "tenant_id", ""),
+            siem_id=getattr(tenant, "siem_id", "") or "",
+            rule_id=rule_id,
+            rule_name=item.get("source_rule_name"),
+        )
+        if override_query:
+            item["search_query"] = override_query
 
     def _expand_mappings(self, mapping: dict) -> list[dict]:
         """Split one resolved mapping into per-target variants when needed.

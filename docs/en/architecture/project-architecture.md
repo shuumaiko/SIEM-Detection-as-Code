@@ -59,7 +59,7 @@ This axis describes the effective deployment state of each tenant:
 - `bindings/ingest/`: mappings from `dataset_id` to actual ingestion targets such as `index` and `sourcetype`
 - `bindings/fields/`: mappings from canonical fields to actual SIEM fields
 - `filters/`: tenant-specific filters applied during rendering
-- `overrides/`: tenant-specific tuning for execution or filter behavior
+- `overrides/`: tenant-specific tuning for execution or hardcoded-query/filter behavior
 - `deployments/rule-deployments.yaml`: manifest that enables or disables rules by SIEM
 
 This axis answers the following questions:
@@ -109,7 +109,7 @@ flowchart LR
     D --> H
     F --> H
 
-    H --> J[artifacts/<tenant>/tenant-rules]
+    H --> J[artifacts/<tenant>/<siem-id>]
     H --> K[deployments/rule-deployments.yaml]
 
     L[project-root/\nCLI + use cases + services] --> H
@@ -229,9 +229,9 @@ The current architectural pipeline can be summarized as follows:
 5. Resolve ingest bindings from `tenants/.../bindings/ingest/`.
 6. Resolve field bindings from `tenants/.../bindings/fields/`.
 7. Resolve execution policy from `execution/<siem>/`.
-8. Apply tenant filters or tenant overrides when present.
+8. Apply tenant filters or tenant overrides when present. In the current hardcoded-query flow, `overrides/filter/` can override `search_query` before tenant field mapping runs.
 9. Read `deployments/rule-deployments.yaml` to determine which rules are enabled for the tenant.
-10. Render output into `artifacts/<tenant>/tenant-rules/`.
+10. Render output into `artifacts/<tenant>/<siem-id>/`.
 11. If required, use adapters in `project-root/` to export or deploy to the target SIEM.
 
 ## 7. Architectural Principles

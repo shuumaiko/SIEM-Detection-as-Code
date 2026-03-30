@@ -26,7 +26,7 @@ Tài liệu này sử dụng tenant `lab` như một ví dụ tham chiếu cho t
 - áp filter đặc thù theo tenant trong quá trình render
 - áp override execution hoặc tenant-specific tuning trong quá trình vận hành
 - xác định tập rule được bật hoặc tắt theo tenant và SIEM
-- sinh output vào `artifacts/<tenant>/tenant-rules/`
+- sinh output vào `artifacts/<tenant>/<siem-id>/`
 
 ## 3. Cấu trúc chuẩn
 
@@ -103,7 +103,7 @@ flowchart TD
     G --> J
     H --> J
 
-    J --> K[artifacts/<tenant>/tenant-rules/\nRendered tenant rules]
+    J --> K[artifacts/<tenant>/<siem-id>/\nRendered tenant rules]
 ```
 
 ## 5. Thành phần dữ liệu
@@ -265,7 +265,7 @@ Quan hệ:
 
 - `filters` tham gia trực tiếp vào bước render rule
 - `filters` thường được tra cứu theo `category`, `product`, hoặc tập nguồn log tương ứng
-- output sau khi áp filter được ghi vào `artifacts/<tenant>/tenant-rules/`
+- output sau khi áp filter được ghi vào `artifacts/<tenant>/<siem-id>/`
 
 ### 5.7. `overrides/`
 
@@ -276,6 +276,11 @@ Vai trò:
 - điều chỉnh execution metadata cho riêng tenant như schedule, severity, risk score
 - bổ sung tenant-specific filter logic mà không phải fork semantic rule gốc
 - hỗ trợ tuning trong quá trình vận hành SOC theo tenant
+
+Trong hardcoded-query flow hiện tại của `project-root/`:
+
+- `overrides/filter/**` có thể cung cấp `query_modifiers.<siem>.search_query` để thay thế hardcoded query trước bước field mapping theo tenant
+- `overrides/execution/**` điều chỉnh execution metadata như `enabled`, `display_name`, `schedule`, và `notable`
 
 Nguyên tắc:
 
@@ -329,7 +334,7 @@ Trình tự xử lý chuẩn của tenant layer được mô tả như sau:
 6. Đọc `deployments/rule-deployments.yaml` để lấy trạng thái bật hoặc tắt rule theo `siem_id`.
 7. Nạp `filters/` và `overrides/` để áp tenant-specific filter hoặc tenant-specific tuning trong quá trình render.
 8. Kết hợp base rules, ingest bindings, field bindings, tenant filters, tenant overrides, và deployment decision.
-9. Sinh output vào `artifacts/<tenant>/tenant-rules/`.
+9. Sinh output vào `artifacts/<tenant>/<siem-id>/`.
 
 ## 8. Ví dụ luồng dữ liệu tham chiếu
 
@@ -342,14 +347,14 @@ Ví dụ với `eset-ra`:
 5. `filters/detections/...`, nếu có, bổ sung điều kiện hoặc ngoại lệ riêng cho tenant trong lúc render.
 6. `overrides/execution/...`, nếu có, điều chỉnh metadata thực thi riêng cho tenant.
 7. `deployments/rule-deployments.yaml` quyết định rule nào được bật cho `splunk`.
-8. Kết quả render được ghi vào `artifacts/lab/tenant-rules/...`.
+8. Kết quả render được ghi vào `artifacts/lab/splunk/...`.
 
 ## 9. Phân biệt `tenants/` và `artifacts/`
 
 - `tenants/` là lớp cấu hình đầu vào theo tenant
 - `filters/` trong `tenants/` là input dùng trong quá trình render
 - `overrides/` trong `tenants/` là input tuning dùng trong quá trình render
-- `artifacts/<tenant>/tenant-rules/` là lớp output đã được render cho tenant
+- `artifacts/<tenant>/<siem-id>/` là lớp output đã được render cho tenant
 
 Diễn giải ở mức kiến trúc:
 
@@ -367,6 +372,6 @@ Trong kiến trúc hiện tại:
 - `filters` tinh chỉnh base rule trong lúc render
 - `overrides` tinh chỉnh execution hoặc logic theo tenant trong lúc render
 - `deployment` quyết định rule nào được đi tiếp
-- output cuối cùng được materialize trong `artifacts/<tenant>/tenant-rules`
+- output cuối cùng được materialize trong `artifacts/<tenant>/<siem-id>`
 
 Tài liệu này là chuẩn tham chiếu cho mọi thay đổi liên quan đến cấu trúc tenant, tenant binding, và cơ chế render theo tenant trong repository.

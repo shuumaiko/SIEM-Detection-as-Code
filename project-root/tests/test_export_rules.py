@@ -9,6 +9,7 @@ from app.usecases.export_rules import ExportRulesUseCase
 from infrastructure.file_loader.detection_field_mapping_loader import DetectionFieldMappingLoader
 from infrastructure.file_loader.execution_config_loader import ExecutionConfigLoader
 from infrastructure.file_loader.registry_loader import RegistryLoader
+from infrastructure.file_loader.tenant_filter_override_loader import TenantFilterOverrideLoader
 from infrastructure.repositories.file_rule_repository import FileRuleRepository
 from infrastructure.repositories.file_tenant_repository import FileTenantRepository
 
@@ -22,6 +23,15 @@ def test_gen_artifact_writes_per_rule_artifacts_and_returns_summary() -> None:
 
     tenants_root = test_root / "tenants"
     shutil.copytree(workspace_root / "tenants" / "lab", tenants_root / "lab")
+    _write_filter_override(
+        tenants_root / "lab" / "overrides" / "filter" / "detections" / "fw_connection_port_23.filter.yaml",
+        rule_id="2a129a58-7725-48c9-8b3a-0a2264522a68",
+        rule_name="fw_connection_port_23",
+        search_query=(
+            'dst_port=23 NOT (action IN ("blocked", "dropped", "denied", "dropped", "deny")) '
+            "NOT src IN (10.10.10.0/24)"
+        ),
+    )
     rules_root = test_root / "rules"
     _write_rule_fixture(
         workspace_root / "rules" / "detections" / "network" / "firewall" / "base" / "fw_connection_port_23.yml",
@@ -59,6 +69,7 @@ def test_gen_artifact_writes_per_rule_artifacts_and_returns_summary() -> None:
         detection_field_mapping_loader=DetectionFieldMappingLoader(
             workspace_root / "mappings" / "detections"
         ),
+        tenant_filter_override_loader=TenantFilterOverrideLoader(tenants_root),
     )
     artifact_service = RuleArtifactService(
         execution_loader=ExecutionConfigLoader(
@@ -172,7 +183,9 @@ def test_gen_artifact_writes_per_rule_artifacts_and_returns_summary() -> None:
     assert "$index$" not in firewall_doc["x_splunk_es"]["search_query"]
     assert "$sourcetype$" not in firewall_doc["x_splunk_es"]["search_query"]
     assert "service=23" in firewall_doc["x_splunk_es"]["search_query"]
+    assert "src_ip IN (10.10.10.0/24)" in firewall_doc["x_splunk_es"]["search_query"]
     assert "dst_port=23" not in firewall_doc["x_splunk_es"]["search_query"]
+    assert "src IN (10.10.10.0/24)" not in firewall_doc["x_splunk_es"]["search_query"]
 
     assert analyst_doc["artifact_type"] == "tenant_rule"
     assert analyst_doc["source_rule"]["rule_id"] == "faee897b-2394-45cf-ae5d-0379476fbf3e"
@@ -234,6 +247,7 @@ def test_gen_artifact_splits_multi_logsource_rules_per_device() -> None:
         detection_field_mapping_loader=DetectionFieldMappingLoader(
             workspace_root / "mappings" / "detections"
         ),
+        tenant_filter_override_loader=TenantFilterOverrideLoader(tenants_root),
     )
     artifact_service = RuleArtifactService(
         execution_loader=ExecutionConfigLoader(
@@ -346,6 +360,7 @@ def test_gen_artifact_skips_targets_without_field_mapping() -> None:
         detection_field_mapping_loader=DetectionFieldMappingLoader(
             workspace_root / "mappings" / "detections"
         ),
+        tenant_filter_override_loader=TenantFilterOverrideLoader(tenants_root),
     )
     artifact_service = RuleArtifactService(
         execution_loader=ExecutionConfigLoader(
@@ -442,6 +457,7 @@ def test_gen_artifact_skips_targets_without_required_query_field_bindings() -> N
         detection_field_mapping_loader=DetectionFieldMappingLoader(
             workspace_root / "mappings" / "detections"
         ),
+        tenant_filter_override_loader=TenantFilterOverrideLoader(tenants_root),
     )
     artifact_service = RuleArtifactService(
         execution_loader=ExecutionConfigLoader(
@@ -500,3 +516,30 @@ def _set_rule_enabled_state(deployment_path: Path, rule_id: str, enabled: bool) 
 
     with open(deployment_path, "w", encoding="utf-8") as file:
         yaml.safe_dump(document, file, sort_keys=False, allow_unicode=True, width=4096)
+
+
+def _write_filter_override(
+    target_path: Path,
+    rule_id: str,
+    rule_name: str,
+    search_query: str,
+) -> None:
+    """Write one tenant filter override used by render regression tests."""
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(target_path, "w", encoding="utf-8") as file:
+        yaml.safe_dump(
+            {
+                "tenant_id": "lab",
+                "rule_id": rule_id,
+                "rule_name": rule_name,
+                "query_modifiers": {
+                    "splunk": {
+                        "search_query": search_query,
+                    }
+                },
+            },
+            file,
+            sort_keys=False,
+            allow_unicode=True,
+            width=4096,
+        )
