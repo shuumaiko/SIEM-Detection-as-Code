@@ -77,3 +77,4 @@ x_query:
         | convert timeformat="%Y-%m-%d %H:%M:00" ctime(_time) as Time
         | eval Alert_Severity="Critical"
         | stats values(file_name) as file_name values(file_path) as file_path values(file_hash) as file_hash values(hostname) as hostname values(ipv4) as ipv4 values(user) as user values(action_taken) as action_taken count by Alert_Severity Time signature
+version: 1.0.0

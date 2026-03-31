@@ -85,3 +85,4 @@ x_query:
         | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) as Time
         | eval Alert_Severity="Critical"
         | stats values(file_name) as file_name values(file_hash) as file_hash values(action_taken) as action_taken values(signature) as signature values(host) as host values(hostname) as hostname count by Alert_Severity Time
+version: 1.0.0

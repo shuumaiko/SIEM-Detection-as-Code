@@ -47,3 +47,4 @@ x_query:
     | eval dest_port=mvindex(dest_port,0,9)
     | where count > 200000
     | sort - count
+version: 1.0.0
