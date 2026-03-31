@@ -1,0 +1,27 @@
+schema_version: 1.0
+
+tenant_id: abc
+device_type: firewall
+device_id: checkpoint-fw
+category: network
+
+vendor: Check Point Software Technologies
+product: Check Point Firewall
+
+role: Firewall
+functions:
+  - Network Security
+  - Threat Prevention
+
+location: unknown
+network_zone: perimeter
+description: Check Point firewall logs onboarded from the tenant ABC Splunk export.
+
+criticality: high
+
+metadata:
+  observed_vendor: checkpoint
+  observed_product: Firewall
+  observed_hostname: CP-SMC
+  observed_eventtype: Network_Traffic
+  observed_from_sample: checkpoint-log.csv

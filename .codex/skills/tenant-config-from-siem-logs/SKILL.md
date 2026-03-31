@@ -14,6 +14,8 @@ Read only the files needed for the requested tenant change.
 - Read `README.en.md` for the high-level repository model when the task spans multiple layers.
 - Read `docs/architecture/tenants-relationship.md` before changing tenant structure.
 - Read `docs/architecture/mappings-relationship.md` when the task touches canonical fields or field bindings.
+- Read `logsource-catalog.seed.yaml` in this skill when the task needs a suggested `catalog_logsource`, `category`, `service`, or starter `dataset_id_pattern` from the Detection Catalog reference dictionary.
+- Use `logsource-catalog.schema.json` in this skill as the contract for that reference dictionary when you extend or review it.
 - Read the relevant existing rules under `rules/` to understand which `logsource` patterns and dataset semantics already drive deployable content.
 - Read nearby files under the target tenant first so new files match the repository's live naming and YAML style.
 - Use `tenants/lab/` as the style baseline when the target tenant or device does not yet have equivalent files.
@@ -32,6 +34,27 @@ This skill may create or update:
 - `tenants/<tenant>/filters/**`
 
 Prefer editing existing files over creating parallel duplicates when a matching device or dataset already exists.
+
+## Detection Catalog Reference Layer
+
+Treat `Detection-Catalog.csv` as a reference dictionary, not as a hard naming authority for tenant files.
+
+Use this layered interpretation:
+
+- `catalog_logsource`: the broad source family from the Detection Catalog reference, such as `NSM:Flow`, `WinEventLog:Sysmon`, or `AWS:CloudTrail`
+- `suggested_category`: the repo-facing category that best aligns the source family to existing rules
+- `suggested_service`: the repo-facing service or stream label that best aligns the source family to existing rules
+- `dataset_id_pattern`: the preferred starter naming pattern for a tenant dataset when no stronger existing tenant or rule-specific naming exists
+
+Apply the layer in this order:
+
+1. infer the nearest `catalog_logsource` from the real SIEM logs or event metadata
+2. load the matching entry from `logsource-catalog.seed.yaml` when available
+3. reuse `suggested_category` and `suggested_service` as the first candidate values for rule matching
+4. use `dataset_id_pattern` only as a starting point, then prefer an existing tenant dataset name or an established repo naming pattern when that gives better continuity
+5. if no catalog entry fits, mark the source as effectively `custom` in your reasoning and fall back to repo rules plus observed log shape
+
+Never force a tenant `dataset_id` to equal the catalog value when that would reduce rule matching quality or break an existing stable tenant naming pattern.
 
 ## Required Inputs
 
@@ -81,19 +104,21 @@ Follow this order.
 1. Inspect the target tenant directory and determine which files already exist for the device or product.
 2. Classify the incoming SIEM logs into the right `device_id` and one or more `dataset_id` values.
 3. Update or create `devices/*.yaml` so the tenant has the correct device identity and product metadata.
-4. Inspect the relevant existing rules and reuse their `logsource` expectations together with the real log shape to choose `dataset_id` names that meaningfully indicate which rules can apply to that logsource.
-5. Update or create `logsources/*.yaml` so the logical datasets, category, and log type reflect both the observed events and the dataset semantics required by the existing rules.
-6. Update or create `bindings/ingest/*.yaml` so each dataset maps to the real SIEM ingest target, and derive `index` and `sourcetype` from the actual SIEM logs or explicit SIEM event metadata instead of guessing from vendor or product names.
-7. If the task requires canonical field bindings, use `$tenant-field-binding-writer` to write or update `bindings/fields/*.yml` instead of inventing field-binding logic here.
-8. If the relevant canonical mapping file under `mappings/` is missing or incomplete, use `$detection-mapping-ocsf` to update that mapping layer before finishing the tenant field binding.
-9. Update tenant `filters/` only when the user explicitly needs tenant-specific rule selection or narrowing.
-10. Re-read every touched file and verify cross-file consistency for `tenant_id`, `siem_id`, `device_id`, `dataset_id`, and ingest routing.
+4. Infer the nearest Detection Catalog source family and use the skill reference dictionary to propose `catalog_logsource`, `suggested_category`, `suggested_service`, and `dataset_id_pattern`.
+5. Inspect the relevant existing rules and reuse their `logsource` expectations together with the real log shape to choose `dataset_id` names that meaningfully indicate which rules can apply to that logsource.
+6. Update or create `logsources/*.yaml` so the logical datasets, category, and log type reflect both the observed events and the dataset semantics required by the existing rules.
+7. Update or create `bindings/ingest/*.yaml` so each dataset maps to the real SIEM ingest target, and derive `index` and `sourcetype` from the actual SIEM logs or explicit SIEM event metadata instead of guessing from vendor or product names.
+8. If the task requires canonical field bindings, use `$tenant-field-binding-writer` to write or update `bindings/fields/*.yml` instead of inventing field-binding logic here.
+9. If the relevant canonical mapping file under `mappings/` is missing or incomplete, use `$detection-mapping-ocsf` to update that mapping layer before finishing the tenant field binding.
+10. Update tenant `filters/` only when the user explicitly needs tenant-specific rule selection or narrowing.
+11. Re-read every touched file and verify cross-file consistency for `tenant_id`, `siem_id`, `device_id`, `dataset_id`, and ingest routing.
 
 ## File Decision Rules
 
 - Keep tenant-wide metadata in `tenant.yaml`.
 - Keep product or device identity in `devices/*.yaml`.
 - Keep logical dataset definitions in `logsources/*.yaml`, and choose `dataset_id` names that remain useful as keys for matching the existing rule inventory.
+- Treat the Detection Catalog reference dictionary as a suggestion source for `category`, `service`, and starter `dataset_id_pattern`, not as a replacement for tenant-local dataset naming.
 - Keep physical SIEM ingest routing in `bindings/ingest/*.yaml`, and source `index` plus `sourcetype` from the real SIEM logs.
 - Keep canonical-to-SIEM field resolution in `bindings/fields/*.yml`.
 - Keep tenant-specific selection logic in `filters/`, not in base rules.
@@ -125,6 +150,7 @@ Write files in the same shape and naming style already used under `tenants/lab/`
 - In the current repo state, prefer the `datasets:` form unless the task clearly belongs to the schema's alternate `service:` pattern.
 - Each dataset object should include `dataset_id`, `description`, `category`, `log_type`, and `enabled`.
 - Choose `dataset_id` from both the real log split and the rule inventory, because this key is how the tenant data lines up with applicable detection content.
+- Use the reference dictionary `dataset_id_pattern` only as the default starter name. Override it when an existing tenant dataset, a repo example, or the live rule inventory points to a more stable or more meaningful name.
 - Reuse existing dataset naming patterns when the meaning matches, such as vendor-specific alert datasets or compact dataset keys like `traffic`, `api`, `app`, or `system`.
 
 ### `bindings/ingest/binding_<device>.yaml`
@@ -164,6 +190,7 @@ Write files in the same shape and naming style already used under `tenants/lab/`
 - Do not hand-write or update `deployments/rule-deployments.yaml`; if deployment enablement must change, route that work through the code path that generates deployment manifests.
 - Do not map every observed event field; only add the fields and datasets needed to support the intended content.
 - Do not name `dataset_id` from vendor habit alone; use the real log pattern plus the existing rule `logsource` taxonomy so the dataset remains a reliable routing key for applicable content.
+- Do not treat `catalog_logsource` or `dataset_id_pattern` as a mandatory output field in tenant YAML; they are skill-side decision aids unless the user explicitly asks to persist them as metadata.
 - Do not invent `index` or `sourcetype`; use values evidenced by the actual SIEM logs or explicit SIEM metadata supplied with the events.
 - Do not add `filters/` or `overrides/` just because they exist in the architecture; create them only when the requested tenant behavior needs them.
 - Do not treat `artifacts/` as source input; use it only as rendered output context if needed.
@@ -176,6 +203,7 @@ Before finishing, verify all of the following.
 - Every new or updated file under `tenants/<tenant>/` matches the repository's current format.
 - `device_id` is consistent across `devices/`, `logsources/`, `bindings/ingest/`, and `bindings/fields/`.
 - Every `dataset_id` in `bindings/ingest/` exists in the related `logsources/` file.
+- The chosen `dataset_id` is compatible with the Detection Catalog reference suggestion or intentionally deviates for a documented rule-driven reason.
 - Each `dataset_id` in the logsource is justified by both the real log pattern and the relevant existing rules that may apply to it.
 - Each `index` and `sourcetype` in `bindings/ingest/` is traceable to the actual SIEM logs or explicit event metadata.
 - `tenant.yaml`, `devices`, `logsources`, and `bindings/ingest` match the current schemas under `schema/tenants/`.
@@ -190,6 +218,7 @@ Create or update a markdown log under `log/YYYY-MM-DD/tenant-config-from-siem-lo
 - Use the current local date for `YYYY-MM-DD`.
 - Use a short filename such as `<task-slug>.md`.
 - Include the request summary, tenant files changed, inferred device and dataset structure, observed ingest evidence such as `index` and `sourcetype`, delegated field binding or mapping work, validation run or skipped, and assumptions.
+- When relevant, include the inferred `catalog_logsource`, suggested category and service from the reference dictionary, and whether the final `dataset_id` followed or deviated from the starter pattern.
 
 ## Validation
 
@@ -204,6 +233,7 @@ When you perform the task, report briefly:
 
 - which tenant files were created or updated
 - which device and dataset structure was inferred from the SIEM logs
+- which `catalog_logsource` reference entry was used, if any
 - which existing rules or rule `logsource` patterns informed the chosen `dataset_id`
 - which observed `index` and `sourcetype` values were used for ingest binding
 - whether `$tenant-field-binding-writer` was used

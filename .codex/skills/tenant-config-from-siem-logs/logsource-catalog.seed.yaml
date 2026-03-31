@@ -1,0 +1,159 @@
+schema_version: 1.0
+
+catalog_entries:
+  - catalog_logsource: NSM:Flow
+    suggested_category: firewall
+    suggested_service: traffic
+    dataset_id_pattern: traffic
+    device_types:
+      - firewall
+      - ids
+      - ndr
+    repo_examples:
+      - traffic
+      - connection
+    match_hints:
+      - flow
+      - session
+      - src
+      - dst
+      - proto
+      - sport
+      - dport
+      - action
+    notes: >
+      Use for network flow style telemetry. Default to dataset_id `traffic`
+      when the tenant source is one firewall or flow stream. Split to a more
+      specific dataset such as `connection` only when existing tenant naming or
+      rule coverage already depends on that split.
+
+  - catalog_logsource: networkdevice:syslog
+    suggested_category: network
+    suggested_service: syslog
+    dataset_id_pattern: generic-syslog
+    device_types:
+      - firewall
+      - switch
+      - router
+      - wlc
+      - network-device
+    repo_examples:
+      - generic-syslog
+      - syslog
+      - cisco-syslog
+    match_hints:
+      - syslog
+      - facility
+      - severity
+      - cisco
+      - asa
+      - switch
+      - router
+    notes: >
+      This catalog family is broad. Prefer an existing vendor-specific dataset
+      such as `syslog` or `cisco-syslog` when the target tenant already uses it.
+      Use `generic-syslog` for a neutral default when no stronger repo pattern
+      is available.
+
+  - catalog_logsource: WinEventLog:Sysmon
+    suggested_category: endpoint
+    suggested_service: sysmon
+    dataset_id_pattern: windows-sysmon
+    device_types:
+      - endpoint
+      - server
+    repo_examples:
+      - windows-sysmon
+    match_hints:
+      - sysmon
+      - eventcode
+      - processguid
+      - image
+      - commandline
+      - parentimage
+    notes: >
+      Detection-Catalog heavily references this source family, but the current
+      repository has limited live tenant examples for it. Use this as a naming
+      default, then refine by the rule inventory or existing tenant conventions.
+
+  - catalog_logsource: WinEventLog:Security
+    suggested_category: windows
+    suggested_service: security
+    dataset_id_pattern: windows-security
+    device_types:
+      - endpoint
+      - server
+      - domain-controller
+    repo_examples:
+      - windows-security
+    match_hints:
+      - security
+      - eventid
+      - subjectusername
+      - targetusername
+      - logon
+    notes: >
+      Use for Windows Security event streams. Keep the dataset broad unless the
+      tenant already separates auth, audit, or privilege events into stable
+      datasets used by deployed rules.
+
+  - catalog_logsource: auditd:SYSCALL
+    suggested_category: linux
+    suggested_service: audit
+    dataset_id_pattern: linux-audit
+    device_types:
+      - linux-server
+      - endpoint
+      - server
+    repo_examples:
+      - linux-audit
+    match_hints:
+      - auditd
+      - syscall
+      - auid
+      - exe
+      - key
+    notes: >
+      Use for Linux audit syscall streams. Prefer a single stable dataset unless
+      the tenant clearly splits by audit rule family and the split matters for
+      detection matching.
+
+  - catalog_logsource: AWS:CloudTrail
+    suggested_category: cloud
+    suggested_service: audit
+    dataset_id_pattern: aws-cloudtrail
+    device_types:
+      - cloud
+      - iam
+      - aws
+    repo_examples:
+      - aws-cloudtrail
+    match_hints:
+      - cloudtrail
+      - eventsource
+      - eventname
+      - awsregion
+      - useridentity
+    notes: >
+      Use for AWS API audit trails. Keep one stable dataset for the main
+      CloudTrail stream, then add narrower datasets only if the repo later grows
+      cloud-specific rule packs that need them.
+
+  - catalog_logsource: m365:unified
+    suggested_category: saas
+    suggested_service: audit
+    dataset_id_pattern: m365-unified-audit
+    device_types:
+      - saas
+      - office-suite
+    repo_examples:
+      - m365-unified-audit
+    match_hints:
+      - office365
+      - workload
+      - operation
+      - userid
+    notes: >
+      Use for Microsoft 365 unified audit style exports. Refine only when the
+      tenant has a durable split by workload that is already reflected in rules
+      or operational ownership.

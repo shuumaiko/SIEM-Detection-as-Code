@@ -1,0 +1,27 @@
+# Detection Catalog Fit Review
+
+- Request summary: Assess whether `Detection-Catalog.csv` can be used as a standard for `tenant-config-from-siem-logs` suggestions such as `dataset_id` and `category`, and evaluate whether current tenant configs can map to that standard.
+- Review scope:
+  - `Detection-Catalog.csv`
+  - tenant architecture docs
+  - current tenant device/logsource/ingest files under `tenants/lab/` and `tenants/demo/`
+  - rule and mapping taxonomy under `rules/` and `mappings/`
+  - deployment matching behavior in `project-root/app/services/rule_deployment_builder.py`
+- Commands run:
+  - `Get-Content .codex/skills/tenant-config-from-siem-logs/SKILL.md`
+  - `Get-Content .codex/skills/siem-detection-as-code-base/SKILL.md`
+  - `Get-Content .codex/skills/project-root-code-reviewer/SKILL.md`
+  - targeted `Get-Content`, `rg`, and `Import-Csv` commands across `Detection-Catalog.csv`, `docs/architecture/`, `rules/`, `mappings/`, and `tenants/`
+  - `python project-root/main.py validate-tenant --tenant-id lab`
+  - `python project-root/main.py validate-tenant --tenant-id demo`
+- Findings:
+  - `Detection-Catalog.csv` is a useful reference taxonomy at the ATT&CK-data-source layer, but it does not directly align with the repo's tenant-layer keys because the CSV expresses broad log families such as `WinEventLog:Sysmon`, `NSM:Flow`, and `AWS:CloudTrail`, while tenant onboarding needs concrete `device_id` plus tenant-local `dataset_id`.
+  - The current engine resolves deployable targets by rule `logsource.category/product/service`, then matches those values against tenant dataset `category`, `dataset_id` or `service`, and `log_type`. This means the CSV can inform category and source-family inference, but cannot safely be the sole source of truth for `dataset_id`.
+  - Existing tenant configs can be mapped to a derived catalog layer for several areas such as firewall traffic, antivirus, and web access, but not losslessly for all current datasets because some datasets are vendor- or tenant-specific splits like `mcafee-epo-syslog`, `cyble_iocs`, `api`, `app`, and `system`.
+  - Validation passed for both `lab` and `demo`, so the current configs are internally consistent with the repo even where they diverge from the CSV taxonomy.
+- Evidence:
+  - `Detection-Catalog.csv` contains broad log families, heavily weighted to `WinEventLog:Sysmon`, `auditd:SYSCALL`, `WinEventLog:Security`, `NSM:Flow`, and `AWS:CloudTrail`.
+  - Tenant datasets in `tenants/lab/logsources/` use repo-local values such as `traffic`, `eset-ra-alerts`, `webserver-access`, `syslog`, `connection`, `api`, `app`, and `system`.
+  - Rules and detection mappings resolve by `logsource.category/product/service`, e.g. firewall `traffic`, antivirus `any`, and webserver `access`.
+  - `rule_deployment_builder.py` matches rule scope against tenant dataset `category`, `dataset_id` or `service`, and `log_type`.
+- Source modification status: review only, no source files were modified.

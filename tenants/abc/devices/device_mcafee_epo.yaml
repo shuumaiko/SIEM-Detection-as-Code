@@ -1,0 +1,25 @@
+schema_version: 1.0
+
+tenant_id: abc
+device_type: endpoint
+device_id: mcafee-epo
+category: security
+
+vendor: McAfee
+product: McAfee Endpoint Protection
+
+role: Endpoint Protection
+functions:
+  - Endpoint Security
+
+location: unknown
+network_zone: unknown
+description: McAfee ePO or Trellix Endpoint Security events onboarded from the tenant ABC Splunk export.
+
+criticality: high
+
+metadata:
+  observed_product_name: ENDP_AM_1070LYNX
+  observed_analyzer_name: Trellix Endpoint Security
+  observed_eventtype: mcafee_epo_hip_file
+  observed_from_sample: mcafee-log.csv

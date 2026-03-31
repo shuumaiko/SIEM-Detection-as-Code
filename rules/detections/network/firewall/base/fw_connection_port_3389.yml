@@ -2,7 +2,7 @@ title: Connection to RDP port (3389) (base)
 name: fw_connection_port_3389
 id: e8b91daa-520a-4eb6-ba43-581362b75912
 rule_type: base
-status: test
+status: stable
 description: Base rule for firewall traffic targeting RDP port 3389.
 references:
     - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#7-9

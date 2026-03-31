@@ -2,7 +2,7 @@ title: Connection to SSH port (22) (base)
 name: fw_connection_port_22
 id: fe03b0a4-4ce1-4d62-a1c7-2fb2671cdb85
 rule_type: base
-status: test
+status: stable
 description: Base rule for firewall traffic targeting SSH port 22.
 references:
     - source_ref: CONTENT_Rules Pre-Deployment_v0.1.json#10

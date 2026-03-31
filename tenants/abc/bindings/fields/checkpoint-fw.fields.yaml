@@ -1,0 +1,26 @@
+schema_version: 1.0
+tenant_id: abc
+siem_id: splunk
+device_id: checkpoint-fw
+
+description: >
+  Canonical-field and OCSF-field to tenant SIEM-field mapping for Check Point
+  firewall logs in tenant ABC, built from the sampled checkpoint-log.csv
+  export and the firewall traffic rule pack.
+
+field_mapping:
+  time: _time
+  src_endpoint.ip: src_ip
+  src_endpoint.port: src_port
+  src_endpoint.zone: inzone
+  dst_endpoint.ip: dest_ip
+  dst_endpoint.port: dest_port
+  dst_endpoint.zone: outzone
+  canonical.event.action: action
+  firewall_rule.name: rule_name
+  network_connection_info.protocol_name: proto
+
+datasets:
+  traffic:
+    field_mapping:
+      count: connection_count
