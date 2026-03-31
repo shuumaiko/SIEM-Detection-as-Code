@@ -120,6 +120,7 @@ Vai trò:
 - là contract chính để khớp tenant dataset với `rule.logsource`
 - tách khỏi lớp mô tả tenant reality
 - giảm fallback heuristic trong engine
+- được đặt ở level `dataset`, không phải ở root `logsource`, vì runtime thực tế đang resolve ingest, field binding, và deploy target theo `dataset_id`
 
 Ví dụ:
 
@@ -129,18 +130,20 @@ datasets:
     category: network
     log_type: traffic
     enabled: true
+    match:
+      category: firewall
+      product: any
+      service: traffic
     metadata:
       catalog_logsource: NSM:Flow
-      match:
-        category: firewall
-        product: any
-        service: traffic
 ```
 
 Ở ví dụ này:
 
 - `category: network` mô tả dataset theo tenant
 - `match.category: firewall` là semantic scope để rule firewall khớp được
+
+Không nên đặt `match.*` dưới `metadata.*` vì đây là contract vận hành chính để resolve rule, không phải auxiliary metadata.
 
 ### 3.4. Lớp ATT&CK overlay
 
@@ -226,20 +229,82 @@ datasets:
     category: network
     log_type: traffic
     enabled: true
+    match:
+      category: firewall
+      product: any
+      service: traffic
     metadata:
       catalog_logsource: NSM:Flow
-      match:
-        category: firewall
-        product: any
-        service: traffic
 ```
 
 Nguyên tắc:
 
 - `dataset_id` vẫn là key ổn định của tenant
 - `category` và `log_type` vẫn giữ vai trò mô tả dữ liệu tenant
+- `match.*` là normalized contract để khớp rule
 - `metadata.catalog_logsource` là reference layer
-- `metadata.match.*` là normalized contract để khớp rule
+- `metadata` chỉ nên giữ auxiliary fields như source-family reference, evidence, notes, provenance
+
+### 5.3. Tránh lặp dữ liệu giữa reality và match scope
+
+Nếu persist đầy đủ `match.category/product/service` cho mọi dataset thì có thể phát sinh lặp nghĩa, ví dụ:
+
+- `log_type: traffic`
+- `match.service: traffic`
+
+Thiết kế tương lai nên cho phép 2 mức biểu diễn:
+
+#### a. Full explicit match
+
+Phù hợp khi cần contract rõ ràng tuyệt đối:
+
+```yaml
+datasets:
+  - dataset_id: traffic
+    category: network
+    log_type: traffic
+    enabled: true
+    match:
+      category: firewall
+      product: any
+      service: traffic
+    metadata:
+      catalog_logsource: NSM:Flow
+```
+
+#### b. Derived match với override tối thiểu
+
+Phù hợp khi muốn giảm duplication:
+
+```yaml
+datasets:
+  - dataset_id: traffic
+    category: network
+    log_type: traffic
+    enabled: true
+    match_overrides:
+      category: firewall
+    metadata:
+      catalog_logsource: NSM:Flow
+```
+
+Trong mô hình này, engine derive:
+
+- `match.service` từ `log_type` khi phù hợp
+- `match.product` từ default như `any` hoặc từ `vendor/product`
+- `match.category` từ `catalog_logsource`, `device_type`, hoặc dictionary normalize
+
+Rồi áp `match_overrides` như delta cuối cùng.
+
+Vì vậy, về lâu dài nên hiểu:
+
+- `match` là normalized runtime view
+- `match_overrides` là persisted delta khi cần tối ưu dữ liệu và giảm drift
+
+Repo có thể hỗ trợ cả hai dạng trong giai đoạn migration, nhưng hướng tối ưu hơn là:
+
+- runtime luôn làm việc với normalized `match`
+- tenant source file chỉ persist override khi giá trị suy ra đã đủ tốt
 
 ## 6. Taxonomy đề xuất cho normalized scope
 
@@ -275,6 +340,30 @@ Taxonomy `match.service` nên là stream vocabulary ngắn, ví dụ:
 - `authentication`
 
 Các giá trị này nên được vận hành như repo contract, không phải vendor contract.
+
+## 6.1. Vì sao không đưa `match` thành `category/product/service` top-level
+
+Mặc dù `match.*` là contract chính để khớp rule, không nên đổi tên trực tiếp thành:
+
+- `category`
+- `product`
+- `service`
+
+ở top-level dataset, vì sẽ gây nhập nhằng giữa:
+
+- field mô tả thực tế dữ liệu tenant
+- field dùng để match semantic rule
+
+Do đó, thiết kế tương lai nên tách rõ:
+
+- `category`, `log_type` cho tenant reality
+- `match.category/product/service` cho rule-facing scope
+
+Tách namespace như vậy giúp:
+
+- dễ đọc YAML hơn
+- giảm nhầm lẫn trong validator và code
+- hỗ trợ explainability khi cần trả lời vì sao một dataset khớp với một rule
 
 ## 7. Vai trò của Detection Catalog trong thiết kế tương lai
 
@@ -316,6 +405,37 @@ Ví dụ các nhóm cần fallback:
 - threat intel feeds
 - SIEM internal sources
 - custom SaaS audit exports
+
+## 7.2. Dataset reality dùng để làm gì trong tương lai
+
+Dataset reality không phải lớp phụ chỉ để hỗ trợ matching. Nó có giá trị vận hành riêng và nên được giữ như first-class data model.
+
+Các use case dài hạn gồm:
+
+- ingest modeling:
+  - map `dataset_id` sang `index`, `sourcetype`, parser, pipeline ingest
+- field binding scope:
+  - xác định binding nào áp cho dataset nào
+- data inventory:
+  - tenant thật sự đang có những loại dữ liệu nào
+- parser and onboarding quality:
+  - kiểm tra log thật có được phân loại đúng chưa
+- data governance:
+  - retention, cost, priority, ownership theo loại dữ liệu
+- content gap analysis:
+  - tenant có data nhưng chưa có rule phù hợp
+  - tenant có rule nhưng thiếu data thực tế
+- explainability:
+  - phân biệt rõ "log này là gì trong thực tế" với "log này được xem là gì để match rule"
+- future automation:
+  - gợi ý parser, field binding, detection pack, hoặc tenant onboarding template từ real dataset profile
+
+Nói ngắn gọn:
+
+- dataset reality phục vụ data management
+- normalized match scope phục vụ rule selection
+
+Cả hai lớp đều cần tồn tại độc lập.
 
 ## 8. Vai trò của ATT&CK trong thiết kế tương lai
 
@@ -393,6 +513,9 @@ Field đề xuất:
 - `match.category`
 - `match.product`
 - `match.service`
+- `match_overrides.category` optional
+- `match_overrides.product` optional
+- `match_overrides.service` optional
 - `index`
 - `sourcetype`
 - `candidate_rule_ids`
@@ -426,7 +549,11 @@ Từ mỗi dataset, suy ra:
 - `match.product`
 - `match.service`
 
-Nếu chưa có metadata `match`, engine có thể dùng dictionary + heuristic để fill tạm, nhưng output normalize nên được materialize hoặc log lại.
+Nếu tenant source chỉ có `match_overrides`, engine phải:
+
+1. derive `match.*` từ dictionary + heuristic
+2. apply `match_overrides.*`
+3. materialize normalized view vào `tenant-scope` hoặc log debug
 
 ### Bước 3. Build hoặc load `rule-index`
 
@@ -478,7 +605,7 @@ Sau khi rule đã được chọn, mới tính:
 ### Giai đoạn 2. Tenant metadata support
 
 - cho phép `metadata.catalog_logsource`
-- cho phép `metadata.match.category/product/service`
+- cho phép `match.category/product/service` hoặc `match_overrides.category/product/service`
 - validator chấp nhận fields mới
 
 ### Giai đoạn 3. Rule index support
@@ -489,7 +616,7 @@ Sau khi rule đã được chọn, mới tính:
 
 ### Giai đoạn 4. Runtime switch
 
-- engine ưu tiên `metadata.match.*`
+- engine ưu tiên `match.*`
 - fallback cũ vẫn còn để tương thích
 
 ### Giai đoạn 5. Cleanup heuristic
@@ -506,7 +633,8 @@ Các quyết định nên được chốt rõ trong hướng tương lai:
 3. ATT&CK là metadata và coverage layer, không phải folder taxonomy chính của `rules/`.
 4. Tenant dataset cần có normalized match scope riêng với tenant reality fields.
 5. `dataset_id` vẫn là stable tenant-local key, không bị ép bằng catalog naming.
-6. `gen-rule` tương lai nên dùng `tenant-scope + rule-index` thay vì scan và match mềm hoàn toàn ở runtime.
+6. `match.*` là contract chính để khớp rule; `metadata.*` chỉ giữ auxiliary fields.
+7. `gen-rule` tương lai nên dùng `tenant-scope + rule-index` thay vì scan và match mềm hoàn toàn ở runtime.
 
 ## 13. Tóm tắt ngắn
 
