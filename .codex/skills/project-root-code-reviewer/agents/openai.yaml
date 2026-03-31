@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Root Code Reviewer"
+  short_description: "Review project-root behavior without editing source"
+  default_prompt: "Use $project-root-code-reviewer to inspect project-root behavior, rerun validations or tests when needed, and report review findings without modifying source files."
+
+policy:
+  allow_implicit_invocation: true

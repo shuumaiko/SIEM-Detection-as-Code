@@ -7,7 +7,7 @@ description: >
   Canonical-field and OCSF-field to tenant SIEM-field mapping for Check Point
   firewall logs in tenant lab.
 
-default_field_mapping:
+field_mapping:
   time: _time
   src_endpoint.ip: src_ip
   src_endpoint.port: s_port
