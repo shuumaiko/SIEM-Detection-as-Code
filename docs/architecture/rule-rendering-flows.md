@@ -42,11 +42,12 @@ Luồng này giữ separation tốt nhất giữa:
 Trình tự thực tế:
 
 1. Nạp source rule từ `rules/detections/` và `rules/analysts/`.
-2. Chỉ chọn các rule có status phù hợp với current render flow, hiện chủ yếu là `stable`.
-3. Đọc hardcoded query từ `x_query` hoặc payload SIEM-specific đã có sẵn trên rule.
-4. Nếu có tenant filter override trong `tenants/<tenant>/overrides/filter/`, dùng `query_modifiers.<siem>.search_query` để override hardcoded query trước bước map field.
-5. Resolve ingest binding để bổ sung `index`, `sourcetype`, `device_id`, `dataset_id`.
-6. Chỉ render các target có field binding hợp lệ và rewrite field trong hardcoded query theo chuỗi:
+2. Chỉ chọn các rule có status phù hợp với current render flow, hiện chủ yếu là `stable`, và có execution payload cho SIEM đích.
+3. Dùng `logsource` trên chính source rule làm deploy scope để resolve tenant target. Với analyst rule, `logsource` phải được khai báo tường minh trên rule, không suy ra runtime từ `correlation.rules`.
+4. Đọc hardcoded query từ `x_query` hoặc payload SIEM-specific đã có sẵn trên rule.
+5. Nếu có tenant filter override trong `tenants/<tenant>/overrides/filter/`, dùng `query_modifiers.<siem>.search_query` để override hardcoded query trước bước map field.
+6. Resolve ingest binding để bổ sung `index`, `sourcetype`, `device_id`, `dataset_id`.
+7. Chỉ render các target có field binding hợp lệ và rewrite field trong hardcoded query theo chuỗi:
 
 ```text
 source rule field
@@ -54,7 +55,7 @@ source rule field
   -> tenant SIEM field
 ```
 
-7. Resolve execution config theo thứ tự:
+8. Resolve execution config theo thứ tự:
 
 ```text
 execution/<siem>/defaults.yaml
@@ -62,9 +63,9 @@ execution/<siem>/defaults.yaml
   <= tenants/<tenant>/overrides/execution/...
 ```
 
-8. Sinh output vào `artifacts/<tenant>/<siem-id>/` theo envelope artifact hiện tại.
-9. Refresh `deployments/rule-deployments.yaml`.
-10. Đồng bộ trạng thái `enabled` từ deployment manifest ngược vào artifact.
+9. Sinh output vào `artifacts/<tenant>/<siem-id>/` theo envelope artifact hiện tại.
+10. Refresh `deployments/rule-deployments.yaml`.
+11. Đồng bộ trạng thái `enabled` từ deployment manifest ngược vào artifact.
 
 ## 4. Phân tách vai trò giữa các lớp
 
@@ -81,8 +82,12 @@ Trong current hardcoded-query flow:
 ## 5. Ghi chú quan trọng
 
 - Hardcoded query là execution artifact chuyển tiếp, không thay thế semantic rule.
+- Trong hardcoded-query flow hiện tại, deploy scope vẫn nằm ở `rule.logsource`, không nằm ở `x_query`.
+- Analyst rule phải khai báo `logsource` rõ ràng; `correlation.rules` dùng để giữ semantic dependency hoặc lineage, không phải fallback runtime để suy scope.
 - Trong hardcoded-query flow hiện tại, `tenants/<tenant>/overrides/filter/` có thể override trực tiếp `search_query` trước bước field mapping.
+- Tenant filter override chỉ thay đổi query text; nó không thay thế `logsource` hoặc quy trình resolve target của rule.
 - Engine hiện tại mới consume phần `query_modifiers.<siem>.search_query` của tenant filter override; các block như `detection_filters` và `append_condition` vẫn là contract dữ liệu, chưa được dựng thành semantic render flow tổng quát.
+- `validate-rules` nên được hiểu là quality gate giúp chặn analyst rule thiếu `logsource` trước khi đi vào `gen-artifact`.
 - Việc giữ hai luồng không có nghĩa kiến trúc bị thay đổi; đây là cách tài liệu phản ánh đúng cả target design lẫn current operational state.
 - Artifact hiện tại nên được hiểu theo `artifacts/default.yml`, không theo flattened legacy artifacts.
 

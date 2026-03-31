@@ -1,0 +1,15 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_id: cisco-asa
+siem_id: splunk
+
+datasets:
+  - dataset_id: syslog
+    index: cisco
+    sourcetype: cisco
+
+  - dataset_id: connection
+    index: cisco
+    sourcetype: cisco:asa
+

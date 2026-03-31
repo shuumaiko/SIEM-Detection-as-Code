@@ -1,0 +1,7 @@
+interface:
+  display_name: "Deployment Flow Reviewer"
+  short_description: "Test and review the real deployment flow"
+  default_prompt: "Use $deployment-flow-reviewer to test and review the real deployment flow, and invoke $project-root-code-reviewer when the suspected root cause is inside project-root code."
+
+policy:
+  allow_implicit_invocation: true

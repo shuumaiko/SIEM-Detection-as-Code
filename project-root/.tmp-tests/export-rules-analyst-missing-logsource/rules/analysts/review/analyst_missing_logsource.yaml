@@ -1,0 +1,28 @@
+title: Review analyst missing logsource
+id: review-analyst-missing-logsource
+rule_type: analyst
+status: stable
+description: Review analyst rule without explicit deploy scope.
+references:
+- internal-review
+author: OpenAI
+date: '2026-03-31'
+tags:
+- review
+correlation:
+  type: event_count
+  rules:
+  - fw_external_connection
+  group-by:
+  - src_ip
+  timespan: 1h
+  condition:
+    gt: 0
+fields:
+- src_ip
+- count
+falsepositives:
+- Expected review fixture traffic
+level: low
+x_query:
+  splunk: index=$index$ sourcetype=$sourcetype$ NOT (src_ip=10.0.0.0/8) | stats count by src_ip

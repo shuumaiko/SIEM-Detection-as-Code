@@ -12,6 +12,10 @@ modified: 2026-03-30
 tags:
     - attack.discovery
     - attack.t1046
+logsource:
+    category: firewall
+    product: any
+    service: traffic
 correlation:
     type: event_count
     rules:

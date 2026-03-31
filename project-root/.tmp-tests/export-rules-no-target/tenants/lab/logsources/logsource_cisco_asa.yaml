@@ -1,0 +1,16 @@
+schema_version: 1.0
+ 
+device_id: cisco-asa
+
+datasets:
+    - dataset_id: syslog
+      description: Generic Cisco ASA syslog
+      category: network
+      log_type: syslog
+      enabled: true
+    
+    - dataset_id: connection
+      description: Connection events
+      category: network
+      log_type: security
+      enabled: true

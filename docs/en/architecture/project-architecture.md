@@ -43,7 +43,7 @@ This axis manages reusable detection content:
 
 - `rules/`: semantic rules under a shared taxonomy
 - `rules/detections/`: detection rules and detection bases
-- `rules/analysts/`: analyst-facing rules containing correlation or aggregate logic
+- `rules/analysts/`: analyst-facing rules containing correlation or aggregate logic, with explicit `logsource` when they are meant to render or deploy
 - `mappings/detections/`: mappings from source rule fields to canonical fields
 - `tenants/.../bindings/fields/`: mappings from canonical fields to actual tenant SIEM fields
 
@@ -229,7 +229,7 @@ The current architectural pipeline can be summarized as follows:
 5. Resolve ingest bindings from `tenants/.../bindings/ingest/`.
 6. Resolve field bindings from `tenants/.../bindings/fields/`.
 7. Resolve execution policy from `execution/<siem>/`.
-8. Apply tenant filters or tenant overrides when present. In the current hardcoded-query flow, `overrides/filter/` can override `search_query` before tenant field mapping runs.
+8. Apply tenant filters or tenant overrides when present. In the current hardcoded-query flow, `overrides/filter/` can override `search_query` before tenant field mapping runs, but deploy scope still comes from `rule.logsource`.
 9. Read `deployments/rule-deployments.yaml` to determine which rules are enabled for the tenant.
 10. Render output into `artifacts/<tenant>/<siem-id>/`.
 11. If required, use adapters in `project-root/` to export or deploy to the target SIEM.

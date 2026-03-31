@@ -105,6 +105,7 @@ class RuleFormatValidator:
                 continue
 
             self._validate_schema(schema, normalized_doc, validator, file_path, errors)
+            self._validate_repo_contracts(normalized_doc, file_path, errors)
 
         return self._result(
             mode=mode,
@@ -191,6 +192,35 @@ class RuleFormatValidator:
         except Exception as exc:
             errors.append(f"{file_path}: schema validation error: {exc}")
 
+    def _validate_repo_contracts(
+        self,
+        doc: dict[str, Any],
+        file_path: Path,
+        errors: list[str],
+    ) -> None:
+        """Validate repository-specific rule contracts beyond the JSON schema.
+
+        Parameters:
+            doc: Normalized YAML document already parsed from one rule file.
+            file_path: Current rule file path used for error reporting.
+            errors: Mutable error collection to append repository contract issues.
+
+        Side effects:
+            Appends errors in place when the rule violates repository authoring
+            requirements that are stricter than the base JSON schema.
+        """
+        if doc.get("rule_type") != "analyst":
+            return
+
+        logsource = doc.get("logsource")
+        if self._has_complete_logsource(logsource):
+            return
+
+        errors.append(
+            f"{file_path}: analyst rules must declare logsource.category, "
+            "logsource.product, and logsource.service."
+        )
+
     def _extract_rule_date(self, doc: dict[str, Any]) -> date | None:
         value = doc.get("modified")
         parsed = self._parse_date(value)
@@ -222,6 +252,15 @@ class RuleFormatValidator:
             elif isinstance(value, date):
                 normalized[key] = value.isoformat()
         return normalized
+
+    def _has_complete_logsource(self, value: Any) -> bool:
+        """Return True when one rule document exposes the full logsource scope."""
+        if not isinstance(value, dict):
+            return False
+        return all(
+            isinstance(value.get(key), str) and value.get(key).strip()
+            for key in ("category", "product", "service")
+        )
 
     def _collect_rule_files(self) -> list[Path]:
         roots = []

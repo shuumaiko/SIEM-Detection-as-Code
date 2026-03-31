@@ -11,6 +11,10 @@ modified: 2026-03-30
 tags:
     - monitoring
     - data_availability
+logsource:
+    category: siem
+    product: splunk
+    service: internal
 correlation:
     type: inactivity_gap
     rules:

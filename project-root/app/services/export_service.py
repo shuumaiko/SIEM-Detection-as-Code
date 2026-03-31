@@ -17,7 +17,6 @@ class ExportService:
             semantic references for analyst correlation, but are not emitted as
             standalone deployable payloads.
         """
-        rules_by_name = self._index_rules_by_name(rules)
         exported: list[dict] = []
 
         for rule in rules:
@@ -26,9 +25,9 @@ class ExportService:
             if rule_type == "base":
                 continue
 
-            logsource = raw.get("logsource") or {}
-            if rule_type == "analyst":
-                logsource = self._derive_analyst_logsource(raw, rules_by_name, logsource)
+            logsource = self._resolve_rule_logsource(rule, raw, rule_type)
+            if logsource is None:
+                continue
 
             exported.append(
                 {
@@ -50,59 +49,41 @@ class ExportService:
 
         return exported
 
-    def _index_rules_by_name(self, rules: list[Rule]) -> dict[str, Rule]:
-        """Index source rules by semantic `name` so analyst rules can resolve bases."""
-        indexed: dict[str, Rule] = {}
-        for rule in rules:
-            rule_name = (rule.raw or {}).get("name")
-            if isinstance(rule_name, str) and rule_name.strip():
-                indexed[rule_name.strip()] = rule
-        return indexed
-
-    def _derive_analyst_logsource(
-        self,
-        raw_rule: dict,
-        rules_by_name: dict[str, Rule],
-        current_logsource: dict,
-    ) -> dict:
-        """Derive analyst logsource scope from referenced source rules when missing.
+    def _resolve_rule_logsource(self, rule: Rule, raw_rule: dict, rule_type: str) -> dict | None:
+        """Return the deploy scope for one rule or `None` when the rule must be skipped.
 
         Parameters:
-            raw_rule: Analyst rule document being flattened.
-            rules_by_name: Source rules keyed by semantic `name`.
-            current_logsource: Any explicit logsource already present on the analyst rule.
+            rule: Source rule model being flattened for the render pipeline.
+            raw_rule: Original YAML document backing the source rule.
+            rule_type: Normalized rule type such as `detection` or `analyst`.
 
         Returns:
-            A logsource dict that prefers the analyst's own explicit values and falls
-            back to the shared scope of its referenced detection/base rules.
+            A shallow logsource dict used for tenant target resolution, or `None`
+            when the rule is not deployable in the current hardcoded-query flow.
+
+        Side effects:
+            None. The returned dict is detached from the source YAML object.
         """
-        derived = dict(current_logsource or {})
-        references = ((raw_rule.get("correlation") or {}).get("rules")) or []
-        referenced_logsources: list[dict] = []
+        raw_logsource = raw_rule.get("logsource") or {}
+        logsource = dict(raw_logsource) if isinstance(raw_logsource, dict) else {}
 
-        for reference in references:
-            if not isinstance(reference, str):
-                continue
-            source_rule = rules_by_name.get(reference.strip())
-            if source_rule is None:
-                continue
-            logsource = (source_rule.raw or {}).get("logsource") or {}
-            if isinstance(logsource, dict) and logsource:
-                referenced_logsources.append(logsource)
+        # Hardcoded-query is now execution-only for analyst content. Analyst rules
+        # must carry their own deploy scope instead of inheriting it at runtime.
+        if rule_type == "analyst" and not self._has_complete_logsource(logsource):
+            return None
 
-        for key in ("category", "product", "service"):
-            if derived.get(key):
-                continue
-            values = {
-                value.strip()
-                for logsource in referenced_logsources
-                for value in [logsource.get(key)]
-                if isinstance(value, str) and value.strip()
-            }
-            if len(values) == 1:
-                derived[key] = next(iter(values))
+        if "category" not in logsource and isinstance(rule.category, str) and rule.category:
+            logsource["category"] = rule.category
+        if "product" not in logsource and isinstance(rule.product, str) and rule.product:
+            logsource["product"] = rule.product
+        return logsource
 
-        return derived
+    def _has_complete_logsource(self, logsource: dict) -> bool:
+        """Return True when one logsource dict declares the full deploy scope."""
+        return all(
+            isinstance(logsource.get(key), str) and logsource.get(key).strip()
+            for key in ("category", "product", "service")
+        )
 
     def _normalize_rule_type(self, value: object) -> str:
         """Normalize source rule types to the render pipeline vocabulary."""

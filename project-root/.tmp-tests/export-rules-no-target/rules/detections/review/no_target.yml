@@ -1,0 +1,12 @@
+title: Review no target
+id: review-no-target
+rule_type: detection
+status: stable
+logsource:
+  category: nonexistent-category
+  product: any
+  service: any
+fields:
+- src_ip
+x_query:
+  splunk: index=$index$ sourcetype=$sourcetype$ src_ip=*

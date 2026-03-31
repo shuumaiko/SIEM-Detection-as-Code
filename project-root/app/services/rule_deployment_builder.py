@@ -96,6 +96,10 @@ class RuleDeploymentBuilder:
             # source -> canonical -> tenant field translation.
             self._apply_tenant_filter_override(tenant, mapped)
             mapping = self._resolve_mapping(tenant, mapped)
+            # Drop rules that do not resolve to any deployable ingest target so
+            # the hardcoded-query flow cannot emit empty artifacts or manifest entries.
+            if not mapping:
+                continue
             expanded_mappings = self._expand_mappings(mapping)
             for expanded_mapping in expanded_mappings:
                 rendered_rule = dict(mapped)
@@ -157,13 +161,15 @@ class RuleDeploymentBuilder:
             mapping: Resolved ingest target mapping for one source rule.
 
         Returns:
-            A list of mappings. Rules with one or zero ingest targets stay as one
+            A list of mappings. Rules with exactly one ingest target stay as one
             mapping, while rules that match multiple tenant logsources expand into
             one mapping per ingest target so each rendered rule has an unambiguous
-            device and dataset.
+            device and dataset. Empty or invalid mappings return an empty list.
         """
         ingest_targets = mapping.get("ingest_targets") or []
-        if not isinstance(ingest_targets, list) or len(ingest_targets) <= 1:
+        if not isinstance(ingest_targets, list) or not ingest_targets:
+            return []
+        if len(ingest_targets) == 1:
             return [mapping]
 
         expanded: list[dict] = []

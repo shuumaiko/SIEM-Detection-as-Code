@@ -1,0 +1,48 @@
+title: Firewall traffic from public IP (base)
+name: fw_external_connection
+id: e00cc3a0-d141-4495-b67c-390162eed27a
+rule_type: base
+status: stable
+description: Connection from public IP
+references:
+- Internal_HaoDA4
+author: AnhPT127
+date: 2025-12-17
+modified: 2025-12-17
+tags:
+- attack.discovery
+- attack.t1046
+logsource:
+  category: firewall
+  product: any
+  service: traffic
+detection:
+  selection:
+    src_ip|exists: true
+  filter_private_ip:
+    src_ip|cidr:
+    - 10.0.0.0/8
+    - 192.168.0.0/16
+    - 172.16.0.0/12
+  condition: selection and not filter_private_ip
+falsepositives:
+- Internet-facing services legitimately receiving external connections
+fields:
+- _time
+- src_ip
+- src_port
+- src_zone
+- dest_ip
+- dest_port
+- dest_zone
+- action
+- protocol
+- firewall_policy_name
+level: informational
+x_query:
+  splunk: 'index=$index$ sourcetype=$sourcetype$ src_ip=*
+
+    | where NOT (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("192.168.0.0/16", src_ip) OR cidrmatch("172.16.0.0/12", src_ip))
+
+    '
+version: 1.0.0

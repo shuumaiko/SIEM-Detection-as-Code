@@ -493,6 +493,192 @@ def test_gen_artifact_skips_targets_without_required_query_field_bindings() -> N
     assert not eset_artifact.exists()
 
 
+def test_gen_artifact_drops_rules_without_any_ingest_target() -> None:
+    workspace_root = Path(__file__).resolve().parents[2]
+    test_root = workspace_root / "project-root" / ".tmp-tests" / "export-rules-no-target"
+    if test_root.exists():
+        shutil.rmtree(test_root)
+    test_root.mkdir(parents=True, exist_ok=True)
+
+    tenants_root = test_root / "tenants"
+    shutil.copytree(workspace_root / "tenants" / "lab", tenants_root / "lab")
+    rules_root = test_root / "rules"
+    rule_path = rules_root / "detections" / "review" / "no_target.yml"
+    rule_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(rule_path, "w", encoding="utf-8") as file:
+        yaml.safe_dump(
+            {
+                "title": "Review no target",
+                "id": "review-no-target",
+                "rule_type": "detection",
+                "status": "stable",
+                "logsource": {
+                    "category": "nonexistent-category",
+                    "product": "any",
+                    "service": "any",
+                },
+                "fields": ["src_ip"],
+                "x_query": {
+                    "splunk": "index=$index$ sourcetype=$sourcetype$ src_ip=*",
+                },
+            },
+            file,
+            sort_keys=False,
+            allow_unicode=True,
+            width=4096,
+        )
+
+    tenant_repository = FileTenantRepository(tenants_root)
+    rule_repository = FileRuleRepository(
+        base_path=rules_root,
+        tenant_rules_path=test_root / "artifacts",
+    )
+    deployment_builder = RuleDeploymentBuilder(
+        registry_loader=RegistryLoader(workspace_root / "mappings" / "logsources"),
+        detection_field_mapping_loader=DetectionFieldMappingLoader(
+            workspace_root / "mappings" / "detections"
+        ),
+        tenant_filter_override_loader=TenantFilterOverrideLoader(tenants_root),
+    )
+    artifact_service = RuleArtifactService(
+        execution_loader=ExecutionConfigLoader(
+            execution_root=workspace_root / "execution",
+            tenants_root=tenants_root,
+        )
+    )
+    use_case = ExportRulesUseCase(
+        tenant_repository=tenant_repository,
+        rule_repository=rule_repository,
+        deployment_builder=deployment_builder,
+        artifact_service=artifact_service,
+    )
+
+    rendered_rules, summary = use_case.prepare_export("lab")
+
+    deployment_manifest = tenants_root / "lab" / "deployments" / "rule-deployments.yaml"
+    unresolved_artifact = (
+        test_root
+        / "artifacts"
+        / "lab"
+        / "splunk"
+        / "detections"
+        / "review"
+        / "no_target.yml"
+    )
+
+    assert rendered_rules == []
+    assert summary["generated_artifact_count"] == 0
+    assert summary["deployed_device_ids"] == []
+    assert summary["deployed_dataset_ids"] == []
+    assert summary["deployed_logsources"] == []
+    assert not unresolved_artifact.exists()
+
+    with open(deployment_manifest, "r", encoding="utf-8") as file:
+        deployment_doc = yaml.safe_load(file)
+    assert deployment_doc["rule_deployments_by_siem"]["splunk"] == []
+
+
+def test_gen_artifact_drops_analyst_rules_without_explicit_logsource() -> None:
+    workspace_root = Path(__file__).resolve().parents[2]
+    test_root = workspace_root / "project-root" / ".tmp-tests" / "export-rules-analyst-missing-logsource"
+    if test_root.exists():
+        shutil.rmtree(test_root)
+    test_root.mkdir(parents=True, exist_ok=True)
+
+    tenants_root = test_root / "tenants"
+    shutil.copytree(workspace_root / "tenants" / "lab", tenants_root / "lab")
+    rules_root = test_root / "rules"
+    _write_rule_fixture(
+        workspace_root / "rules" / "detections" / "network" / "firewall" / "base" / "fw_external_connection.yml",
+        rules_root / "detections" / "network" / "firewall" / "base" / "fw_external_connection.yml",
+        status="stable",
+    )
+
+    analyst_rule_path = rules_root / "analysts" / "review" / "analyst_missing_logsource.yaml"
+    analyst_rule_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(analyst_rule_path, "w", encoding="utf-8") as file:
+        yaml.safe_dump(
+            {
+                "title": "Review analyst missing logsource",
+                "id": "review-analyst-missing-logsource",
+                "rule_type": "analyst",
+                "status": "stable",
+                "description": "Review analyst rule without explicit deploy scope.",
+                "references": ["internal-review"],
+                "author": "OpenAI",
+                "date": "2026-03-31",
+                "tags": ["review"],
+                "correlation": {
+                    "type": "event_count",
+                    "rules": ["fw_external_connection"],
+                    "group-by": ["src_ip"],
+                    "timespan": "1h",
+                    "condition": {"gt": 0},
+                },
+                "fields": ["src_ip", "count"],
+                "falsepositives": ["Expected review fixture traffic"],
+                "level": "low",
+                "x_query": {
+                    "splunk": (
+                        "index=$index$ sourcetype=$sourcetype$ "
+                        "NOT (src_ip=10.0.0.0/8) | stats count by src_ip"
+                    )
+                },
+            },
+            file,
+            sort_keys=False,
+            allow_unicode=True,
+            width=4096,
+        )
+
+    tenant_repository = FileTenantRepository(tenants_root)
+    rule_repository = FileRuleRepository(
+        base_path=rules_root,
+        tenant_rules_path=test_root / "artifacts",
+    )
+    deployment_builder = RuleDeploymentBuilder(
+        registry_loader=RegistryLoader(workspace_root / "mappings" / "logsources"),
+        detection_field_mapping_loader=DetectionFieldMappingLoader(
+            workspace_root / "mappings" / "detections"
+        ),
+        tenant_filter_override_loader=TenantFilterOverrideLoader(tenants_root),
+    )
+    artifact_service = RuleArtifactService(
+        execution_loader=ExecutionConfigLoader(
+            execution_root=workspace_root / "execution",
+            tenants_root=tenants_root,
+        )
+    )
+    use_case = ExportRulesUseCase(
+        tenant_repository=tenant_repository,
+        rule_repository=rule_repository,
+        deployment_builder=deployment_builder,
+        artifact_service=artifact_service,
+    )
+
+    rendered_rules, summary = use_case.prepare_export("lab")
+
+    deployment_manifest = tenants_root / "lab" / "deployments" / "rule-deployments.yaml"
+    unresolved_artifact = (
+        test_root
+        / "artifacts"
+        / "lab"
+        / "splunk"
+        / "analysts"
+        / "review"
+        / "analyst_missing_logsource.yaml"
+    )
+
+    assert rendered_rules == []
+    assert summary["generated_artifact_count"] == 0
+    assert summary["deployed_logsources"] == []
+    assert not unresolved_artifact.exists()
+
+    with open(deployment_manifest, "r", encoding="utf-8") as file:
+        deployment_doc = yaml.safe_load(file)
+    assert deployment_doc["rule_deployments_by_siem"]["splunk"] == []
+
+
 def _write_rule_fixture(source_path: Path, target_path: Path, status: str) -> None:
     """Copy one source rule into a temporary rules root with an overridden status."""
     with open(source_path, "r", encoding="utf-8") as file:

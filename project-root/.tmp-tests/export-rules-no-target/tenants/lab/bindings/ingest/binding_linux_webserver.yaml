@@ -1,0 +1,11 @@
+﻿schema_version: 1.0
+
+tenant_id: lab
+device_id: nginx-webserver
+siem_id: splunk
+
+datasets:
+  - dataset_id: webserver-access
+    index: linux
+    sourcetype: nginx:plus:access
+

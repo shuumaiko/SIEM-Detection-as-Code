@@ -28,6 +28,7 @@ Follow this order.
    - `detection` when the logic is a standalone event rule with `logsource` and `detection`.
    - `detection_base` or `base` when the logic is a reusable building block that an analyst rule can call.
    - `analyst` when the rule expresses threshold, sequence, aggregation, or multi-rule correlation in `correlation`.
+   - When creating or normalizing an `analyst` rule from referenced base rules, carry a concrete `logsource` block into the analyst rule from the shared base-rule scope. Do not leave analyst `logsource` implicit for runtime inference.
 3. Search for the closest existing canonical rule by intent, not just by title.
 4. Decide whether the imported rule should create a new canonical rule or merge into an existing one.
 5. Set `status: test` on every rule that is created or modified by the merge.
@@ -52,6 +53,7 @@ Create new canonical content.
 
 - If the imported rule is a standalone event rule, create one new detection rule under `rules/detections/`.
 - If the imported rule is analyst-facing or contains correlation logic, create the required reusable base rule under `rules/detections/` when needed and create the analyst rule under `rules/analysts/`.
+- If you create an analyst rule from a base rule, copy the base rule `logsource` into the analyst rule so the analyst content keeps its own deploy scope.
 - Base new files on Sigma-style structure first, then normalize the result to the repo schema.
 - Set `status: test` on every newly created canonical rule.
 - Keep the imported semantic logic intact while rewriting only the repository-facing structure and metadata.
@@ -82,7 +84,7 @@ If the canonical rule is already repo-standard:
 - Keep the rule valid against the relevant schema branch.
 - Every created or modified rule must end with `status: test`.
 - Required metadata for detection-style rules: `title`, `id`, `status`, `description`, `references`, `author`, `date`, `tags`, `logsource`, `detection`.
-- Required metadata for analyst rules: `title`, `id`, `status`, `description`, `references`, `author`, `date`, `tags`, `correlation`, `fields`, `falsepositives`, `level`.
+- Required metadata for analyst rules in this repository: `title`, `id`, `status`, `description`, `references`, `author`, `date`, `tags`, `logsource`, `correlation`, `fields`, `falsepositives`, `level`.
 - Accept `rule_type: detection`, `rule_type: detection_base`, or `rule_type: base` for detection-style content based on nearby repo patterns.
 - Keep `level: informational` when `rule_type: base` is used, matching the schema rule.
 - Preserve nearby file conventions for extension, naming, and metadata ordering.

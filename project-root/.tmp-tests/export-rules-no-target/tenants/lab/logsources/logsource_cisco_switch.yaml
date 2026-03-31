@@ -1,0 +1,16 @@
+schema_version: 1.0
+ 
+device_id: cisco-switch
+
+datasets:
+    - dataset_id: generic-syslog
+      description: generic Cisco syslog
+      category: network
+      log_type: syslog
+      enabled: true
+
+    - dataset_id: cisco-syslog
+      description: Cisco-specific syslog events
+      category: network
+      log_type: syslog
+      enabled: true

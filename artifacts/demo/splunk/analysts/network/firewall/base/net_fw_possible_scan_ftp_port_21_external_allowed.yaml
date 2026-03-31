@@ -17,7 +17,7 @@ metadata:
   - attack.discovery
   - attack.t1046
   owner: AnhPT127
-  last_rendered: '2026-03-31T03:28:07Z'
+  last_rendered: '2026-03-31T07:15:35Z'
 x_splunk_es:
   targets:
     ingest_targets:

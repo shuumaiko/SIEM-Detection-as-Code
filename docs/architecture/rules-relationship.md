@@ -102,6 +102,8 @@ Nguyên tắc:
 
 - chứa correlation hoặc logic tổng hợp
 - có thể tham chiếu tới detection rule hoặc detection base khác
+- phải khai báo `logsource` rõ ràng nếu rule được dùng trong luồng render hoặc deploy hiện tại
+- `correlation.rules` giữ semantic dependency hoặc lineage, không thay thế `logsource` runtime
 - thể hiện detection intent ở mức aggregation, threshold, sequence, grouping
 
 Ví dụ hiện tại:
@@ -109,6 +111,9 @@ Ví dụ hiện tại:
 - `rules/analysts/network/firewall/base/net_fw_request_reached_over_threshold.yaml`
 
 Trong rule loại này, block `correlation:` là semantic logic thực thụ, không phải execution metadata.
+Trong hardcoded-query flow hiện tại, analyst rule phải tự mang deploy scope qua
+`logsource`. Khi analyst rule được tạo từ base rule, `logsource` nên được kế thừa
+ngay ở thời điểm authoring hoặc merge, không để engine suy luận lúc runtime.
 
 ## 8. Quan hệ giữa `detection` và `analyst`
 
@@ -123,6 +128,7 @@ detection base
 
 analyst rule
   -> gọi đến detection base hoặc detection rule khác
+  -> tự mang `logsource` để xác định deploy scope
   -> bổ sung logic correlation / threshold / aggregation
 ```
 
@@ -145,11 +151,12 @@ Một semantic rule thường có các thành phần sau:
 - `date`
 - `modified`
 - `tags`
-- `logsource` hoặc `correlation`
+- `logsource` và khối semantic chính như `detection` hoặc `correlation`
 - `fields`
 - `level`
 
 Không phải mọi rule đều cần đủ mọi block, nhưng đây là bộ metadata điển hình đang được dùng.
+Riêng analyst rule trong repository hiện tại nên có cả `logsource` và `correlation`.
 
 ## 10. Vai trò của `id`
 
@@ -175,6 +182,7 @@ Trong hiện trạng hiện tại, `x_query` hoặc hardcoded query trong rule l
 - semantic rule vẫn nằm ở `detection` hoặc `correlation`
 - query hardcode là cách vận hành tạm thời trên SIEM
 - `x_query` không thay thế vai trò của `execution/`
+- `x_query` không quyết định deploy scope; phần đó vẫn nằm ở `logsource`
 
 Nói ngắn gọn:
 
@@ -218,6 +226,7 @@ Khi render thực tế:
 
 - tenant filter hoặc `overrides/filter/` có thể tinh chỉnh logic theo ngữ cảnh tenant
 - trong hardcoded-query flow hiện tại, `overrides/filter/` có thể thay trực tiếp `search_query` trước bước map field `source rule field -> canonical field -> tenant SIEM field`
+- tenant override không thay thế `logsource` của rule trong quá trình resolve target
 - tenant execution override có thể tinh chỉnh metadata thực thi
 
 Nhưng các lớp đó không thay thế semantic ownership của `rules/`.

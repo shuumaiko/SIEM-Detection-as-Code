@@ -1,0 +1,22 @@
+schema_version: 1.0
+tenant_id: lab
+siem_id: splunk
+device_id: mcafee-epo
+
+description: >
+  Canonical-field to tenant SIEM-field mapping for McAfee ePO antivirus syslog
+  events in tenant lab. Built from the antivirus rule pack currently deployed
+  for Splunk, `mappings/detections/category/antivirus/antivirus.fields.yaml`,
+  and a sampled slice of `mcafee-log.csv` rather than the full 127 MB export.
+
+field_mapping:
+  time: _time
+  canonical.event.action: action
+  malware.name: signature
+  file.name: TargetName
+  file.path: TargetPath
+  file.hashes: file_hash
+  device.hostname: dest_host
+  device.ip: dest_ip
+  user.name: user
+  process.name: source_process_name

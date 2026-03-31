@@ -43,7 +43,7 @@ Trục này quản lý detection content ở mức chuẩn và có khả năng t
 
 - `rules/`: semantic rules theo taxonomy chung
 - `rules/detections/`: detection rule và detection base
-- `rules/analysts/`: analyst rule chứa correlation hoặc logic tổng hợp
+- `rules/analysts/`: analyst rule chứa correlation hoặc logic tổng hợp, đồng thời mang `logsource` rõ ràng khi cần deploy hoặc render
 - `mappings/detections/`: ánh xạ từ source rule field sang canonical field
 - `tenants/.../bindings/fields/`: ánh xạ từ canonical field sang field thực tế trên SIEM của tenant
 
@@ -229,7 +229,7 @@ Pipeline kiến trúc hiện tại có thể được mô tả ngắn gọn như
 5. Resolve ingest binding từ `tenants/.../bindings/ingest/`.
 6. Resolve field binding từ `tenants/.../bindings/fields/`.
 7. Resolve execution policy từ `execution/<siem>/`.
-8. Áp tenant filters hoặc tenant overrides nếu có. Trong hardcoded-query flow hiện tại, `overrides/filter/` có thể override `search_query` trước bước tenant field mapping.
+8. Áp tenant filters hoặc tenant overrides nếu có. Trong hardcoded-query flow hiện tại, `overrides/filter/` có thể override `search_query` trước bước tenant field mapping, nhưng deploy scope vẫn được xác định từ `rule.logsource`.
 9. Đọc `deployments/rule-deployments.yaml` để chọn tập rule bật cho tenant.
 10. Render output vào `artifacts/<tenant>/<siem-id>/`.
 11. Nếu cần, dùng adapter trong `project-root/` để export hoặc deploy sang SIEM đích.
