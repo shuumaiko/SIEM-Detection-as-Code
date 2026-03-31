@@ -6,7 +6,7 @@ This `docs/` directory contains the architecture documents, rendering-flow notes
 
 - Use `docs/architecture/` as the primary architecture reference.
 - Use `docs/en/architecture/` when you need the English mirror.
-- Use `docs/note/` for historical context, gap reviews, and change logs.
+- Use `docs/note/` for repo-local notes and historical context; use `log/` for local task and review logs.
 
 Documentation updates should reflect the current project state without changing the repository's architectural direction unless that change is explicitly intended.
 
@@ -24,9 +24,12 @@ docs/
 |   `-- execution-relationship.md
 |-- en/
 |   `-- architecture/
-`-- note/
-    |-- repo-gap-review-2026-03-23.md
-    `-- logs/
+|-- note/
+|   |-- base-note.txt
+|   `-- SIEM-DaC-Idea.md
+`-- ../log/
+    `-- YYYY-MM-DD/
+        `-- <log-type>/
 ```
 
 ## Recommended Reading Order
@@ -46,8 +49,8 @@ If you want the repository-local Codex workflow helpers:
 
 If you want historical drift and implementation context:
 
-1. `note/repo-gap-review-2026-03-23.md`
-2. `note/logs/code/*.md`
+1. `../log/2026-03-23/repo-gap-review/repo-gap-review.md`
+2. `../log/YYYY-MM-DD/project-root-code-maintainer/*.md`
 
 ## Current Status
 
@@ -61,4 +64,4 @@ The current project state is:
 
 ## Summary
 
-Use this folder to understand the repository before changing code or data. Architecture lives in `docs/architecture/`; history and transition notes live in `docs/note/`.
+Use this folder to understand the repository before changing code or data. Architecture lives in `docs/architecture/`; repo-local notes stay in `docs/note/`; local task and review logs now live in `log/`.

@@ -22,7 +22,7 @@ Use the `project-root-code-maintainer` flow to fix artifact generation so render
   - `app/services/export_service.py`: renderable payload shaping and analyst logsource derivation
   - `app/services/rule_artifact_service.py`: deployable artifact naming
 - Validation plan: update targeted export-flow tests and repository-path tests, then run them if Python runtime is available.
-- Log file path: `docs/note/logs/code/2026-03-29-project-root-artifact-render-analyst-flow.md`.
+- Log file path: `log/2026-03-29/project-root-code-maintainer/project-root-artifact-render-analyst-flow.md`.
 
 ## Function Flow Summary
 
@@ -55,3 +55,4 @@ Use the `project-root-code-maintainer` flow to fix artifact generation so render
 ## Assumptions
 
 - Base rules are semantic building blocks for analyst correlation and should not be materialized as standalone tenant artifacts unless a future requirement explicitly asks for that.
+

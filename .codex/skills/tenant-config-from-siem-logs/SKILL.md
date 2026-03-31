@@ -183,6 +183,14 @@ Before finishing, verify all of the following.
 - Canonical mapping gaps were handled through `$detection-mapping-ocsf` before finalizing tenant bindings.
 - No hand-written deployment manifest was introduced as part of tenant onboarding from logs.
 
+## Logging
+
+Create or update a markdown log under `log/YYYY-MM-DD/tenant-config-from-siem-logs/`.
+
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
+- Include the request summary, tenant files changed, inferred device and dataset structure, observed ingest evidence such as `index` and `sourcetype`, delegated field binding or mapping work, validation run or skipped, and assumptions.
+
 ## Validation
 
 Run the smallest useful verification after edits.

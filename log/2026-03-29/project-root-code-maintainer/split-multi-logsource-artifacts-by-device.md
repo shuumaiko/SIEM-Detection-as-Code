@@ -22,7 +22,7 @@ When one source rule matches multiple tenant logsources, generate multiple rende
   - `app/services/rule_artifact_service.py`
   - `tests/test_export_rules.py`
 - Validation plan: targeted pytest for export flow, then rerun `gen-artifact` for tenant `lab`.
-- Log file path: `docs/note/logs/code/2026-03-29-split-multi-logsource-artifacts-by-device.md`.
+- Log file path: `log/2026-03-29/project-root-code-maintainer/split-multi-logsource-artifacts-by-device.md`.
 
 ## Function Flow Summary
 
@@ -48,3 +48,4 @@ When one source rule matches multiple tenant logsources, generate multiple rende
 
 - Existing deployment manifests will be regenerated with new variant-scoped rule IDs for any source rule that resolves to multiple tenant targets.
 - If the team wants variant IDs to follow a stricter schema later, that can be normalized in a dedicated compatibility pass.
+

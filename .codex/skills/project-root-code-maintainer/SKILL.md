@@ -1,6 +1,6 @@
 ---
 name: project-root-code-maintainer
-description: Maintain and modernize `project-root/` in this repository using the documented repository architecture as the source of business truth. Treat any `legacy/` folders and legacy-named directories as historical concepts to ignore, not as the real architecture or default runtime input, unless the user explicitly asks for legacy compatibility work. Use when Codex needs to fix bugs, refactor outdated skeleton code, or add features inside `project-root/` while first defining business scope, mapping function flow, adding clear function-level comments or docstrings, and logging key implementation notes under `docs/note/logs/code/`.
+description: Maintain and modernize `project-root/` in this repository using the documented repository architecture as the source of business truth. Treat any `legacy/` folders and legacy-named directories as historical concepts to ignore, not as the real architecture or default runtime input, unless the user explicitly asks for legacy compatibility work. Use when Codex needs to fix bugs, refactor outdated skeleton code, or add features inside `project-root/` while first defining business scope, mapping function flow, adding clear function-level comments or docstrings, and logging key implementation notes under `log/YYYY-MM-DD/project-root-code-maintainer/`.
 ---
 
 # Project Root Code Maintainer
@@ -22,7 +22,7 @@ Use this skill to keep code changes narrow, business-first, and auditable when w
 ## Required Guardrails
 
 - Change code only inside `project-root/`.
-- Allow one exception outside `project-root/`: create or update a task log under `docs/note/logs/code/`.
+- Allow one exception outside `project-root/`: create or update a task log under `log/YYYY-MM-DD/project-root-code-maintainer/`.
 - Ignore `legacy/` folders as architectural truth and do not introduce new runtime dependencies on them unless the user explicitly asks for legacy behavior.
 - Define the business scope before writing code.
 - When adding or changing a function, add a clear docstring for purpose, important inputs, return shape, and side effects.
@@ -80,10 +80,12 @@ For every new or modified function:
 
 ## Logging
 
-Create or update a markdown log under `docs/note/logs/code/`. Use a dated filename such as `YYYY-MM-DD-<task-slug>.md`.
+Create or update a markdown log under `log/YYYY-MM-DD/project-root-code-maintainer/`.
 
 Include:
 
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
 - Request summary
 - Business definition
 - Function flow summary

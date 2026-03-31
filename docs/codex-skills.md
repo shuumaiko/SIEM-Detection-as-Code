@@ -34,7 +34,7 @@ Mục đích:
 Dùng khi:
 - sửa CLI, use case, service, repository, validator
 - đổi behavior của render, export, deploy, validation
-- cần log thay đổi dưới `docs/note/logs/code/`
+- cần log thay đổi dưới `log/YYYY-MM-DD/project-root-code-maintainer/`
 
 ### `schema-fix-from-source`
 
@@ -117,4 +117,4 @@ Khi cần hiểu hoặc cập nhật một skill:
 
 - Repository skill root: `.codex/skills/`
 - Architecture source of truth: `docs/architecture/`
-- Current code-change audit trail: `docs/note/logs/code/`
+- Current code-change audit trail: `log/YYYY-MM-DD/project-root-code-maintainer/`

@@ -20,7 +20,7 @@ Prevent blind artifact generation by requiring real tenant field mappings before
   - `app/services/rule_deployment_builder.py`
   - `tests/test_export_rules.py`
 - Validation plan: targeted pytest for export flow, then rerun `gen-artifact` for tenant `lab`.
-- Log file path: `docs/note/logs/code/2026-03-29-require-field-bindings-before-artifact-generation.md`.
+- Log file path: `log/2026-03-29/project-root-code-maintainer/require-field-bindings-before-artifact-generation.md`.
 
 ## Function Flow Summary
 
@@ -42,3 +42,4 @@ Prevent blind artifact generation by requiring real tenant field mappings before
 
 - Existing tenants that relied on ingest-only generation will now produce fewer artifacts until field bindings are added.
 - If the team later wants stricter validation, `_has_field_mapping()` can evolve from “any non-empty field mapping” to “required fields covered for the specific rule pack.”
+

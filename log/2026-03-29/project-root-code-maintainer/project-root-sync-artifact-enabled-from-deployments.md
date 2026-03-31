@@ -22,7 +22,7 @@ Use the `project-root-code-maintainer` flow to update rendered tenant artifacts 
   - `app/services`: expose artifact state sync through the rule service
   - `infrastructure/repositories`: rewrite artifact files on disk
 - Validation plan: targeted pytest coverage for export flow and deployment builder behavior.
-- Log file path: `docs/note/logs/code/2026-03-29-project-root-sync-artifact-enabled-from-deployments.md`.
+- Log file path: `log/2026-03-29/project-root-code-maintainer/project-root-sync-artifact-enabled-from-deployments.md`.
 
 ## Function Flow Summary
 
@@ -53,3 +53,4 @@ Use the `project-root-code-maintainer` flow to update rendered tenant artifacts 
 ## Assumptions
 
 - The deployment manifest is the final tenant decision for whether a rendered artifact should be active, even when execution defaults or rule overrides set a different `enabled` value earlier in the pipeline.
+

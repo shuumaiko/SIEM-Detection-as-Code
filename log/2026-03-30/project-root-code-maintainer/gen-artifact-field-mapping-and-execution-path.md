@@ -35,7 +35,7 @@ the repository's two-layer field contract:
   - focused pytest on export and repository flow
   - live `gen-artifact` run on tenant `demo`
 - Log file path:
-  - `docs/note/logs/code/2026-03-30-gen-artifact-field-mapping-and-execution-path.md`
+  - `log/2026-03-30/project-root-code-maintainer/gen-artifact-field-mapping-and-execution-path.md`
 
 # Function Flow Summary
 
@@ -62,7 +62,7 @@ the repository's two-layer field contract:
 - `project-root/app/services/rule_deployment_builder.py`
 - `project-root/infrastructure/file_loader/detection_field_mapping_loader.py`
 - `project-root/tests/test_export_rules.py`
-- `docs/note/logs/code/2026-03-30-gen-artifact-field-mapping-and-execution-path.md`
+- `log/2026-03-30/project-root-code-maintainer/gen-artifact-field-mapping-and-execution-path.md`
 
 # Tests Run
 
@@ -81,3 +81,4 @@ the repository's two-layer field contract:
   extra review/output fields that are not executed in the query path.
 - Current execution input now comes from `execution/<siem>/...`; the old
   `legacy/execution` files remain on disk but are no longer used by this flow.
+

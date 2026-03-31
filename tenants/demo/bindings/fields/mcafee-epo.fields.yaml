@@ -9,7 +9,7 @@ description: >
   for Splunk, mappings/detections/category/antivirus/antivirus.fields.yaml,
   and a sampled slice of mcafee-log.csv.
 
-default_field_mapping:
+field_mapping:
   time: _time
   canonical.event.action: action
   malware.name: signature

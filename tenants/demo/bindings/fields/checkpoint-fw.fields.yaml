@@ -8,7 +8,7 @@ description: >
   firewall logs in tenant demo. Built from a sampled slice of checkpoint-log.csv
   and the firewall detection and analyst rule pack already present in the repo.
 
-default_field_mapping:
+field_mapping:
   time: _time
   src_endpoint.ip: src_ip
   src_endpoint.port: src_port

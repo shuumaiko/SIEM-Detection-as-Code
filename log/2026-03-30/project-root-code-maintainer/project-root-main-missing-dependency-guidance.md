@@ -11,7 +11,7 @@
 - Affected flow steps: entry point bootstrap, dependency wiring handoff to `interfaces.cli.run_cli`, missing-module failure handling.
 - Correct ownership layer: `project-root/main.py` entrypoint bootstrap and `project-root/tests/` regression coverage.
 - Validation plan: run targeted pytest coverage for `project-root/tests/test_main.py` and smoke tests if the environment supports them.
-- Log file path: `docs/note/logs/code/2026-03-30-project-root-main-missing-dependency-guidance.md`
+- Log file path: `log/2026-03-30/project-root-code-maintainer/project-root-main-missing-dependency-guidance.md`
 
 # Function Flow Summary
 
@@ -25,7 +25,7 @@
 
 - `project-root/main.py`
 - `project-root/tests/test_main.py`
-- `docs/note/logs/code/2026-03-30-project-root-main-missing-dependency-guidance.md`
+- `log/2026-03-30/project-root-code-maintainer/project-root-main-missing-dependency-guidance.md`
 
 # Tests Run
 
@@ -37,3 +37,4 @@
 
 - This change improves failure guidance but does not install dependencies automatically; the runtime environment still needs `PyYAML` and any other required packages.
 - If future startup failures come from missing internal modules rather than third-party packages, the message still stays truthful by calling them “missing Python modules” and only suggesting dependency installation conditionally.
+

@@ -31,7 +31,7 @@
       "type": "string",
       "minLength": 1
     },
-    "default_field_mapping": {
+    "field_mapping": {
       "$ref": "#/$defs/field_mapping"
     },
     "datasets": {

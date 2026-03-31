@@ -64,6 +64,14 @@ When using this skill, report briefly:
 - whether `$detection-mapping-ocsf` was needed
 - whether automated validation was run
 
+## Logging
+
+Create or update a markdown log under `log/YYYY-MM-DD/tenant-onboard-from-siem-log/`.
+
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
+- Include the request summary, sampled log evidence used, tenant config files changed, field binding files changed, whether mapping repair was needed, validation run or skipped, and assumptions.
+
 ## Guardrails
 
 - Do not duplicate logic already covered by `$tenant-config-from-siem-logs` or `$tenant-field-binding-writer`; delegate conceptually to those workflows.

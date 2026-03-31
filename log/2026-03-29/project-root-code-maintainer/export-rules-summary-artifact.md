@@ -22,7 +22,7 @@ Change `export-rules` so it generates an export artifact that matches the comman
   - `app/services/rule_artifact_service.py`: build the summary artifact
   - `infrastructure/repositories/file_rule_repository.py`: persist and read the summary artifact format
 - Validation plan: update targeted export tests and repository artifact tests, rerun the narrow pytest selection, then rerun `export-rules` for `lab`.
-- Log file path: `docs/note/logs/code/2026-03-29-export-rules-summary-artifact.md`.
+- Log file path: `log/2026-03-29/project-root-code-maintainer/export-rules-summary-artifact.md`.
 
 ## Function Flow Summary
 
@@ -57,3 +57,4 @@ Change `export-rules` so it generates an export artifact that matches the comman
 ## Assumptions
 
 - The primary purpose of `export-rules` is export visibility and deployment scope reporting, not storing full per-rule SIEM execution documents in the artifact layer.
+

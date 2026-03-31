@@ -100,7 +100,9 @@ If the canonical rule is already repo-standard:
 
 Always record the outcome of the merge in a log file.
 
-- Create or update a dated log under `docs/note/`, for example `docs/note/rule-merge-log-YYYY-MM-DD.md`, unless the user specifies another path.
+- Create or update a markdown log under `log/YYYY-MM-DD/merge-rule-into-base/`.
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
 - Log every created or modified canonical rule.
 - Include: imported source identifier, target file path, classification, action taken, whether logic was preserved, metadata changes, query changes, and deferred suggestions.
 - Use `references/merge-log-template.md` as the default structure when creating a new log file.

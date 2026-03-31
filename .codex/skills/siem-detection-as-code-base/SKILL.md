@@ -50,6 +50,14 @@ Read only the files needed for the requested change.
 - Do not hand-edit `tenants/<tenant>/deployments/rule-deployments.yaml` unless the user explicitly asks for a generated artifact fixture or legacy compatibility update.
 - When deployment enablement logic must change, prefer updating the code path that generates deployment manifests and then regenerate or validate the output.
 
+## Logging
+
+Create or update a markdown log under `log/YYYY-MM-DD/siem-detection-as-code-base/`.
+
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
+- Include the request summary, affected layers, files changed, validation run or skipped, generated artifacts touched if any, and assumptions or follow-ups.
+
 ## Validate Before Finishing
 
 Run the smallest useful verification after edits.

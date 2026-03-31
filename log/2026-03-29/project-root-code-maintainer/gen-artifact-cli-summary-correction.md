@@ -26,7 +26,7 @@ Revert the mistaken summary-only artifact behavior. Keep generated tenant artifa
   - `app/services`: build per-rule artifact envelopes
   - `infrastructure/repositories`: persist and reload tenant artifact files
 - Validation plan: run targeted pytest for export flow and repository behavior, then run the CLI command for tenant `lab`.
-- Log file path: `docs/note/logs/code/2026-03-29-gen-artifact-cli-summary-correction.md`.
+- Log file path: `log/2026-03-29/project-root-code-maintainer/gen-artifact-cli-summary-correction.md`.
 
 ## Function Flow Summary
 
@@ -54,3 +54,4 @@ Revert the mistaken summary-only artifact behavior. Keep generated tenant artifa
 
 - `export-rules` is still kept as a compatibility alias for now to avoid breaking existing usage abruptly.
 - If the team wants a hard rename later, remove the alias in a dedicated compatibility cleanup.
+

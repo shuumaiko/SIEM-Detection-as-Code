@@ -17,7 +17,7 @@ Start repairing the `project-root/` engine so the flow can begin from current so
   - `app/services/`: flatten source rules, resolve targets, and build artifact documents.
   - `infrastructure/`: load execution config and persist rendered files.
 - Validation plan: add/update repository and use-case tests, then run the CLI once against `lab`.
-- Log file path: `docs/note/logs/code/2026-03-28-project-root-hardcoded-render-flow.md`.
+- Log file path: `log/2026-03-28/project-root-code-maintainer/project-root-hardcoded-render-flow.md`.
 
 ## Function Flow Summary
 
@@ -67,3 +67,4 @@ Start repairing the `project-root/` engine so the flow can begin from current so
 ## Assumptions
 
 - The user request `./project-code` refers to the active engine under `project-root/`.
+

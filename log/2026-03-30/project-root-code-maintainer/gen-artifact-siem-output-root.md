@@ -13,7 +13,7 @@ Change `gen-artifact` so each tenant export writes under `artifacts/<tenant-id>/
 - Affected flow steps: export use case summary, rule repository artifact save/read/sync path resolution, repository-facing save service signature, and regression tests.
 - Correct ownership layer: `app/usecases`, `app/services`, `domain/repositories`, `infrastructure/repositories`, and targeted tests.
 - Validation plan: run focused `pytest` coverage for export/repository flows and execute the CLI command for tenant `demo`.
-- Log file path: `docs/note/logs/code/2026-03-30-gen-artifact-siem-output-root.md`
+- Log file path: `log/2026-03-30/project-root-code-maintainer/gen-artifact-siem-output-root.md`
 
 ## Function Flow Summary
 
@@ -33,7 +33,7 @@ Change `gen-artifact` so each tenant export writes under `artifacts/<tenant-id>/
 - `project-root/infrastructure/repositories/file_rule_repository.py`
 - `project-root/tests/test_folder_architecture.py`
 - `project-root/tests/test_export_rules.py`
-- `docs/note/logs/code/2026-03-30-gen-artifact-siem-output-root.md`
+- `log/2026-03-30/project-root-code-maintainer/gen-artifact-siem-output-root.md`
 
 ## Tests Run
 
@@ -44,3 +44,4 @@ Change `gen-artifact` so each tenant export writes under `artifacts/<tenant-id>/
 
 - Read flows still support older `artifacts/<tenant-id>/tenant-rules/` trees for compatibility, but new writes only target `artifacts/<tenant-id>/<siem-id>/`.
 - Existing older artifact directories are not rewritten automatically; they simply stop being the primary read target once the SIEM-specific tree exists.
+

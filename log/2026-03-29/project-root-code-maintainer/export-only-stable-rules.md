@@ -11,7 +11,7 @@
 - Affected flow steps: source rule scan, render candidate selection, export test fixtures.
 - Correct ownership layer: `infrastructure/repositories` for source-rule selection.
 - Validation plan: run focused export pipeline test under `project-root/tests/test_export_rules.py`.
-- Log file path: `docs/note/logs/code/2026-03-29-export-only-stable-rules.md`
+- Log file path: `log/2026-03-29/project-root-code-maintainer/export-only-stable-rules.md`
 
 # Function Flow Summary
 
@@ -25,7 +25,7 @@
 
 - `project-root/infrastructure/repositories/file_rule_repository.py`
 - `project-root/tests/test_export_rules.py`
-- `docs/note/logs/code/2026-03-29-export-only-stable-rules.md`
+- `log/2026-03-29/project-root-code-maintainer/export-only-stable-rules.md`
 
 # Tests Run
 
@@ -34,3 +34,4 @@
 # Risks And Follow-ups
 
 - The current repository data shown during implementation contains only `status: test` rules in `rules/detections/`, so real exports may now be empty until stable rules are introduced.
+

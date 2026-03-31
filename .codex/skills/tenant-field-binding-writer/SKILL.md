@@ -79,6 +79,14 @@ Before finishing, verify all of the following.
 - Dataset-specific mappings are placed under `datasets`, not mixed into `default_field_mapping`.
 - No tenant binding file is used to define new canonical semantics that belong in `mappings/`.
 
+## Logging
+
+Create or update a markdown log under `log/YYYY-MM-DD/tenant-field-binding-writer/`.
+
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
+- Include the request summary, target tenant and device, rule pack and mapping files used, canonical-to-SIEM bindings written, validation run or skipped, and any unresolved mapping gaps.
+
 ## Output Expectations
 
 When you perform the task, report briefly:

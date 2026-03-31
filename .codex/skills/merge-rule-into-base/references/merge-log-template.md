@@ -1,6 +1,6 @@
 # Rule Merge Log Template
 
-Use this template when recording a merge session under `docs/note/`.
+Use this template when recording a merge session under `log/YYYY-MM-DD/merge-rule-into-base/`.
 
 ```md
 # Rule Merge Log - YYYY-MM-DD

@@ -62,6 +62,14 @@ For rule files in this repo, treat the split-vs-unified choice as a design decis
 - Avoid inventing fields that do not exist in the source files.
 - Avoid tightening enums or required lists from one sample only.
 
+## Logging
+
+Create or update a markdown log under `log/YYYY-MM-DD/schema-fix-from-source/`.
+
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
+- Include the request summary, source file families inspected, schema files changed, drift decisions, validation run or skipped, and unresolved dependencies.
+
 ## Validation
 
 - Re-open the edited schema files and representative source files after the patch.

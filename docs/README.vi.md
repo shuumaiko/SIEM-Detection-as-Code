@@ -6,7 +6,7 @@ Thư mục `docs/` chứa tài liệu kiến trúc, mô tả luồng xử lý, v
 
 - Dùng `docs/architecture/` làm source of truth cho kiến trúc hiện tại.
 - Dùng `docs/en/architecture/` khi cần bản tiếng Anh.
-- Dùng `docs/note/` để tra lại bối cảnh lịch sử, gap review, và log thay đổi gần đây.
+- Dùng `docs/note/` để tra lại note trong repo và bối cảnh lịch sử; dùng `log/` cho task log và review log cục bộ.
 
 ## Cấu trúc chính
 
@@ -22,9 +22,12 @@ docs/
 |   `-- execution-relationship.md
 |-- en/
 |   `-- architecture/
-`-- note/
-    |-- repo-gap-review-2026-03-23.md
-    `-- logs/
+|-- note/
+|   |-- base-note.txt
+|   `-- SIEM-DaC-Idea.md
+`-- ../log/
+    `-- YYYY-MM-DD/
+        `-- <log-type>/
 ```
 
 ## Nên đọc theo thứ tự nào
@@ -39,8 +42,8 @@ Nếu muốn hiểu kiến trúc hiện tại:
 
 Nếu muốn hiểu trạng thái thay đổi gần đây:
 
-1. `note/repo-gap-review-2026-03-23.md`
-2. `note/logs/code/*.md`
+1. `../log/2026-03-23/repo-gap-review/repo-gap-review.md`
+2. `../log/YYYY-MM-DD/project-root-code-maintainer/*.md`
 
 ## Nguyên tắc tài liệu
 
@@ -51,4 +54,4 @@ Nếu muốn hiểu trạng thái thay đổi gần đây:
 
 ## Tóm tắt
 
-`docs/` là điểm vào chính để hiểu repo. Với kiến trúc, ưu tiên `docs/architecture/`. Với lịch sử thay đổi và drift, xem `docs/note/`.
+`docs/` là điểm vào chính để hiểu repo. Với kiến trúc, ưu tiên `docs/architecture/`. Với note trong repo, xem `docs/note/`. Với log tác vụ và review cục bộ, xem `log/`.

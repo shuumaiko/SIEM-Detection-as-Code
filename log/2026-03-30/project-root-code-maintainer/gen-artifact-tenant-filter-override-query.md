@@ -13,7 +13,7 @@ Update the hardcoded-query render flow so it reads tenant filter overrides from 
 - Affected flow steps: main app wiring, rule deployment builder query preparation, tenant filter override loading, and export regression tests.
 - Correct ownership layer: query override file parsing belongs in `infrastructure/file_loader`, while pre-field-mapping query substitution belongs in `app/services/rule_deployment_builder.py`.
 - Validation plan: run targeted export tests and execute the CLI once for `demo`.
-- Log file path: `docs/note/logs/code/2026-03-30-gen-artifact-tenant-filter-override-query.md`
+- Log file path: `log/2026-03-30/project-root-code-maintainer/gen-artifact-tenant-filter-override-query.md`
 
 ## Function Flow Summary
 
@@ -30,7 +30,7 @@ Update the hardcoded-query render flow so it reads tenant filter overrides from 
 - `project-root/app/services/rule_deployment_builder.py`
 - `project-root/main.py`
 - `project-root/tests/test_export_rules.py`
-- `docs/note/logs/code/2026-03-30-gen-artifact-tenant-filter-override-query.md`
+- `log/2026-03-30/project-root-code-maintainer/gen-artifact-tenant-filter-override-query.md`
 
 ## Tests Run
 
@@ -42,3 +42,4 @@ Update the hardcoded-query render flow so it reads tenant filter overrides from 
 
 - The current implementation intentionally uses only `query_modifiers.<siem>.search_query` from tenant filter overrides for the hardcoded-query flow.
 - Richer semantic processing of `detection_filters` and `append_condition` remains out of scope for this fix.
+

@@ -17,7 +17,7 @@ metadata:
   - attack.discovery
   - attack.t1046
   owner: AnhPT127
-  last_rendered: '2026-03-30T09:30:00Z'
+  last_rendered: '2026-03-31T03:18:48Z'
 x_splunk_es:
   targets:
     ingest_targets:
@@ -38,8 +38,12 @@ x_splunk_es:
       risk_score: 10
     enabled: true
   search_query: |-
-    ((index=checkpoint sourcetype=cp_log)) | where NOT (cidrmatch("10.0.0.0/8", src_ip) OR cidrmatch("192.168.0.0/16", src_ip) OR cidrmatch("172.16.0.0/12", src_ip))
+    ((index=checkpoint sourcetype=cp_log)) NOT (src_ip=10.0.0.0/8 OR src_ip=192.168.0.0/16 OR src_ip=172.16.0.0/12)
     | bucket _time span=1h
-    | stats count dc(dest_ip) as Total_dest values(action) as Action by _time src_ip
+    | convert timeformat="%Y/%m/%d %H:%M:%S" ctime(_time) AS Time
+    | eval Alert_Severity="Low"
+    | stats values(action) as Action, values(dest_ip) as dest_ip, dc(dest_ip) as Total_dest, values(service) as "Dest Port" count by Alert_Severity Time src_ip
+    | eval dest_ip=mvindex(dest_ip,0,9)
+    | eval service=mvindex(service,0,9)
     | where count > 200000
     | sort - count

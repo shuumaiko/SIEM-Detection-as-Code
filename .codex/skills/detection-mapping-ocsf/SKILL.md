@@ -71,6 +71,14 @@ Keep the file valid against `schema/mappings/detection_fields.schema.json`.
 - Avoid baking tenant bindings into `mappings/detections/`; tenant-specific physical fields belong in `tenants/.../bindings/fields/`.
 - Prefer a compact, maintainable shared dictionary over exhaustive vendor normalization.
 
+## Logging
+
+Create or update a markdown log under `log/YYYY-MM-DD/detection-mapping-ocsf/`.
+
+- Use the current local date for `YYYY-MM-DD`.
+- Use a short filename such as `<task-slug>.md`.
+- Include the request summary, touched mapping files, OCSF version and source files used, key canonical field decisions, validation run or skipped, and any assumptions.
+
 ## Validation
 
 - Re-read `schema/mappings/detection_fields.schema.json` after structural edits.

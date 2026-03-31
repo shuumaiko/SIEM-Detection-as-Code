@@ -84,5 +84,5 @@ Decision hint:
 
 ## Notes To Reuse
 
-- Read `docs/note/repo-gap-review-2026-03-23.md` when the task is about rule schema drift or split-vs-unified rule contracts.
+- Read `log/2026-03-23/repo-gap-review/repo-gap-review.md` when the task is about rule schema drift or split-vs-unified rule contracts.
 - Stay outside `project-root/`; schema design here is repository-contract work, not runtime-engine work.

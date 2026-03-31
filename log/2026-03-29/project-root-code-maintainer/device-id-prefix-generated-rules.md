@@ -11,7 +11,7 @@
 - Affected flow steps: target resolution in deployment builder and final title rendering in artifact builder.
 - Correct ownership layer: `app/services`
 - Validation plan: run focused export pipeline tests.
-- Log file path: `docs/note/logs/code/2026-03-29-device-id-prefix-generated-rules.md`
+- Log file path: `log/2026-03-29/project-root-code-maintainer/device-id-prefix-generated-rules.md`
 
 # Function Flow Summary
 
@@ -26,7 +26,7 @@
 - `project-root/app/services/rule_artifact_service.py`
 - `project-root/app/services/rule_deployment_builder.py`
 - `project-root/tests/test_export_rules.py`
-- `docs/note/logs/code/2026-03-29-device-id-prefix-generated-rules.md`
+- `log/2026-03-29/project-root-code-maintainer/device-id-prefix-generated-rules.md`
 
 # Tests Run
 
@@ -35,3 +35,4 @@
 # Risks And Follow-ups
 
 - Multi-device rules are intentionally left without a prefix because a single prefix would hide ambiguity.
+

@@ -12,7 +12,7 @@
 - Affected flow steps: CLI command dispatch, validator result presentation, schema-driven rule validation.
 - Correct ownership layer: `interfaces` for output formatting, `rules/` for normalized detection content.
 - Validation plan: run focused CLI/output tests and rerun `validate-rules --all`.
-- Log file path: `docs/note/logs/code/2026-03-29-validate-rules-json-and-rule-normalization.md`
+- Log file path: `log/2026-03-29/project-root-code-maintainer/validate-rules-json-and-rule-normalization.md`
 
 # Function Flow Summary
 
@@ -40,3 +40,4 @@
 
 - The added `x_query` blocks keep the current transition model alive, but they are still hand-maintained query artifacts rather than generated output.
 - Some legacy or non-normalized rules under `rules/legacy/` and `rules/deprecated/` remain outside the current validator scope.
+

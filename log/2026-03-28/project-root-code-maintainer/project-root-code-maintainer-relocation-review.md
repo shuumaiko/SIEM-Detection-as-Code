@@ -7,7 +7,7 @@ Move the `project-root-code-maintainer` skill out of `docs/skills/` into the rep
 ## Business Definition
 
 - Goal: place the skill where Codex can discover and use it as a repository skill.
-- Outcome: future requests can invoke the skill from `.codex/skills/` while still using `docs/` as architecture context and `docs/note/logs/code/` as the audit trail.
+- Outcome: future requests can invoke the skill from `.codex/skills/` while still using `docs/` as architecture context and `log/YYYY-MM-DD/project-root-code-maintainer/` as the audit trail.
 - Trigger: the earlier skill was written using context from `docs/`, but that was misinterpreted as the storage location.
 - Main input: current skill files and the clarified user requirement.
 - Main output: relocated skill under `.codex/skills/project-root-code-maintainer`.
@@ -26,13 +26,13 @@ Move the `project-root-code-maintainer` skill out of `docs/skills/` into the rep
 - `.codex/skills/project-root-code-maintainer/SKILL.md`
 - `.codex/skills/project-root-code-maintainer/agents/openai.yaml`
 - `.codex/skills/project-root-code-maintainer/references/project-root-current-context.md`
-- `docs/note/logs/code/2026-03-28-project-root-code-maintainer-relocation-review.md`
+- `log/2026-03-28/project-root-code-maintainer/project-root-code-maintainer-relocation-review.md`
 
 ## Review Notes
 
 - Placement is now correct for a repo-local Codex skill.
 - The skill metadata remains valid and the default prompt explicitly names `$project-root-code-maintainer`.
-- The skill instructions still align with the clarified intent: read business context from `docs/`, change code in `project-root/`, and log important decisions under `docs/note/logs/code/`.
+- The skill instructions still align with the clarified intent: read business context from `docs/`, change code in `project-root/`, and log important decisions under `log/YYYY-MM-DD/project-root-code-maintainer/`.
 - No content-level defects were identified during this review pass.
 
 ## Tests Run
@@ -43,3 +43,4 @@ Move the `project-root-code-maintainer` skill out of `docs/skills/` into the rep
 
 - Copying into `.codex/skills/` required elevated permissions in this environment even though the repository is writable.
 - The earlier log that records the initial mistaken placement is kept as historical context rather than being rewritten.
+
