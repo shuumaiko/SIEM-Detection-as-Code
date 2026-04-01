@@ -135,6 +135,7 @@ Repo hiện có một số repo-local Codex Skills trong `.codex/skills/` để 
 
 - README này chỉ mô tả ngắn để người đọc biết chúng tồn tại.
 - Tài liệu chi tiết nằm tại `docs/codex-skills.md`.
+- Repo này dùng `.codex/` làm layer điều khiển AI và `.omx/` làm runtime layer cho OMX; xem `docs/omx-safe-integration.md`.
 - Khi làm việc với OCSF-driven mapping qua skill `detection-mapping-ocsf`, nên clone `ocsf-schema` vào `.tmp/ocsf-schema` để skill dùng local reference ổn định.
 - Khi cập nhật skill, nên giữ chúng bám sát `docs/architecture/` và current repository contracts.
 

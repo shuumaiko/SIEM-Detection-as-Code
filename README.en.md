@@ -79,6 +79,13 @@ For deeper details, see:
 - `docs/architecture/mappings-relationship.md`
 - `docs/architecture/execution-relationship.md`
 
+## Codex And OMX
+
+This repository uses `.codex/` as its AI control layer and `.omx/` as the OMX runtime layer.
+
+- Use `docs/codex-skills.md` for the current project skill catalog.
+- Use `docs/omx-safe-integration.md` for the local layout and wrapper flow.
+
 ## Architectural View
 
 The system can be understood through 4 main axes.

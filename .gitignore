@@ -6,3 +6,5 @@ __pycache__/
 .pytest_cache_local/
 pytest-cache-files-*/
 .tmp
+.omx/
+.vendor/oh-my-codex/
