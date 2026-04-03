@@ -1,0 +1,29 @@
+schema_version: 1.0
+
+tenant_id: xyz
+device_type: firewall
+device_id: checkpoint-fw
+category: network
+
+vendor: Check Point Software Technologies
+product: Check Point Firewall
+
+role: Firewall
+functions:
+  - Network Security
+  - Threat Prevention
+
+location: unknown
+network_zone: perimeter
+description: Check Point firewall traffic observed from Splunk cp_log samples.
+
+criticality: high
+
+metadata:
+  observed_vendor: checkpoint
+  observed_product: Firewall
+  observed_hostname: CP-SMC
+  observed_sourcetype: cp_log
+  observed_index: checkpoint
+  observed_from_sample: checkpoint-log.csv
+

@@ -1,0 +1,15 @@
+schema_version: 1.0
+
+device_id: mcafee-epo
+
+datasets:
+  - dataset_id: mcafee-epo-syslog
+    description: McAfee ePO antivirus syslog events observed in mcafee-log.csv.
+    category: antivirus
+    log_type: security
+    enabled: true
+    metadata:
+      observed_eventtype: mcafee_epo_hip_file
+      observed_product_family: TVD
+      observed_analyzer_name: Trellix Endpoint Security
+

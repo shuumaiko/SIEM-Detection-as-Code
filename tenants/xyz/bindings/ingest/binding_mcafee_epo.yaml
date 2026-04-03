@@ -1,0 +1,15 @@
+schema_version: 1.0
+
+tenant_id: xyz
+device_id: mcafee-epo
+siem_id: splunk
+
+datasets:
+  - dataset_id: mcafee-epo-syslog
+    index: epav
+    sourcetype: mcafee:epo:syslog
+    source: mcafee-log.csv
+    metadata:
+      observed_eventtype: mcafee_epo_hip_file
+      observed_loghost: fis-sav-mcafee
+

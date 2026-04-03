@@ -1,0 +1,17 @@
+schema_version: 1.0
+
+tenant_id: xyz
+name: XYZ
+environment: production
+timezone: Asia/Ho_Chi_Minh
+
+siem_id: splunk
+
+metadata:
+  onboarding_source:
+    - checkpoint-log.csv
+    - mcafee-log.csv
+  onboarding_method: tenant-onboard-from-siem-log
+  assumptions:
+    timezone: assumed from operator context
+

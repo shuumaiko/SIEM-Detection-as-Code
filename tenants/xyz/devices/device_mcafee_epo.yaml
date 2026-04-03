@@ -1,0 +1,27 @@
+schema_version: 1.0
+
+tenant_id: xyz
+device_type: endpoint
+device_id: mcafee-epo
+category: security
+
+vendor: McAfee
+product: Trellix Endpoint Security
+
+role: Endpoint Protection
+functions:
+  - Endpoint Security
+
+location: unknown
+network_zone: unknown
+description: McAfee ePO endpoint security events forwarded to Splunk syslog.
+
+criticality: high
+
+metadata:
+  observed_vendor_product: mcafee_epo
+  observed_analyzer_name: Trellix Endpoint Security
+  observed_sourcetype: mcafee:epo:syslog
+  observed_index: epav
+  observed_from_sample: mcafee-log.csv
+
